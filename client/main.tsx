@@ -12,7 +12,7 @@ function Root({authService}: {
 }, context: JSX.Context) {
     const loading = bind(true);
     const register = bind(false);
-    const amber = bind(false);
+    const amber = bind(localStorage.getItem('utTheme') === 'amber');
 
     async function authenticate() {
         loading.value = true;
@@ -28,6 +28,7 @@ function Root({authService}: {
     authenticate();
 
     context.onDestroy(amber.getAndObserve(amber => {
+        localStorage.setItem('utTheme', amber ? 'amber' : 'green');
         if (amber) {
             document.body.classList.add('amber')
         } else {
