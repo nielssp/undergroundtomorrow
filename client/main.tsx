@@ -11,6 +11,7 @@ function Root({authService}: {
 }) {
     const loading = bind(true);
     const register = bind(false);
+    const amber = bind(false);
 
     async function authenticate() {
         loading.value = true;
@@ -25,7 +26,7 @@ function Root({authService}: {
 
     authenticate();
 
-    return <div class='bezel'>
+    return <div class={{bezel: true, amber}}>
         <div class='display'>
             <Show when={loading}>
                 <div>Please wait...</div>
@@ -54,6 +55,11 @@ function Root({authService}: {
                     </>
                 }</Deref>
             </Show>
+            <br/>
+            <br/>
+            <div>
+                <button onClick={() => amber.value = !amber.value}>Amber</button>
+            </div>
         </div>
     </div>;
 }

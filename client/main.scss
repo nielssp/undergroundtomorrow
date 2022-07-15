@@ -1,35 +1,14 @@
 :root {
-    --margin: 0.8rem;
+    --margin: 1vh;
     --padding: var(--margin);
     --spacing: var(--margin);
 
-    --desktop-bg: #909090;
-    --disabled: #909090;
-
-    --window-bg: #FFFFFF;
-    --window-fg: #000000;
-    --window-border: #000000;
-
-    --button-bg: var(--window-bg);
-    --button-fg: var(--window-fg);
-    --button-border: var(--window-border);
-
-    --input-bg: var(--window-bg);
-    --input-fg: var(--window-fg);
-    --input-border: var(--window-border);
-
-    --hover-bg: #F0F0F0;
-
-    --water-bg: #47686F;
-    --water-fg: #FFFFFF;
-    --land-bg: #DDDEA9;
-    --land-fg: #000000;
-
-    --green: #A8DDAA;
-    --red: #DEA9A9;
-
-    --light: rgba(128, 128, 128, 0.25);
-    --lighter: rgba(128, 128, 128, 0.12);
+    --primary: #0f0;
+    --primary-9: #090;
+    --primary-5: #050;
+    --primary-4: #040;
+    --primary-3: #030;
+    --primary-1: #010;
 }
 
 * {
@@ -63,16 +42,25 @@ body {
     border: 0.5vh ridge #666;
     border-radius: 2vh;
     overflow: hidden;
-    background: #020 radial-gradient(#030, #010);
+    background: radial-gradient(var(--primary-3), var(--primary-1));
     position: relative;
+}
+
+.bezel.amber {
+    --primary: #f90;
+    --primary-9: #960;
+    --primary-5: #530;
+    --primary-4: #420;
+    --primary-3: #320;
+    --primary-1: #100;
 }
 
 .display {
   padding: 0.5vh 1vh;
   font-family: monospace;
   font-size: 2vh;
-  color: #0f0;
-  text-shadow: 0 0 0.5vh #0f0;
+  color: var(--primary);
+  text-shadow: 0 0 0.5vh var(--primary);
   position: absolute;
   top: 0;
   left: 0;
@@ -88,7 +76,7 @@ body {
 
   .invert {
     background: #0c0;
-    box-shadow: 0 0 0.5vh #0f0;
+    box-shadow: 0 0 0.5vh var(--primary);
     color: #010;
     text-shadow: none;
 
@@ -100,8 +88,8 @@ body {
   }
 
   .box {
-    border: 0.1vh solid #0f0;
-    box-shadow: 0 0 0.5vh #0f0, inset 0 0 0.5vh #0f0;
+    border: 0.1vh solid var(--primary);
+    box-shadow: 0 0 0.5vh var(--primary), inset 0 0 0.5vh var(--primary);
   }
 
   button {
@@ -116,14 +104,14 @@ body {
     transition: all linear 0.1s;
 
     &:hover {
-      background: #040;
+      background: var(--primary-4);
     }
 
     &:active {
-      box-shadow: 0 0 0.5vh #0f0;
-      background: #0f0;
-      color: #090;
-      border-color: #0f0;
+      box-shadow: 0 0 0.5vh var(--primary);
+      background: var(--primary);
+      color: var(--primary-9);
+      border-color: var(--primary);
     }
 
     &:focus-visible {
@@ -153,10 +141,10 @@ select[size="1"] {
     padding: 0.1vh;
     font-size: inherit;
     font-family: inherit;
-    background-color: #050;
+    background-color: var(--primary-5);
     color: inherit;
-    border: 0.1vh solid #050;
-    box-shadow: 0 0 0.5vh #050;
+    border: 0.1vh solid var(--primary-5);
+    box-shadow: 0 0 0.5vh var(--primary-5);
     transition: all linear 0.1s;
 
     &:focus {
