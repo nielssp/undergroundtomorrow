@@ -125,6 +125,11 @@ body {
       color: #090;
       border-color: #0f0;
     }
+
+    &:focus-visible {
+        outline: none;
+        border-color: #0ff;
+    }
   }
 
   &:after {
@@ -140,4 +145,27 @@ body {
       background: linear-gradient(to bottom, transparent 50%, rgba(#000, .1) 51%);
       background-size: 100% 0.4vh;
   }  
+}
+
+input,
+textarea,
+select[size="1"] {
+    padding: 0.1vh;
+    font-size: inherit;
+    font-family: inherit;
+    background-color: #050;
+    color: inherit;
+    border: 0.1vh solid #050;
+    box-shadow: 0 0 0.5vh #050;
+    transition: all linear 0.1s;
+
+    &:focus {
+        outline: none;
+        border: 0.1vh solid currentColor;
+        box-shadow: 0 0 0.5vh currentColor, inset 0 0 0.5vh currentColor;
+    }
+
+    &:disabled {
+        color: #060;
+    }
 }

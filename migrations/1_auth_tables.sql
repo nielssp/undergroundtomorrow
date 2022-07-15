@@ -8,5 +8,5 @@ create table "users" (
 create table "sessions" (
     "id" varchar(255) primary key,
     "user_id" bigint not null references "users" ("id") on delete cascade,
-    "valid_until" timestamp not null
+    "valid_until" timestamptz not null
 );

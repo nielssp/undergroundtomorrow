@@ -39,7 +39,7 @@ export class Api {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Nuke-Nation': '1'
+                'X-Underground-Tomorrow': '1'
             },
             body: JSON.stringify(data),
         });

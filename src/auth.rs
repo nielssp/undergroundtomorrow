@@ -104,7 +104,7 @@ async fn invalidate(
 ) -> actix_web::Result<HttpResponse> {
     let session = validate_session(&request).await?;
     sessions::delete_session(&pool, &session.id).await?;
-    Ok(HttpResponse::NoContent().body(""))
+    Ok(HttpResponse::Ok().json("OK"))
 }
 
 #[post("/auth/set_password")]
