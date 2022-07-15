@@ -51,25 +51,29 @@ body {
 .bezel {
     flex-grow: 1;
     max-width: 75vh;
-    border: 0.5vh ridge #666;
     border-radius: 2vh;
     overflow: hidden;
-    background: radial-gradient(var(--primary-3), var(--primary-1));
     position: relative;
+    background: linear-gradient(to top left, #777, #444);
+    padding: 0.5vh;
+    box-shadow: inset 0.2vh 0.2vh 0.1vh 0 rgba(200, 200, 200, 0.5), inset -0.2vh -0.2vh 0.1vh 0 rgba(0, 0, 0, 0.5);
 }
 
 .display {
   padding: 0.5vh 1vh;
   font-family: monospace;
   font-size: 2vh;
+  border-radius: 1.75vh;
   color: var(--primary);
   text-shadow: 0 0 0.5vh var(--primary);
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0.5vh;
+  left: 0.5vh;
+  right: 0.5vh;
+  bottom: 0.5vh;
   overflow: hidden;
+  background: radial-gradient(var(--primary-3), var(--primary-1));
+  box-shadow: inset 0 0 2vh #000;
 
   &::selection, ::selection {
     background: #0c0;
