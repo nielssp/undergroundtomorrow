@@ -1,0 +1,44 @@
+[package]
+name = "underground-tomorrow"
+version = "0.1.0"
+authors = ["Niels Sonnich Poulsen <niels@nielssp.dk>"]
+edition = "2021"
+
+[dependencies]
+async-std = { version = "1.11", features = ["attributes"] }
+
+# Logging, config, and error handling
+dotenv = "0.15"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+log = "0.4"
+thiserror = "1.0"
+config = "0.11"
+
+# Dates
+chrono = { version = "0.4", features = ["serde"] }
+time = "0.2"
+
+# Web service
+actix-web = "4"
+actix-cors = "0.6"
+actix-rt = "2.7"
+tracing-actix-web = "0.5"
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.5", features = ["runtime-async-std-rustls", "postgres", "migrate", "chrono"] }
+
+# Auth
+argonautica = "0.2"
+rand = "0.8"
+base64 = "0.13"
+
+# Game data
+toml = "0.5"
+lazy_static = "1.4"
+
+# Util
+itertools = "0.10"

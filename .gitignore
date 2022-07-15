@@ -1,0 +1,6 @@
+/.idea
+/target
+/.cache
+/dist
+/node_modules
+.env

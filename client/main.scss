@@ -1,0 +1,143 @@
+:root {
+    --margin: 0.8rem;
+    --padding: var(--margin);
+    --spacing: var(--margin);
+
+    --desktop-bg: #909090;
+    --disabled: #909090;
+
+    --window-bg: #FFFFFF;
+    --window-fg: #000000;
+    --window-border: #000000;
+
+    --button-bg: var(--window-bg);
+    --button-fg: var(--window-fg);
+    --button-border: var(--window-border);
+
+    --input-bg: var(--window-bg);
+    --input-fg: var(--window-fg);
+    --input-border: var(--window-border);
+
+    --hover-bg: #F0F0F0;
+
+    --water-bg: #47686F;
+    --water-fg: #FFFFFF;
+    --land-bg: #DDDEA9;
+    --land-fg: #000000;
+
+    --green: #A8DDAA;
+    --red: #DEA9A9;
+
+    --light: rgba(128, 128, 128, 0.25);
+    --lighter: rgba(128, 128, 128, 0.12);
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+@import './layout.scss';
+
+body {
+    background-color: #000;
+    font-family: 'IBM Plex Mono', sans-serif;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.bezel {
+    flex-grow: 1;
+    max-width: 75vh;
+    border: 0.5vh ridge #666;
+    border-radius: 2vh;
+    overflow: hidden;
+    background: #020 radial-gradient(#030, #010);
+    position: relative;
+}
+
+.display {
+  padding: 0.5vh 1vh;
+  font-family: monospace;
+  font-size: 2vh;
+  color: #0f0;
+  text-shadow: 0 0 0.5vh #0f0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+
+  &::selection, ::selection {
+    background: #0c0;
+    color: #010;
+    text-shadow: none;
+  }
+
+  .invert {
+    background: #0c0;
+    box-shadow: 0 0 0.5vh #0f0;
+    color: #010;
+    text-shadow: none;
+
+    &::selection, ::selection {
+      background: #010;
+      color: #0c0;
+      text-shadow: none;
+    }
+  }
+
+  .box {
+    border: 0.1vh solid #0f0;
+    box-shadow: 0 0 0.5vh #0f0, inset 0 0 0.5vh #0f0;
+  }
+
+  button {
+    color: inherit;
+    border: 0.1vh solid currentColor;
+    padding: 0.1vh 0.3vh;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    box-shadow: 0 0 0.5vh currentColor, inset 0 0 0.5vh currentColor;
+    text-shadow: 0 0 0.5vh currentColor;
+    transition: all linear 0.1s;
+
+    &:hover {
+      background: #040;
+    }
+
+    &:active {
+      box-shadow: 0 0 0.5vh #0f0;
+      background: #0f0;
+      color: #090;
+      border-color: #0f0;
+    }
+  }
+
+  &:after {
+      display: block;
+      pointer-events: none;
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 2147483648;
+      background: linear-gradient(to bottom, transparent 50%, rgba(#000, .1) 51%);
+      background-size: 100% 0.4vh;
+  }  
+}
