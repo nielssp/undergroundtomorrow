@@ -1,6 +1,7 @@
 import { bind, createElement, Deref, mount, Show, Fragment } from 'cstk';
 import { Api } from './api';
 import { environment } from './config/environment';
+import { Icon } from './icon';
 import { Login } from './login';
 import './main.scss';
 import { Register } from './register';
@@ -8,7 +9,7 @@ import { AuthService } from './services/auth-service';
 
 function Root({authService}: {
     authService: AuthService,
-}) {
+}, context: JSX.Context) {
     const loading = bind(true);
     const register = bind(false);
     const amber = bind(false);
@@ -26,13 +27,24 @@ function Root({authService}: {
 
     authenticate();
 
-    return <div class={{bezel: true, amber}}>
+    context.onDestroy(amber.getAndObserve(amber => {
+        if (amber) {
+            document.body.classList.add('amber')
+        } else {
+            document.body.classList.remove('amber')
+        }
+    }));
+
+    return <div class='bezel'>
         <div class='display'>
             <Show when={loading}>
                 <div>Please wait...</div>
             </Show>
             <Show when={loading.not}>
                 <Show when={authService.user.not}>
+                    <div>
+                        <Icon name='logo'/>
+                    </div>
                     <div style='font-weight: bold;'>Underground Tomorrow</div>
                     <div>Bunker Administration Operating System</div>
                     <div>Version 2.0</div>

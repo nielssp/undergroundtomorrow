@@ -26,8 +26,8 @@
       "density": "4.0"
     }
   ],
-  "background_color": "#909090",
-  "theme_color": "#FFFFFF",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "start_url": "./",
   "display": "fullscreen"
 }
