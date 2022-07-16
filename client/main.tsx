@@ -54,6 +54,8 @@ function Root({authService}: {
                         <Login authService={authService}/>
                         <br/>
                         <button onClick={() => register.value = true}>Register</button>
+                        <br/>
+                        <button>Guest</button>
                     </Show>
                     <Show when={register}>
                         <Register authService={authService} onClose={() => register.value = false}/>
@@ -61,6 +63,13 @@ function Root({authService}: {
                 </Show>
                 <Deref ref={authService.user}>{user =>
                     <>
+                        <menu role='tablist'>
+                            <li><button aria-selected='true'>Status</button></li>
+                            <li><button>People</button></li>
+                            <li><button>Items</button></li>
+                            <li><button>Map</button></li>
+                            <li><button>Radio</button></li>
+                        </menu>
                         <div>Welcome back, {user.props.username}.</div>
                         <div>
                             <button onClick={() => authService.invalidate()}>Log Out</button>
@@ -71,7 +80,7 @@ function Root({authService}: {
             <br/>
             <br/>
             <div>
-                <button onClick={() => amber.value = !amber.value}>Amber</button>
+                <button onClick={() => amber.value = !amber.value}>Mode</button>
             </div>
         </div>
     </div>;
