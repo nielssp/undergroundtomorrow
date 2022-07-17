@@ -1,6 +1,7 @@
 const iconFiles = {
     logo: require('./icons/logo.svg'),
     close: require('./icons/close.svg'),
+    message: require('./icons/message.svg'),
 }
 const iconCache: Record<string, Promise<string>> = {};
 

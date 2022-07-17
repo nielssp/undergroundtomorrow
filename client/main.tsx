@@ -1,4 +1,4 @@
-import { bind, createElement, Deref, mount, Show, Fragment } from 'cstk';
+import { bind, createElement, Deref, mount, Show, Fragment, ref } from 'cstk';
 import { Api } from './api';
 import { environment } from './config/environment';
 import { Icon } from './icon';
@@ -30,9 +30,9 @@ function Root({authService}: {
     context.onDestroy(amber.getAndObserve(amber => {
         localStorage.setItem('utTheme', amber ? 'amber' : 'green');
         if (amber) {
-            document.body.classList.add('amber')
+            document.documentElement.classList.add('amber')
         } else {
-            document.body.classList.remove('amber')
+            document.documentElement.classList.remove('amber')
         }
     }));
 
@@ -69,21 +69,50 @@ function Root({authService}: {
                             <li><button>Items</button></li>
                             <li><button>Map</button></li>
                             <li><button>Radio</button></li>
+                            <li><button class='attention'><Icon name='message'/></button></li>
                         </menu>
                         <div>Welcome back, {user.props.username}.</div>
                         <div>
                             <button onClick={() => authService.invalidate()}>Log Out</button>
                         </div>
+                        <Map/>
                     </>
                 }</Deref>
             </Show>
-            <br/>
-            <br/>
-            <div>
+            <div class='status-bar' style='margin-top: auto;'>
+                <div class='status'>01/01/2070</div>
+                <div class='status'>08:56 AM</div>
+                <div class='status' style='flex-grow: 1;'>Bunker 101</div>
                 <button onClick={() => amber.value = !amber.value}>Mode</button>
             </div>
         </div>
     </div>;
+}
+
+function loadTexture(src: string): Promise<HTMLImageElement> {
+  const img = new Image();
+  img.src = src;
+  return new Promise((resolve, reject) => {
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+  });
+}
+
+function Map({}, context: JSX.Context) {
+    const canvasRef = ref<HTMLCanvasElement>();
+    context.onInit(async () => {
+        if (!canvasRef.value) {
+            return;
+        }
+        const canvas = canvasRef.value;
+        const ctx = canvas.getContext('2d')!;
+        const map = await loadTexture(require('./assets/map2.png'));
+        ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = '#ff9900';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+    return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
 }
 
 const api = new Api(environment.apiUrl);
