@@ -1,9 +1,10 @@
-import { bind, createElement, Deref, mount, Show, Fragment, ref } from 'cstk';
+import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from 'cstk';
 import { Api } from './api';
 import { environment } from './config/environment';
 import { Icon } from './icon';
 import { Login } from './login';
 import './main.scss';
+import { Map } from './map';
 import { Register } from './register';
 import { AuthService } from './services/auth-service';
 
@@ -13,6 +14,8 @@ function Root({authService}: {
     const loading = bind(true);
     const register = bind(false);
     const amber = bind(localStorage.getItem('utTheme') === 'amber');
+
+    const tab = bind<'status'|'people'|'items'|'map'|'radio'|'messages'>('status');
 
     async function authenticate() {
         loading.value = true;
@@ -64,18 +67,22 @@ function Root({authService}: {
                 <Deref ref={authService.user}>{user =>
                     <>
                         <menu role='tablist'>
-                            <li><button aria-selected='true'>Status</button></li>
-                            <li><button>People</button></li>
-                            <li><button>Items</button></li>
-                            <li><button>Map</button></li>
-                            <li><button>Radio</button></li>
-                            <li><button class='attention'><Icon name='message'/></button></li>
+                            <li><button onClick={() => tab.value = 'status'} aria-selected={ariaBool(tab.eq('status'))}>Status</button></li>
+                            <li><button onClick={() => tab.value = 'people'} aria-selected={ariaBool(tab.eq('people'))}>People</button></li>
+                            <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
+                            <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
+                            <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))}>Radio</button></li>
+                            <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class='attention'><Icon name='message'/></button></li>
                         </menu>
-                        <div>Welcome back, {user.props.username}.</div>
-                        <div>
-                            <button onClick={() => authService.invalidate()}>Log Out</button>
-                        </div>
-                        <Map/>
+                        <Show when={tab.eq('status')}>
+                            <div>Welcome back, {user.props.username}.</div>
+                            <div>
+                                <button onClick={() => authService.invalidate()}>Log Out</button>
+                            </div>
+                        </Show>
+                        <Show when={tab.eq('map')}>
+                            <Map/>
+                        </Show>
                     </>
                 }</Deref>
             </Show>
@@ -87,32 +94,6 @@ function Root({authService}: {
             </div>
         </div>
     </div>;
-}
-
-function loadTexture(src: string): Promise<HTMLImageElement> {
-  const img = new Image();
-  img.src = src;
-  return new Promise((resolve, reject) => {
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-  });
-}
-
-function Map({}, context: JSX.Context) {
-    const canvasRef = ref<HTMLCanvasElement>();
-    context.onInit(async () => {
-        if (!canvasRef.value) {
-            return;
-        }
-        const canvas = canvasRef.value;
-        const ctx = canvas.getContext('2d')!;
-        const map = await loadTexture(require('./assets/map2.png'));
-        ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = '#ff9900';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    });
-    return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
 }
 
 const api = new Api(environment.apiUrl);

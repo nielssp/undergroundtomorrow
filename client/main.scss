@@ -254,7 +254,7 @@ menu[role="tablist"] {
             border-color: var(--primary-60);
 
             &[aria-selected="true"] {
-                border-bottom: 0;
+                border-bottom-color: transparent;
             }
 
             &:active {
