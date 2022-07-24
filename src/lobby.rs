@@ -6,7 +6,7 @@ use sqlx::PgPool;
 use crate::{
     auth::{validate_admin_session, validate_session},
     db::{bunkers, inhabitants, worlds},
-    error, generate,
+    error, generate, data::LAST_NAMES,
 };
 
 #[derive(serde::Deserialize)]
@@ -85,16 +85,20 @@ async fn join_world(
     )
     .await?;
     let world_time = worlds::get_world_time(&world);
+    let mut last_names: Vec<&String> = Vec::with_capacity(20);
+    for _ in 0..20 {
+        last_names.push(&LAST_NAMES[rand::random::<usize>() % LAST_NAMES.len()]);
+    }
     for _ in 0..5 {
-        let person = generate::generate_person(world_time, 0, 18);
+        let person = generate::generate_person(world_time, 0, 18, &last_names);
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
     for _ in 0..15 {
-        let person = generate::generate_person(world_time, 19, 50);
+        let person = generate::generate_person(world_time, 19, 50, &last_names);
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
     for _ in 0..5 {
-        let person = generate::generate_person(world_time, 51, 100);
+        let person = generate::generate_person(world_time, 51, 100, &last_names);
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
     // TODO: starting items

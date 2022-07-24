@@ -121,7 +121,7 @@ function Root({authService, lobbyService, gameService}: {
                                     <People gameService={gameService}/>
                                 </Show>
                                 <Show when={tab.eq('map')}>
-                                    <Map/>
+                                    <Map amber={amber} gameService={gameService}/>
                                 </Show>
                             </div>
                         </Show>
