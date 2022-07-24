@@ -1,0 +1,2 @@
+ALTER TABLE "worlds" ADD COLUMN "created" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "worlds" ADD COLUMN "start_year" int NOT NULL DEFAULT 2072;

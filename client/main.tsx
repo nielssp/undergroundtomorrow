@@ -1,15 +1,23 @@
 import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from 'cstk';
+import {format} from 'date-fns';
 import { Api } from './api';
 import { environment } from './config/environment';
 import { Icon } from './icon';
+import {Lobby} from './lobby';
 import { Login } from './login';
 import './main.scss';
 import { Map } from './map';
+import {People} from './people';
 import { Register } from './register';
 import { AuthService } from './services/auth-service';
+import {GameService} from './services/game-service';
+import {LobbyService} from './services/lobby-service';
+import {LoadingIndicator} from './util';
 
-function Root({authService}: {
+function Root({authService, lobbyService, gameService}: {
     authService: AuthService,
+    lobbyService: LobbyService,
+    gameService: GameService,
 }, context: JSX.Context) {
     const loading = bind(true);
     const register = bind(false);
@@ -39,11 +47,32 @@ function Root({authService}: {
         }
     }));
 
+    context.onDestroy(authService.user.getAndObserve(user => {
+        if (user) {
+            const m = location.hash.match(/^#(\d+)\/([^\/]+)$/);
+            if (m) {
+                tab.value = m[2] as any;
+                gameService.selectWorld(parseInt(m[1]));
+            }
+        }
+    }));
+
+    context.onDestroy(gameService.world.getAndObserve(world => {
+        if (world) {
+            location.hash = `${world.id}/${tab.value}`;
+        }
+    }));
+
+    context.onDestroy(tab.getAndObserve(tab => {
+        const worldId = gameService.world.value?.id;
+        if (worldId) {
+            location.hash = `${worldId}/${tab}`;
+        }
+    }));
+
     return <div class='bezel'>
         <div class='display'>
-            <Show when={loading}>
-                <div>Please wait...</div>
-            </Show>
+            <LoadingIndicator loading={loading}/>
             <Show when={loading.not}>
                 <Show when={authService.user.not}>
                     <div>
@@ -66,37 +95,56 @@ function Root({authService}: {
                 </Show>
                 <Deref ref={authService.user}>{user =>
                     <>
-                        <menu role='tablist'>
-                            <li><button onClick={() => tab.value = 'status'} aria-selected={ariaBool(tab.eq('status'))}>Status</button></li>
-                            <li><button onClick={() => tab.value = 'people'} aria-selected={ariaBool(tab.eq('people'))}>People</button></li>
-                            <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
-                            <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
-                            <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))}>Radio</button></li>
-                            <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class='attention'><Icon name='message'/></button></li>
-                        </menu>
-                        <Show when={tab.eq('status')}>
-                            <div>Welcome back, {user.props.username}.</div>
-                            <div>
-                                <button onClick={() => authService.invalidate()}>Log Out</button>
+                        <Show when={gameService.world.not}>
+                            <div class='stack-column grow' style='overflow-y: auto;'>
+                                <Lobby user={user} authService={authService} lobbyService={lobbyService} gameService={gameService}/>
                             </div>
                         </Show>
-                        <Show when={tab.eq('map')}>
-                            <Map/>
+                        <Show when={gameService.world}>
+                            <menu role='tablist'>
+                                <li><button onClick={() => tab.value = 'status'} aria-selected={ariaBool(tab.eq('status'))}>Status</button></li>
+                                <li><button onClick={() => tab.value = 'people'} aria-selected={ariaBool(tab.eq('people'))}>People</button></li>
+                                <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
+                                <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
+                                <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))}>Radio</button></li>
+                                <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class='attention'><Icon name='message'/></button></li>
+                            </menu>
+                            <div class='stack-column grow' style='overflow-y: auto;'>
+                                <Show when={tab.eq('status')}>
+                                    <div>Welcome back, {user.props.username}.</div>
+                                    <div class='margin-top stack-row spacing'>
+                                        <button onClick={() => gameService.world.value = undefined}>Switch</button>
+                                        <button onClick={() => authService.invalidate()}>Log Out</button>
+                                    </div>
+                                </Show>
+                                <Show when={tab.eq('people')}>
+                                    <People gameService={gameService}/>
+                                </Show>
+                                <Show when={tab.eq('map')}>
+                                    <Map/>
+                                </Show>
+                            </div>
                         </Show>
                     </>
                 }</Deref>
             </Show>
-            <div class='status-bar' style='margin-top: auto;'>
-                <div class='status'>01/01/2070</div>
-                <div class='status'>08:56 AM</div>
-                <div class='status' style='flex-grow: 1;'>Bunker 101</div>
-                <button onClick={() => amber.value = !amber.value}>Mode</button>
-            </div>
+                <div class='status-bar margin-top'>
+                    <Deref ref={gameService.bunker}>{bunker =>
+                        <>
+                            <div class='status'>{gameService.worldTime.map(wt => format(wt, 'MM/dd/yyyy'))}</div>
+                            <div class='status'>{gameService.worldTime.map(wt => format(wt, 'hh:mm a'))}</div>
+                            <div class='status' style='flex-grow: 1;'>Bunker {bunker.props.number}</div>
+                        </>
+                        }</Deref>
+                    <button onClick={() => amber.value = !amber.value}>Mode</button>
+                </div>
         </div>
     </div>;
 }
 
 const api = new Api(environment.apiUrl);
 const authService = new AuthService(api);
+const lobbyService = new LobbyService(api);
+const gameService = new GameService(api);
 
-mount(document.body, <Root authService={authService}/>)
+mount(document.body, <Root authService={authService} lobbyService={lobbyService} gameService={gameService}/>)

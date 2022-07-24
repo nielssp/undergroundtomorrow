@@ -12,10 +12,13 @@ pub struct Session {
 }
 
 pub async fn get_session(pool: &PgPool, session_id: &str) -> Result<Option<Session>, error::Error> {
-    let result = sqlx::query("SELECT s.id AS session_id, s.valid_until, u.id AS user_id, u.username, u.admin FROM sessions s INNER JOIN users u ON s.user_id = u.id WHERE s.id = $1")
-        .bind(session_id)
-        .fetch_optional(pool)
-        .await?;
+    let result = sqlx::query(
+        "SELECT s.id AS session_id, s.valid_until, u.id AS user_id, u.username, u.admin, u.guest \
+        FROM sessions s INNER JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+    )
+    .bind(session_id)
+    .fetch_optional(pool)
+    .await?;
     if let Some(row) = result {
         Ok(Some(Session {
             id: row.try_get("session_id")?,
@@ -24,6 +27,7 @@ pub async fn get_session(pool: &PgPool, session_id: &str) -> Result<Option<Sessi
                 id: row.try_get("user_id")?,
                 username: row.try_get("username")?,
                 admin: row.try_get("admin")?,
+                guest: row.try_get("guest")?,
             },
         }))
     } else {

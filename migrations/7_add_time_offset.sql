@@ -1,0 +1,1 @@
+ALTER TABLE "worlds" ADD COLUMN "time_offset" int NOT NULL DEFAULT -18000;

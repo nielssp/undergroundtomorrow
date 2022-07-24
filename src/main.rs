@@ -13,6 +13,9 @@ mod auth;
 mod data;
 mod db;
 mod error;
+mod game;
+mod generate;
+mod lobby;
 mod settings;
 
 #[actix_web::main]
@@ -61,6 +64,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(pool.clone()))
             .service(health)
             .configure(auth::config)
+            .configure(lobby::config)
+            .configure(game::config)
     })
     .bind(address)?
     .run()

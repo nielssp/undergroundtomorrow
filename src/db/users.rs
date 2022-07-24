@@ -4,11 +4,12 @@ use sqlx::{PgPool, Row};
 
 use crate::error;
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, sqlx::FromRow)]
 pub struct User {
     pub id: i64,
     pub username: String,
     pub admin: bool,
+    pub guest: bool,
 }
 
 pub struct Password {
@@ -20,14 +21,6 @@ pub struct Password {
 pub struct NewUser {
     pub username: String,
     pub password: String,
-}
-
-fn map_user(row: PgRow) -> Result<User, sqlx::Error> {
-    Ok(User {
-        id: row.try_get("id")?,
-        username: row.try_get("username")?,
-        admin: row.try_get("admin")?,
-    })
 }
 
 pub async fn get_password_by_username(
@@ -67,13 +60,10 @@ pub async fn get_password_by_user_id(
 }
 
 pub async fn get_user_by_id(pool: &PgPool, user_id: i64) -> Result<Option<User>, error::Error> {
-    Ok(
-        sqlx::query("SELECT id, username, admin FROM users WHERE id = $1")
-            .bind(user_id)
-            .try_map(map_user)
-            .fetch_optional(pool)
-            .await?,
-    )
+    Ok(sqlx::query_as("SELECT * FROM users WHERE id = $1")
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await?)
 }
 
 pub async fn create_user(pool: &PgPool, new_user: NewUser) -> Result<User, error::Error> {
@@ -98,6 +88,7 @@ pub async fn create_user(pool: &PgPool, new_user: NewUser) -> Result<User, error
         id,
         username: new_user.username,
         admin: false,
+        guest: false,
     })
 }
 

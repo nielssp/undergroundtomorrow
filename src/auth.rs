@@ -155,10 +155,13 @@ pub async fn validate_session(request: &HttpRequest) -> actix_web::Result<Sessio
     let pool = request
         .app_data::<web::Data<PgPool>>()
         .ok_or_else(|| error::internal_error("Pool not found"))?;
-    request.headers().get("X-Underground-Tomorrow").ok_or_else(|| {
-        info!("header missing");
-        error::Error::Unauthorized
-    })?;
+    request
+        .headers()
+        .get("X-Underground-Tomorrow")
+        .ok_or_else(|| {
+            info!("header missing");
+            error::Error::Unauthorized
+        })?;
     match request.cookie("ut_session") {
         Some(cookie) => {
             let session = sessions::get_session(pool, cookie.value())

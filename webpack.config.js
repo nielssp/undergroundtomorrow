@@ -32,6 +32,12 @@ module.exports = (env, argv) => {
           test: /\.(png|jpe?g|gif|svg|txt)$/i,
           type: 'asset/resource',
         },
+        {
+          test: /\.m?js/,
+          resolve: {
+            fullySpecified: false
+          }
+        },
       ],
     },
     devServer: {
