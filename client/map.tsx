@@ -21,17 +21,24 @@ function MapCanvas({amber, bunker}: {
     bunker: Property<Bunker>,
 }, context: JSX.Context) {
     const canvasRef = ref<HTMLCanvasElement>();
+    let repaint = true;
+    let destroyed = false;
     let mapTexture: HTMLImageElement|undefined;
-    loadTexture(require('./assets/map2.png')).then(texture => {
+    loadTexture(require('./assets/map.png')).then(texture => {
         mapTexture = texture;
-        render();
+        repaint = true;
     });
+    let sector: [number, number]|undefined;
 
     function render() {
-        if (!canvasRef.value || !mapTexture) {
+        if (!repaint || destroyed || !canvasRef.value || !mapTexture) {
+            if (!destroyed) {
+                requestAnimationFrame(render);
+            }
             return;
         }
 
+        repaint = false;
         const canvas = canvasRef.value;
         const dpr = window.devicePixelRatio || 1;
         if (canvas.clientWidth * dpr !== canvas.width || canvas.clientHeight * dpr !== canvas.height) {
@@ -39,26 +46,82 @@ function MapCanvas({amber, bunker}: {
             canvas.height = canvas.clientHeight * dpr;
         }
         const ctx = canvas.getContext('2d')!;
+        ctx.lineWidth = dpr;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(mapTexture, 0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#000000';
-        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 5 * dpr, bunker.value.y / 2600 * canvas.height - 5 * dpr, 10 * dpr, 10 * dpr);
-        ctx.strokeRect(bunker.value.x / 2600 * canvas.width - 3 * dpr, bunker.value.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
-        ctx.globalCompositeOperation = 'multiply';
         const style = getComputedStyle(document.documentElement);
         const hue = style.getPropertyValue('--primary-hue');
-        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = `hsl(${hue}, 100%, 25%)`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (sector) {
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.fillStyle = `hsla(${hue}, 100%, 25%, 25%)`;
+            ctx.fillRect(canvas.width / 26 * sector[0], canvas.height / 26 * sector[1], canvas.width / 26, canvas.height / 26);
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        ctx.strokeStyle = '#00000080';
+        for (let i = 1; i < 26; i++) {
+            let x = canvas.width / 26 * i;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+        }
+        for (let i = 1; i < 26; i++) {
+            let y = canvas.height / 26 * i;
+            ctx.beginPath();
+            ctx.moveTo(0, y,);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 5 * dpr, bunker.value.y / 2600 * canvas.height - 5 * dpr, 10 * dpr, 10 * dpr);
+        ctx.fillStyle = '#000';
+        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 4 * dpr, bunker.value.y / 2600 * canvas.height - 4 * dpr, 8 * dpr, 8 * dpr);
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 3 * dpr, bunker.value.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
+
+        requestAnimationFrame(render);
     }
 
-    context.onInit(async () => {
+    function onMosueMove(event: MouseEvent) {
+        if (!canvasRef.value) {
+            return;
+        }
+        const rect = canvasRef.value.getBoundingClientRect();
+        const x = Math.floor(26 * (event.pageX - rect.left) / canvasRef.value.clientWidth);
+        const y = Math.floor(26 * (event.pageY - rect.top) / canvasRef.value.clientHeight);
+        if (!sector || sector[0] !== x || sector[1] !== y) {
+            sector = [x, y];
+            repaint = true;
+        }
+    }
+
+    function onMouseOut(event: MouseEvent) {
+        if (sector) {
+            sector = undefined;
+            repaint = true;
+        }
+    }
+
+    context.onInit(() => {
         render();
+        canvasRef.value?.addEventListener('mousemove', onMosueMove);
+        canvasRef.value?.addEventListener('mouseout', onMouseOut);
     });
 
-    context.onDestroy(amber.observe(() => render()));
+    context.onDestroy(() => {
+        destroyed = true;
+        canvasRef.value?.removeEventListener('mousemove', onMosueMove);
+        canvasRef.value?.removeEventListener('mouseout', onMouseOut);
+    });
 
-    context.onDestroy(bunker.observe(() => render()));
+    context.onDestroy(amber.observe(() => repaint = true));
+
+    context.onDestroy(bunker.observe(() => repaint = true));
 
     return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
 }

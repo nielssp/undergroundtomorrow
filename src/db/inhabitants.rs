@@ -16,7 +16,31 @@ pub struct Inhabitant {
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InhabitantData {}
+pub enum SkillType {
+    Combat,
+    HandToHand,
+    Guns,
+    Science,
+    Reactor,
+    Botany,
+    Medicine,
+    FirstAid,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Skill {
+    pub skill_type: SkillType,
+    pub level: i32,
+    pub xp: i32,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct InhabitantData {
+    #[serde(default)]
+    pub skills: Vec<Skill>,
+}
 
 pub struct NewInhabitant {
     pub name: String,
@@ -52,4 +76,22 @@ pub async fn get_inhabitants(
             .fetch_all(pool)
             .await?,
     )
+}
+
+pub fn get_skill_level(xp: i32) -> i32 {
+    ((xp as f64) / 50.0 + 1.0).log2() as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_get_skill_level() {
+        assert_eq!(0, get_skill_level(0));
+        assert_eq!(0, get_skill_level(49));
+        assert_eq!(1, get_skill_level(50));
+        assert_eq!(1, get_skill_level(149));
+        assert_eq!(2, get_skill_level(150));
+    }
 }

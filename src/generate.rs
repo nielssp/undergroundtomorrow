@@ -14,6 +14,6 @@ pub fn generate_person(world_time: NaiveDateTime, min_age: i32, max_age: i32, la
     NewInhabitant {
         name,
         date_of_birth: time_of_birth.date(),
-        data: InhabitantData {},
+        data: InhabitantData::default(),
     }
 }
