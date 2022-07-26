@@ -5,8 +5,9 @@ use sqlx::PgPool;
 
 use crate::{
     auth::{validate_admin_session, validate_session},
+    data::LAST_NAMES,
     db::{bunkers, inhabitants, worlds},
-    error, generate, data::LAST_NAMES,
+    error, generate,
 };
 
 #[derive(serde::Deserialize)]

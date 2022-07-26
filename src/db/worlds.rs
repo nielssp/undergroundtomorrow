@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc, NaiveDateTime, Datelike, Timelike, NaiveDate, Duration};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, NaiveDateTime, Timelike, Utc};
 use sqlx::{PgPool, Row};
 
 use crate::error;

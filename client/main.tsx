@@ -3,10 +3,12 @@ import {format} from 'date-fns';
 import { Api } from './api';
 import { environment } from './config/environment';
 import { Icon } from './icon';
+import {Items} from './items';
 import {Lobby} from './lobby';
 import { Login } from './login';
 import './main.scss';
 import { Map } from './map';
+import {Messages} from './messages';
 import {People} from './people';
 import { Register } from './register';
 import { AuthService } from './services/auth-service';
@@ -120,8 +122,14 @@ function Root({authService, lobbyService, gameService}: {
                                 <Show when={tab.eq('people')}>
                                     <People gameService={gameService}/>
                                 </Show>
+                                <Show when={tab.eq('items')}>
+                                    <Items gameService={gameService}/>
+                                </Show>
                                 <Show when={tab.eq('map')}>
                                     <Map amber={amber} gameService={gameService}/>
+                                </Show>
+                                <Show when={tab.eq('messages')}>
+                                    <Messages gameService={gameService}/>
                                 </Show>
                             </div>
                         </Show>

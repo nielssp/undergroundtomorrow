@@ -10,9 +10,14 @@ export function Map({amber, gameService}: {
     gameService: GameService,
 }, context: JSX.Context) {
     return <>
+    <div class='stack-row spacing margin-bottom justify-end'>
+        <button>Locations</button>
+    </div>
     <Deref ref={gameService.bunker}>{bunker =>
-        <MapCanvas amber={amber} bunker={bunker}/>
-        }</Deref>
+        <div style='flex-grow: 1; display: flex; overflow: hidden;'>
+            <MapCanvas amber={amber} bunker={bunker}/>
+        </div>
+    }</Deref>
 </>;
 }
 
@@ -24,7 +29,7 @@ function MapCanvas({amber, bunker}: {
     let repaint = true;
     let destroyed = false;
     let mapTexture: HTMLImageElement|undefined;
-    loadTexture(require('./assets/map.png')).then(texture => {
+    loadTexture(require('./assets/map3.png')).then(texture => {
         mapTexture = texture;
         repaint = true;
     });

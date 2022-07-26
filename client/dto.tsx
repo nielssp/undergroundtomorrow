@@ -67,3 +67,20 @@ export interface Inhabitant {
     dateOfBirth: string;
     data: InhabitantData;
 }
+
+export interface Item {
+    id: number;
+    bunkerId: number;
+    itemType: string;
+    quantity: number;
+}
+
+export interface Message {
+    id: number;
+    receiverBunkerId: number;
+    senderBunkerId?: number;
+    senderName: string;
+    subject: string;
+    body: string;
+    created: string;
+}

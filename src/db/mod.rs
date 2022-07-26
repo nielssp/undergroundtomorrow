@@ -1,5 +1,9 @@
 pub mod bunkers;
+pub mod expeditions;
 pub mod inhabitants;
+pub mod items;
+pub mod locations;
+pub mod messages;
 pub mod sessions;
 pub mod users;
 pub mod worlds;
