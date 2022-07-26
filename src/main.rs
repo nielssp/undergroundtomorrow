@@ -26,6 +26,10 @@ async fn main() -> std::io::Result<()> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
+    info!("{} first names loaded", data::FIRST_NAMES.len());
+    info!("{} last names loaded", data::LAST_NAMES.len());
+    info!("{} location types loaded", data::LOCATION_TYPES.len());
+
     info!("Starting Underground Tomorrow server...");
 
     let settings = Settings::new().expect("Failed reading settings");

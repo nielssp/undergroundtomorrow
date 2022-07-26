@@ -23,3 +23,9 @@ pub fn generate_person(
         data: InhabitantData::default(),
     }
 }
+
+pub fn generate_position() -> (i32, i32) {
+    let x = (rand::random::<f64>() * 2600.0) as i32;
+    let y = (rand::random::<f64>() * 2600.0) as i32;
+    (x, y)
+}

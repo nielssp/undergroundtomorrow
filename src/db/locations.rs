@@ -5,6 +5,9 @@ use crate::error;
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LocationData {
+    pub location_type: String,
+    #[serde(default)]
+    pub abundance: f64,
     // abundance / chance of finding loot, lowers (for everyone) after each expedition
     // accessibility: ...
     // loot table

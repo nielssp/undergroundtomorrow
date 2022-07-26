@@ -5,9 +5,9 @@ use sqlx::PgPool;
 
 use crate::{
     auth::{validate_admin_session, validate_session},
-    data::LAST_NAMES,
-    db::{bunkers, inhabitants, worlds},
-    error, generate,
+    data::{LAST_NAMES, self},
+    db::{bunkers, inhabitants, worlds, locations},
+    error, generate::{self, generate_position},
 };
 
 #[derive(serde::Deserialize)]
@@ -47,6 +47,22 @@ async fn create_world(
     validate_admin_session(&request).await?;
     let request_data = data.into_inner();
     let world_id = worlds::create_world(&pool, &request_data).await?;
+    for location_type in data::LOCATION_TYPES.values() {
+        for _ in 0..location_type.quantity {
+            let (x, y) = generate_position();
+            let name = location_type.name.clone();
+            locations::create_location(&pool, &locations::NewLocation {
+                world_id,
+                name,
+                x,
+                y,
+                data: locations::LocationData {
+                    location_type: location_type.id.clone(),
+                    abundance: 1.0,
+                },
+            }).await?;
+        }
+    }
     Ok(HttpResponse::Ok().json(world_id))
 }
 
@@ -71,8 +87,7 @@ async fn join_world(
     let bunker_number = 1 + bunkers::get_max_bunker_number(&pool, request_data.world_id)
         .await?
         .unwrap_or(0);
-    let x = (rand::random::<f64>() * 2600.0) as i32;
-    let y = (rand::random::<f64>() * 2600.0) as i32;
+    let (x, y) = generate_position();
     let bunker_id = bunkers::create_bunker(
         &pool,
         &bunkers::NewBunker {
