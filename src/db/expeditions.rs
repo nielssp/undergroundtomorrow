@@ -1,5 +1,7 @@
 use chrono::{DateTime, Utc};
-use sqlx::{types::Json, PgPool};
+use sqlx::{types::Json, PgPool, Row};
+
+use crate::error;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -16,3 +18,39 @@ pub struct Expedition {
     pub eta: DateTime<Utc>,
     pub data: Json<ExpeditionData>,
 }
+
+pub struct NewExpedition {
+    pub bunker_id: i32,
+    pub location_id: Option<i32>,
+    pub zone_x: i32,
+    pub zone_y: i32,
+    pub eta: DateTime<Utc>,
+    pub data: ExpeditionData,
+}
+
+pub async fn create_expedition(pool: &PgPool, expedition: &NewExpedition) -> Result<i32, error::Error> {
+    Ok(sqlx::query(
+        "INSERT INTO expeditions (bunker_id, location_id, zone_x, zone_y, eta, data) \
+        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id"
+    )
+        .bind(expedition.bunker_id)
+        .bind(expedition.location_id)
+        .bind(expedition.zone_x)
+        .bind(expedition.zone_y)
+        .bind(expedition.eta)
+        .bind(Json(&expedition.data))
+        .fetch_one(pool)
+        .await?
+        .try_get(0)?)
+}
+
+pub async fn delete_expedition(pool: &PgPool, expedition_id: i32) -> Result<(), error::Error> {
+    sqlx::query(
+        "DELETE FROM expeditions WHERE id = $1"
+    )
+        .bind(expedition_id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+

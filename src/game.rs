@@ -1,5 +1,5 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Duration};
 use sqlx::PgPool;
 use tracing::info;
 
@@ -9,20 +9,29 @@ use crate::{
         bunkers::{self, Bunker},
         inhabitants, items, messages,
         sessions::Session,
-        worlds, locations,
+        worlds, locations, expeditions,
     },
     error,
 };
 
 pub struct Player {
-    world_id: i32,
-    bunker: Bunker,
-    session: Session,
+    pub world_id: i32,
+    pub bunker: Bunker,
+    pub session: Session,
 }
 
 #[derive(serde::Deserialize)]
-pub struct MessageQuery {
+struct MessageQuery {
     older_than: Option<DateTime<Utc>>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ExpeditionRequest {
+    zone_x: i32,
+    zone_y: i32,
+    location_id: Option<i32>,
+    team: Vec<i32>,
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
@@ -31,7 +40,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_inhabitants)
         .service(get_items)
         .service(get_locations)
-        .service(get_messages);
+        .service(get_messages)
+        .service(create_expedition);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -45,7 +55,7 @@ async fn get_world(
     Ok(HttpResponse::Ok().json(world))
 }
 
-#[post("/world/{world_id:\\d+}/get_bunker")]
+#[post("/world/{world_id:\\d+}/get_bunk&er")]
 async fn get_bunker(
     request: HttpRequest,
     pool: web::Data<PgPool>,
@@ -95,6 +105,50 @@ async fn get_messages(
     let player = validate_player(&request, world_id.into_inner()).await?;
     Ok(HttpResponse::Ok()
         .json(messages::get_messages(&pool, player.bunker.id, query.older_than).await?))
+}
+
+#[post("/world/{world_id:\\d+}/create_expedition")]
+async fn create_expedition(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<ExpeditionRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    let mut expedition_request = data.into_inner();
+    let available = inhabitants::get_available_inhabitants(&pool, player.bunker.id, &expedition_request.team).await?;
+    if available.is_empty() {
+        Err(error::client_error("EMPTY_TEAM"))?;
+    }
+    if let Some(location_id) = expedition_request.location_id {
+        if !locations::is_location_discovered(&pool, player.bunker.id, location_id).await? {
+            expedition_request.location_id = None;
+        }
+    }
+    if expedition_request.zone_x < 0 || expedition_request.zone_x >= 26 || expedition_request.zone_y < 0 || expedition_request.zone_y >= 26 {
+        Err(error::client_error("INVALID_ZONE"))?;
+    }
+    let distance = locations::get_distance(
+        (player.bunker.x, player.bunker.y),
+        (expedition_request.zone_x * 100 + 50, expedition_request.zone_y * 100 + 50),
+    ) as i64;
+    let speed: i64 = 5;
+    let duration = Duration::minutes(10 + distance / speed);
+    let eta = Utc::now() + duration;
+    let new_expedition = expeditions::NewExpedition {
+        bunker_id: player.bunker.id,
+        location_id: expedition_request.location_id,
+        zone_x: expedition_request.zone_x,
+        zone_y: expedition_request.zone_y,
+        eta, 
+        data: expeditions::ExpeditionData { },
+    };
+    let expedition_id = expeditions::create_expedition(&pool, &new_expedition).await?;
+    if !inhabitants::attach_to_expedition(&pool, player.bunker.id, expedition_id, &available).await? {
+        expeditions::delete_expedition(&pool, expedition_id).await?;
+        Err(error::internal_error("Expedition failed"))?;
+    }
+    Ok(HttpResponse::Ok().json("OK"))
 }
 
 pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web::Result<Player> {

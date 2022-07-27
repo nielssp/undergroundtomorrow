@@ -71,3 +71,18 @@ pub async fn get_discovered_locations(pool: &PgPool, bunker_id: i32) -> Result<V
     .fetch_all(pool)
     .await?)
 }
+
+pub async fn is_location_discovered(pool: &PgPool, bunker_id: i32, location_id: i32) -> Result<bool, error::Error> {
+    Ok(sqlx::query("SELECT 1 FROM bunker_locations WHERE bunker_id = $1 AND location_id = $2")
+        .bind(bunker_id)
+        .bind(location_id)
+        .fetch_optional(pool)
+        .await?
+        .is_some())
+}
+
+pub fn get_distance(a: (i32, i32), b: (i32, i32)) -> i32 {
+    let delta_x = a.0 - b.0;
+    let delta_y = a.1 - b.1;
+    ((delta_x * delta_x + delta_y * delta_y) as f64).sqrt() as i32
+}

@@ -49,9 +49,9 @@ async fn create_world(
     let request_data = data.into_inner();
     let world_id = worlds::create_world(&pool, &request_data).await?;
     for location_type in data::LOCATION_TYPES.values() {
-        for _ in 0..location_type.quantity {
+        for i in 0..location_type.quantity {
             let (x, y) = generate_position();
-            let name = location_type.name.clone();
+            let name = format!("{} {}", location_type.name, i + 1);
             locations::create_location(
                 &pool,
                 &locations::NewLocation {
