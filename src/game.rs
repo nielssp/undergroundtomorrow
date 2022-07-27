@@ -7,9 +7,9 @@ use crate::{
     auth::validate_session,
     db::{
         bunkers::{self, Bunker},
-        inhabitants, items,
+        inhabitants, items, messages,
         sessions::Session,
-        worlds, messages,
+        worlds, locations,
     },
     error,
 };
@@ -30,6 +30,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_bunker)
         .service(get_inhabitants)
         .service(get_items)
+        .service(get_locations)
         .service(get_messages);
 }
 
@@ -74,6 +75,16 @@ async fn get_items(
     Ok(HttpResponse::Ok().json(items::get_items(&pool, player.bunker.id).await?))
 }
 
+#[post("/world/{world_id:\\d+}/get_locations")]
+async fn get_locations(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(locations::get_discovered_locations(&pool, player.bunker.id).await?))
+}
+
 #[post("/world/{world_id:\\d+}/get_messages")]
 async fn get_messages(
     request: HttpRequest,
@@ -82,7 +93,8 @@ async fn get_messages(
     query: web::Query<MessageQuery>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(messages::get_messages(&pool, player.bunker.id, query.older_than).await?))
+    Ok(HttpResponse::Ok()
+        .json(messages::get_messages(&pool, player.bunker.id, query.older_than).await?))
 }
 
 pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web::Result<Player> {

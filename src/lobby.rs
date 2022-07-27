@@ -5,9 +5,10 @@ use sqlx::PgPool;
 
 use crate::{
     auth::{validate_admin_session, validate_session},
-    data::{LAST_NAMES, self},
-    db::{bunkers, inhabitants, worlds, locations},
-    error, generate::{self, generate_position},
+    data::{self, LAST_NAMES},
+    db::{bunkers, inhabitants, locations, worlds},
+    error,
+    generate::{self, generate_position},
 };
 
 #[derive(serde::Deserialize)]
@@ -51,16 +52,20 @@ async fn create_world(
         for _ in 0..location_type.quantity {
             let (x, y) = generate_position();
             let name = location_type.name.clone();
-            locations::create_location(&pool, &locations::NewLocation {
-                world_id,
-                name,
-                x,
-                y,
-                data: locations::LocationData {
-                    location_type: location_type.id.clone(),
-                    abundance: 1.0,
+            locations::create_location(
+                &pool,
+                &locations::NewLocation {
+                    world_id,
+                    name,
+                    x,
+                    y,
+                    data: locations::LocationData {
+                        location_type: location_type.id.clone(),
+                        abundance: 1.0,
+                    },
                 },
-            }).await?;
+            )
+            .await?;
         }
     }
     Ok(HttpResponse::Ok().json(world_id))

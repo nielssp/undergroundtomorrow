@@ -75,6 +75,20 @@ export interface Item {
     quantity: number;
 }
 
+export interface LocationData {
+    locationType: string;
+    abundance: number;
+}
+
+export interface Location {
+    id: number;
+    worldId: number;
+    name: string;
+    x: number;
+    y: number;
+    data: LocationData;
+}
+
 export interface Message {
     id: number;
     receiverBunkerId: number;

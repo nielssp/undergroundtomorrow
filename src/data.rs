@@ -60,7 +60,13 @@ fn load_location_types(dir: &str) -> std::io::Result<HashMap<String, LocationTyp
                 .to_str()
                 .unwrap()
                 .replace(".toml", "");
-            map.insert(id.clone(), LocationType { id, ..location_type });
+            map.insert(
+                id.clone(),
+                LocationType {
+                    id,
+                    ..location_type
+                },
+            );
         }
     }
     Ok(map)

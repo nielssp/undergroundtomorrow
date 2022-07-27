@@ -15,7 +15,11 @@ pub struct Message {
     pub created: DateTime<Utc>,
 }
 
-pub async fn get_messages(pool: &PgPool, bunker_id: i32, older_than: Option<DateTime<Utc>>) -> Result<Vec<Message>, error::Error> {
+pub async fn get_messages(
+    pool: &PgPool,
+    bunker_id: i32,
+    older_than: Option<DateTime<Utc>>,
+) -> Result<Vec<Message>, error::Error> {
     if let Some(older_than) = older_than {
         Ok(sqlx::query_as("SELECT * FROM messages WHERE receiver_bunker_id = $1 AND created < $2 ORDER BY created DESC LIMIT 50")
             .bind(bunker_id)
@@ -23,9 +27,11 @@ pub async fn get_messages(pool: &PgPool, bunker_id: i32, older_than: Option<Date
             .fetch_all(pool)
             .await?)
     } else {
-        Ok(sqlx::query_as("SELECT * FROM messages WHERE receiver_bunker_id = $1 ORDER BY created DESC LIMIT 50")
-            .bind(bunker_id)
-            .fetch_all(pool)
-            .await?)
+        Ok(sqlx::query_as(
+            "SELECT * FROM messages WHERE receiver_bunker_id = $1 ORDER BY created DESC LIMIT 50",
+        )
+        .bind(bunker_id)
+        .fetch_all(pool)
+        .await?)
     }
 }

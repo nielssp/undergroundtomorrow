@@ -16,7 +16,7 @@ min = 2
 max = 4
 chance = 0.2
 
-[loot.Books]
+[loot.Book]
 min = 1
 max = 1
 chance = 0.2

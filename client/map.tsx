@@ -1,5 +1,5 @@
-import {Fragment, createElement, ref, Property, Deref} from 'cstk';
-import {Bunker} from './dto';
+import {Fragment, createElement, ref, Property, Deref, bind} from 'cstk';
+import {Bunker, Location} from './dto';
 import {GameService} from './services/game-service';
 
 export class MapService {
@@ -9,21 +9,25 @@ export function Map({amber, gameService}: {
     amber: Property<boolean>,
     gameService: GameService,
 }, context: JSX.Context) {
+    const error = bind(false);
+    const promise = bind(gameService.getLocations());
+    const locations = promise.await(() => error.value = true);
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
         <button>Locations</button>
     </div>
     <Deref ref={gameService.bunker}>{bunker =>
         <div style='flex-grow: 1; display: flex; overflow: hidden;'>
-            <MapCanvas amber={amber} bunker={bunker}/>
+            <MapCanvas amber={amber} bunker={bunker} locations={locations.orElse([])}/>
         </div>
     }</Deref>
 </>;
 }
 
-function MapCanvas({amber, bunker}: {
+function MapCanvas({amber, bunker, locations}: {
     amber: Property<boolean>,
     bunker: Property<Bunker>,
+    locations: Property<Location[]>, 
 }, context: JSX.Context) {
     const canvasRef = ref<HTMLCanvasElement>();
     let repaint = true;
@@ -83,6 +87,11 @@ function MapCanvas({amber, bunker}: {
         }
 
         ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+        for (let location of locations.value) {
+            ctx.fillRect(location.x / 2600 * canvas.width - 3 * dpr, location.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
+        }
+
+        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
         ctx.fillRect(bunker.value.x / 2600 * canvas.width - 5 * dpr, bunker.value.y / 2600 * canvas.height - 5 * dpr, 10 * dpr, 10 * dpr);
         ctx.fillStyle = '#000';
         ctx.fillRect(bunker.value.x / 2600 * canvas.width - 4 * dpr, bunker.value.y / 2600 * canvas.height - 4 * dpr, 8 * dpr, 8 * dpr);
@@ -125,8 +134,8 @@ function MapCanvas({amber, bunker}: {
     });
 
     context.onDestroy(amber.observe(() => repaint = true));
-
     context.onDestroy(bunker.observe(() => repaint = true));
+    context.onDestroy(locations.observe(() => repaint = true));
 
     return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
 }

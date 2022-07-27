@@ -61,3 +61,13 @@ pub async fn add_bunker_location(
     .await?;
     Ok(())
 }
+
+pub async fn get_discovered_locations(pool: &PgPool, bunker_id: i32) -> Result<Vec<Location>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT l.* FROM locations l INNER JOIN bunker_locations bl ON bl.location_id = l.id \
+        WHERE bl.bunker_id = $1",
+    )
+    .bind(bunker_id)
+    .fetch_all(pool)
+    .await?)
+}
