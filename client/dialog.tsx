@@ -1,63 +1,79 @@
-import { bind, Component, createElement, Dynamic, Emitter, Field, Fragment, Input, mount, ref, TextControl } from "cstk";
+import { apply, bind, Component, createElement, Dynamic, Emitter, Field, Fragment, Input, mount, Property, ref, TextControl } from "cstk";
 import { Icon } from "./icon";
 
 export const dialogContainer = bind<HTMLElement>(document.body);
 
-function DialogContent({container, window, dialog}: {
+function DialogContent<T extends {}>({container, window, dialog}: {
     container: HTMLElement,
     window: HTMLElement,
-    dialog: Dialog,
-}, context: JSX.Context): JSX.Element {
-    const keyHandler = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && dialog.canClose.value) {
-            e.stopPropagation();
-            dialog.close();
-        }
-        if (e.key === 'Tab') {
-            const tabbable = window.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-            const first = tabbable.length ? tabbable[0] as HTMLElement : null;
-            const last = tabbable.length ? tabbable[tabbable.length - 1] as HTMLElement : null;
-            if (e.shiftKey) {
-                if (document.activeElement === first && last) {
-                    last.focus();
+    dialog: Dialog<T>,
+}): JSX.Element {
+    return context => {
+        const keyHandler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && dialog.canClose.value) {
+                e.stopPropagation();
+                dialog.close();
+            }
+            if (e.key === 'Tab') {
+                const tabbable = window.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                const first = tabbable.length ? tabbable[0] as HTMLElement : null;
+                const last = tabbable.length ? tabbable[tabbable.length - 1] as HTMLElement : null;
+                if (e.shiftKey) {
+                    if (document.activeElement === first && last) {
+                        last.focus();
+                        e.preventDefault();
+                    }
+                } else if (document.activeElement === last && first) {
+                    first.focus();
                     e.preventDefault();
                 }
-            } else if (document.activeElement === last && first) {
-                first.focus();
-                e.preventDefault();
             }
-        }
+        };
+        const backdropClickHandler = (e: MouseEvent) => {
+            if (!dialog.modal.value && e.target === container) {
+                dialog.close();
+            }
+        };
+        context.onInit(() => {
+            container.addEventListener('click', backdropClickHandler);
+            window.addEventListener('keydown', keyHandler);
+            window.focus();
+        });
+        context.onDestroy(() => {
+            container.removeEventListener('click', backdropClickHandler);
+            window.removeEventListener('keydown', keyHandler);
+        });
+        return apply(dialog.body({dialog, ...dialog.props}, context), context);
     };
-    const backdropClickHandler = (e: MouseEvent) => {
-        if (!dialog.modal.value && e.target === container) {
-            dialog.close();
-        }
-    };
-    context.onInit(() => {
-        container.addEventListener('click', backdropClickHandler);
-        window.addEventListener('keydown', keyHandler);
-        window.focus();
-    });
-    context.onDestroy(() => {
-        container.removeEventListener('click', backdropClickHandler);
-        window.removeEventListener('keydown', keyHandler);
-    });
-    return <Dynamic component={dialog.body} dialog={dialog}/>;
 }
 
-export class Dialog {
+export interface DialogRef {
+    readonly isOpen: Property<boolean>;
+    readonly onClose: Emitter<void>;
+    readonly canClose: Property<boolean>;
+    readonly modal: Property<boolean>;
+    focus(): void;
+    open(): void;
+    close(): void;
+}
+
+export type DialogBody<T extends {}> = Component<T & {dialog: DialogRef}>;
+
+export class Dialog<T extends {}> implements DialogRef {
     private backdrop: HTMLElement = document.createElement('div');
     private container: HTMLElement = document.createElement('div');
     private window: HTMLElement = document.createElement('div');
     private previousFocus?: HTMLElement;
     private unmount?: () => void;
-    readonly body = bind<Component<{dialog: Dialog}>|undefined>(undefined);
     readonly isOpen = bind(false);
     readonly onClose = new Emitter<void>();
     readonly canClose = bind(true);
     readonly modal = bind(false);
 
-    constructor() {
+    constructor(
+        public body: DialogBody<T>,
+        public props: T,
+    ) {
         this.backdrop.className = 'backdrop';
         this.container.className = 'modal-container';
         this.window.tabIndex = 0;
@@ -109,15 +125,21 @@ export class Dialog {
     }
 }
 
+export async function openDialog<T extends {}>(body: DialogBody<T>, props: T) {
+    const dialog = new Dialog(body, props);
+    dialog.open();
+    await dialog.onClose.next();
+}
+
 export async function openAlert(text: string, buttonText: string = 'OK'): Promise<void> {
-    const dialog = new Dialog();
     const button = ref<HTMLButtonElement>();
-    dialog.body.value = () => <div class='padding stack-column spacing'>
+    const body = () => <div class='padding stack-column spacing'>
         <div>{text}</div>
         <div class='stack-row justify-end'>
             <button onClick={() => dialog.close()} ref={button}>{buttonText}</button>
         </div>
     </div>;
+    const dialog = new Dialog(body, {});
     dialog.open();
     button.value?.focus();
     await dialog.onClose.next();
@@ -147,7 +169,6 @@ export const defaultConfirmButtons: ConfirmButton<boolean>[] = [
 export async function openConfirm(text: string): Promise<boolean>;
 export async function openConfirm<T>(text: string, buttons: ConfirmButton<T>[]): Promise<T>;
 export async function openConfirm(text: string, buttons: ConfirmButton<any>[] = defaultConfirmButtons): Promise<any> {
-    const dialog = new Dialog();
     let defaultButton = ref<HTMLButtonElement>();
     let selectedRole: any;
     const buttonComponents = buttons.map(button => {
@@ -164,12 +185,13 @@ export async function openConfirm(text: string, buttons: ConfirmButton<any>[] = 
         }
         return <button onClick={click} ref={buttonRef}>{button.text}</button>;
     });
-    dialog.body.value = () => <div class='padding stack-column spacing'>
+    const body = () => <div class='padding stack-column spacing'>
         <div>{text}</div>
         <div class='stack-row justify-end spacing'>
             {buttonComponents}
         </div>
     </div>;
+    const dialog = new Dialog(body, {});
     dialog.open();
     defaultButton.value?.focus();
     await dialog.onClose.next();
@@ -181,7 +203,6 @@ export async function openPrompt(
     value: string = '',
     buttons: ConfirmButton<boolean>[] = defaultConfirmButtons,
 ): Promise<string|undefined> {
-    const dialog = new Dialog();
     let result: string|undefined;
     const buttonComponents = buttons.map(button => {
         const click = () => {
@@ -199,7 +220,7 @@ export async function openPrompt(
         result = input.value;
         dialog.close();
     }
-    dialog.body.value = () => <form class='padding stack-column spacing' onSubmit={submit}>
+    const body = () => <form class='padding stack-column spacing' onSubmit={submit}>
         <Field control={input}>
             <label>{text}</label>
             <div>
@@ -210,15 +231,9 @@ export async function openPrompt(
             {buttonComponents}
         </div>
     </form>;
+    const dialog = new Dialog(body, {});
     dialog.open();
     inputElement.value?.select();
     await dialog.onClose.next();
     return result;
-}
-
-export async function openDialog(component: Component<{dialog: Dialog}>) {
-    const dialog = new Dialog();
-    dialog.body.value = component;
-    dialog.open();
-    await dialog.onClose.next();
 }

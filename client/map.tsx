@@ -1,8 +1,8 @@
-import {Fragment, createElement, ref, Property, Deref, bind} from 'cstk';
-import { openAlert } from './dialog';
+import {Fragment, createElement, ref, Property, Deref, bind, For} from 'cstk';
+import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
 import {Bunker, Location} from './dto';
 import {GameService} from './services/game-service';
-import { getSectorName } from './util';
+import { formatDistance, getDistance, getSectorName } from './util';
 
 export class MapService {
 }
@@ -14,14 +14,38 @@ export function Map({amber, gameService}: {
     const error = bind(false);
     const promise = bind(gameService.getLocations());
     const locations = promise.await(() => error.value = true);
+    const locationsBySector: Map<string, Location[]> = new window.Map();
+
+    context.onDestroy(locations.observe(locations => {
+        locationsBySector.clear();
+        locations?.forEach(location => {
+            const key = getSectorName({
+                x: Math.floor(location.x / 100),
+                y: Math.floor(location.y / 100)
+            });
+            if (!locationsBySector.has(key)) {
+                locationsBySector.set(key, []);
+            }
+            locationsBySector.get(key)?.push(location);
+        });
+    }));
+
+    function openLocations() {
+        const bunker = gameService.bunker.value;
+        if (!bunker) {
+            return;
+        }
+        openDialog(LocationsDialog, {locations: locations.orElse([]), bunker});
+    }
 
     function selectSector(sector: {x: number, y: number}) {
-        openAlert(`Sector ${getSectorName(sector)} selected`);
+        const locations = locationsBySector.get(getSectorName(sector)) || [];
+        openDialog(LocationDialog, {sector, locations});
     }
 
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
-        <button>Locations</button>
+        <button onClick={openLocations}>Locations</button>
     </div>
     <Deref ref={gameService.bunker}>{bunker =>
         <div style='flex-grow: 1; display: flex; overflow: hidden;'>
@@ -29,6 +53,46 @@ export function Map({amber, gameService}: {
         </div>
     }</Deref>
 </>;
+}
+
+function LocationsDialog({dialog, locations, bunker}: {
+    dialog: DialogRef,
+    locations: Property<Location[]>,
+    bunker: Bunker,
+}) {
+    const sorted = locations.map(locations => {
+        return locations.map(l => {
+            return {distance: getDistance(l, bunker), ...l};
+        }).sort((a, b) => a.distance - b.distance);
+    });
+    return <div class='stack-column spacing padding'>
+        <For each={sorted}>{location =>
+            <div class='stack-row spacing'>
+                <div class='grow'>{location.props.name}</div>
+                <div>{location.props.distance.map(formatDistance)}</div>
+                <button>Explore</button>
+            </div>
+            }</For>
+    </div>;
+}
+
+function LocationDialog({dialog, sector, locations}: {
+    dialog: DialogRef,
+    sector: {x: number, y: number},
+    locations: Location[],
+}) {
+    return <div class='stack-column spacing padding'>
+        <div class='stack-row spacing align-center justify-space-between'>
+            <div>Sector {getSectorName(sector)}</div>
+            <button>Explore</button>
+        </div>
+        <For each={bind(locations)}>{location =>
+            <div class='stack-row spacing align-center justify-space-between'>
+                <div>{location.props.name}</div>
+                <button>Explore</button>
+            </div>
+            }</For>
+    </div>;
 }
 
 function MapCanvas({amber, bunker, locations, onSelect}: {

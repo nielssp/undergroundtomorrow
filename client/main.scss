@@ -171,6 +171,7 @@ body {
 .modal {
     border: var(--line-width) solid var(--primary);
     box-shadow: 0 0 0.5vh currentColor, inset 0 0 0.5vh currentColor;
+    overflow: auto;
 }
 
 .icon {
