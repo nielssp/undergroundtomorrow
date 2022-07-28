@@ -22,7 +22,7 @@ export function Lobby({user, authService, lobbyService, gameService}: {
     }
 
     async function createWorld() {
-        const name = await openPrompt('Create World', 'World Name');
+        const name = await openPrompt('World Name');
         if (name) {
             await lobbyService.createWorld({
                 name,

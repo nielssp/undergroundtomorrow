@@ -55,7 +55,7 @@ async fn get_world(
     Ok(HttpResponse::Ok().json(world))
 }
 
-#[post("/world/{world_id:\\d+}/get_bunk&er")]
+#[post("/world/{world_id:\\d+}/get_bunker")]
 async fn get_bunker(
     request: HttpRequest,
     pool: web::Data<PgPool>,

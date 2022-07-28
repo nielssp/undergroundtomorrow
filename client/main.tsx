@@ -2,6 +2,7 @@ import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from
 import {format} from 'date-fns';
 import { Api } from './api';
 import { environment } from './config/environment';
+import { dialogContainer } from './dialog';
 import { Icon } from './icon';
 import {Items} from './items';
 import {Lobby} from './lobby';
@@ -24,6 +25,7 @@ function Root({authService, lobbyService, gameService}: {
     const loading = bind(true);
     const register = bind(false);
     const amber = bind(localStorage.getItem('utTheme') === 'amber');
+    const displayRef = ref<HTMLDivElement>();
 
     const tab = bind<'status'|'people'|'items'|'map'|'radio'|'messages'>('status');
 
@@ -39,6 +41,12 @@ function Root({authService, lobbyService, gameService}: {
     }
 
     authenticate();
+
+    context.onInit(() => {
+        if (displayRef.value) {
+            dialogContainer.value = displayRef.value;
+        }
+    });
 
     context.onDestroy(amber.getAndObserve(amber => {
         localStorage.setItem('utTheme', amber ? 'amber' : 'green');
@@ -73,7 +81,7 @@ function Root({authService, lobbyService, gameService}: {
     }));
 
     return <div class='bezel'>
-        <div class='display'>
+        <div class='display' ref={displayRef}>
             <LoadingIndicator loading={loading}/>
             <Show when={loading.not}>
                 <Show when={authService.user.not}>
@@ -134,18 +142,18 @@ function Root({authService, lobbyService, gameService}: {
                             </div>
                         </Show>
                     </>
-                }</Deref>
+                    }</Deref>
             </Show>
-                <div class='status-bar margin-top'>
-                    <Deref ref={gameService.bunker}>{bunker =>
-                        <>
-                            <div class='status'>{gameService.worldTime.map(wt => format(wt, 'MM/dd/yyyy'))}</div>
-                            <div class='status'>{gameService.worldTime.map(wt => format(wt, 'hh:mm a'))}</div>
-                            <div class='status' style='flex-grow: 1;'>Bunker {bunker.props.number}</div>
-                        </>
-                        }</Deref>
-                    <button onClick={() => amber.value = !amber.value}>Mode</button>
-                </div>
+            <div class='status-bar margin-top'>
+                <Deref ref={gameService.bunker}>{bunker =>
+                    <>
+                        <div class='status'>{gameService.worldTime.map(wt => format(wt, 'MM/dd/yyyy'))}</div>
+                        <div class='status'>{gameService.worldTime.map(wt => format(wt, 'hh:mm a'))}</div>
+                        <div class='status' style='flex-grow: 1;'>Bunker {bunker.props.number}</div>
+                    </>
+                    }</Deref>
+                <button onClick={() => amber.value = !amber.value}>Mode</button>
+            </div>
         </div>
     </div>;
 }

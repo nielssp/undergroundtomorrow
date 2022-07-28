@@ -23,7 +23,7 @@ export function Login({authService}: {
         } catch (error: any) {
             switch (error?.code) {
                 case 'INVALID_CREDENTIALS':
-                    openAlert('Login', 'Incorrect username or password');
+                    openAlert('Incorrect username or password');
                     break;
                 default:
                     handleError(error);

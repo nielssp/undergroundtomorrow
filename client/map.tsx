@@ -1,6 +1,8 @@
 import {Fragment, createElement, ref, Property, Deref, bind} from 'cstk';
+import { openAlert } from './dialog';
 import {Bunker, Location} from './dto';
 import {GameService} from './services/game-service';
+import { getSectorName } from './util';
 
 export class MapService {
 }
@@ -12,22 +14,28 @@ export function Map({amber, gameService}: {
     const error = bind(false);
     const promise = bind(gameService.getLocations());
     const locations = promise.await(() => error.value = true);
+
+    function selectSector(sector: {x: number, y: number}) {
+        openAlert(`Sector ${getSectorName(sector)} selected`);
+    }
+
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
         <button>Locations</button>
     </div>
     <Deref ref={gameService.bunker}>{bunker =>
         <div style='flex-grow: 1; display: flex; overflow: hidden;'>
-            <MapCanvas amber={amber} bunker={bunker} locations={locations.orElse([])}/>
+            <MapCanvas amber={amber} bunker={bunker} locations={locations.orElse([])} onSelect={selectSector}/>
         </div>
     }</Deref>
 </>;
 }
 
-function MapCanvas({amber, bunker, locations}: {
+function MapCanvas({amber, bunker, locations, onSelect}: {
     amber: Property<boolean>,
     bunker: Property<Bunker>,
     locations: Property<Location[]>, 
+    onSelect: (sector: {x: number, y: number}) => void,
 }, context: JSX.Context) {
     const canvasRef = ref<HTMLCanvasElement>();
     let repaint = true;
@@ -121,16 +129,28 @@ function MapCanvas({amber, bunker, locations}: {
         }
     }
 
+    function onClick(event: MouseEvent) {
+        if (!canvasRef.value) {
+            return;
+        }
+        const rect = canvasRef.value.getBoundingClientRect();
+        const x = Math.floor(26 * (event.pageX - rect.left) / canvasRef.value.clientWidth);
+        const y = Math.floor(26 * (event.pageY - rect.top) / canvasRef.value.clientHeight);
+        onSelect({x, y});
+    }
+
     context.onInit(() => {
         render();
         canvasRef.value?.addEventListener('mousemove', onMosueMove);
         canvasRef.value?.addEventListener('mouseout', onMouseOut);
+        canvasRef.value?.addEventListener('click', onClick);
     });
 
     context.onDestroy(() => {
         destroyed = true;
         canvasRef.value?.removeEventListener('mousemove', onMosueMove);
         canvasRef.value?.removeEventListener('mouseout', onMouseOut);
+        canvasRef.value?.removeEventListener('click', onClick);
     });
 
     context.onDestroy(amber.observe(() => repaint = true));

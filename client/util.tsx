@@ -10,3 +10,7 @@ export function LoadingIndicator({loading}: {
         </div>
     </Show>;
 }
+
+export function getSectorName({x, y}: {x: number, y: number}): string {
+    return `${String.fromCharCode(0x41 + x)}${y + 1}`;
+}

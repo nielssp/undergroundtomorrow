@@ -19,7 +19,7 @@ export function Register({authService, onClose}: {
         const password = passwordControl.value;
         const confirmPassword = confirmPasswordControl.value;
         if (password !== confirmPassword) {
-            openAlert('Register', 'Password mismatch');
+            openAlert('Password mismatch');
             return;
         }
         loading.value = true;
@@ -30,7 +30,7 @@ export function Register({authService, onClose}: {
         } catch (error: any) {
             switch (error?.code) {
                 case 'USERNAME_TAKEN':
-                    openAlert('Register', 'The name is not available');
+                    openAlert('The name is not available');
                     break;
                 default:
                     handleError(error);
