@@ -41,6 +41,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_items)
         .service(get_locations)
         .service(get_messages)
+        .service(get_expeditions)
         .service(create_expedition);
 }
 
@@ -105,6 +106,16 @@ async fn get_messages(
     let player = validate_player(&request, world_id.into_inner()).await?;
     Ok(HttpResponse::Ok()
         .json(messages::get_messages(&pool, player.bunker.id, query.older_than).await?))
+}
+
+#[post("/world/{world_id:\\d+}/get_expeditions")]
+async fn get_expeditions(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(expeditions::get_expeditions(&pool, player.bunker.id).await?))
 }
 
 #[post("/world/{world_id:\\d+}/create_expedition")]

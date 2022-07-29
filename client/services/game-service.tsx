@@ -1,7 +1,7 @@
 import {bind, ref} from "cstk";
 import {addSeconds, differenceInCalendarYears, differenceInSeconds, formatISO, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
-import {Bunker, Inhabitant, Item, Location, Message, World} from "../dto";
+import {Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, Location, Message, World} from "../dto";
 /*
     let duration = Utc::now().signed_duration_since(world.created);
     let date = NaiveDate::from_yo(world.start_year, world.created.ordinal());
@@ -79,5 +79,13 @@ export class GameService {
     getMessages(olderThan?: Date) {
         // TODO: query-object for rpc method
         return this.api.rpc<Message[]>(`world/${this.worldId}/get_messages${olderThan ? '?older_than=' + formatISO(olderThan) : ''}`);
+    }
+
+    getExpeditions() {
+        return this.api.rpc<Expedition[]>(`world/${this.worldId}/get_expeditions`);
+    }
+
+    createExpedition(expeditionRequest: ExpeditionRequest) {
+        return this.api.rpc<void>(`world/${this.worldId}/create_expedition`, expeditionRequest);
     }
 }

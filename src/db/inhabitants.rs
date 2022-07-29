@@ -113,7 +113,7 @@ pub async fn attach_to_expedition(
         .map(|i| format!("${}", i + 3))
         .join(", ");
     let query_str = format!("UPDATE inhabitants SET expedition_id = $1 \
-        WHERE bunker_id = $2 AND i.id IN ( { } ) AND i.expedition_id IS NULL", params);
+        WHERE bunker_id = $2 AND id IN ( { } ) AND expedition_id IS NULL", params);
 
     let mut query = sqlx::query(&query_str)
         .bind(expedition_id)

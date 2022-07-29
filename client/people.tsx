@@ -23,6 +23,9 @@ export function People({gameService}: {
                             <div>(Age: {zipWith([gameService.worldTime, person.props.dateOfBirth], (wt, dob) => {
                                 return '' + differenceInYears(wt, parseISO(dob));
                             })})</div>
+                            <Show when={person.props.expeditionId}>
+                                <div>(away)</div>
+                            </Show>
                         </div>
                         }</For>
                 </div>

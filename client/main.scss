@@ -6,15 +6,15 @@
     --primary-hue: 120;
 
     --primary: hsl(var(--primary-hue), 100%, 50%);
-    --primary-90: hsl(var(--primary-hue), 100%, 45%);
-    --primary-80: hsl(var(--primary-hue), 100%, 40%);
-    --primary-70: hsl(var(--primary-hue), 100%, 35%);
-    --primary-60: hsl(var(--primary-hue), 100%, 30%);
-    --primary-50: hsl(var(--primary-hue), 100%, 25%);
-    --primary-40: hsl(var(--primary-hue), 100%, 20%);
-    --primary-30: hsl(var(--primary-hue), 100%, 15%);
-    --primary-20: hsl(var(--primary-hue), 100%, 10%);
-    --primary-10: hsl(var(--primary-hue), 100%, 5%);
+    --primary-90: hsla(var(--primary-hue), 100%, 50%, 90%);
+    --primary-80: hsla(var(--primary-hue), 100%, 50%, 80%);
+    --primary-70: hsla(var(--primary-hue), 100%, 50%, 70%);
+    --primary-60: hsla(var(--primary-hue), 100%, 50%, 60%);
+    --primary-50: hsla(var(--primary-hue), 100%, 50%, 50%);
+    --primary-40: hsla(var(--primary-hue), 100%, 50%, 40%);
+    --primary-30: hsla(var(--primary-hue), 100%, 50%, 30%);
+    --primary-20: hsla(var(--primary-hue), 100%, 50%, 20%);
+    --primary-10: hsla(var(--primary-hue), 100%, 50%, 10%);
 
     --focus: #0ff;
 
@@ -92,7 +92,7 @@ body {
   right: 0.5vh;
   bottom: 0.5vh;
   overflow: hidden;
-  background: radial-gradient(var(--primary-20), var(--primary-10));
+  background: #000 radial-gradient(var(--primary-20), var(--primary-10));
   box-shadow: inset 0 0 2vh #000;
   display: flex;
   flex-direction: column;
@@ -151,8 +151,8 @@ body {
         right: 0;
         bottom: 0;
         left: 0;
-        background: radial-gradient(var(--primary-20), var(--primary-10));
-        opacity: 0.5;
+        background: #000 radial-gradient(var(--primary-20), var(--primary-10));
+        opacity: 0.8;
     }
 }
 
@@ -172,6 +172,9 @@ body {
     border: var(--line-width) solid var(--primary);
     box-shadow: 0 0 0.5vh currentColor, inset 0 0 0.5vh currentColor;
     overflow: auto;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .icon {
@@ -227,6 +230,13 @@ button {
     &:focus-visible {
         outline: none;
         border-color: var(--focus);
+    }
+
+    &:disabled {
+        background: transparent;
+        box-shadow: none;
+        border-color: var(--primary-50);
+        color: var(--primary-50);
     }
 }
 
@@ -335,6 +345,17 @@ menu[role="tablist"] {
             75% {
                 content: '\\';
             }
+        }
+    }
+}
+
+[role="listbox"] {
+    [role="option"] {
+        &[aria-selected="true"] {
+            font-weight: bold;
+        }
+        &:hover {
+            background: var(--primary-20);
         }
     }
 }

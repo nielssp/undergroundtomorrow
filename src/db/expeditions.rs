@@ -54,3 +54,9 @@ pub async fn delete_expedition(pool: &PgPool, expedition_id: i32) -> Result<(), 
     Ok(())
 }
 
+pub async fn get_expeditions(pool: &PgPool, bunker_id: i32) -> Result<Vec<Expedition>, error::Error> {
+    Ok(sqlx::query_as("SELECT * FROM expeditions WHERE bunker_id = $1")
+        .bind(bunker_id)
+        .fetch_all(pool)
+        .await?)
+}

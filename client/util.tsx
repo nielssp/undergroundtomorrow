@@ -27,3 +27,10 @@ export function formatDistance(meters: number) {
     }
     return `${Math.round(meters / 100) / 10}km`;
 }
+
+export function getSector({x, y}: {x: number, y: number}): {x: number, y: number} {
+    return {
+        x: Math.floor(x / 100),
+        y: Math.floor(y / 100),
+    };
+}

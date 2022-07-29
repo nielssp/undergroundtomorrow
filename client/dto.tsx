@@ -49,7 +49,7 @@ export interface BunkerData {
 export interface Bunker {
     id: number;
     userId: number;
-    world_Id: number;
+    worldId: number;
     number: number;
     x: number;
     y: number;
@@ -62,7 +62,7 @@ export interface InhabitantData {
 export interface Inhabitant {
     id: number;
     bunkerId: number;
-    expedition_id?: number;
+    expeditionId?: number;
     name: string;
     dateOfBirth: string;
     data: InhabitantData;
@@ -97,4 +97,24 @@ export interface Message {
     subject: string;
     body: string;
     created: string;
+}
+
+export interface ExpeditionData {
+}
+
+export interface Expedition {
+    id: number;
+    bunkerId: number;
+    locationId?: number;
+    zoneX: number;
+    zoneY: number;
+    eta: string;
+    data: ExpeditionData;
+}
+
+export interface ExpeditionRequest {
+    zoneX: number;
+    zoneY: number;
+    locationId?: number;
+    team: number[];
 }

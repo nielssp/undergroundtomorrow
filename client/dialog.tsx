@@ -125,10 +125,16 @@ export class Dialog<T extends {}> implements DialogRef {
     }
 }
 
-export async function openDialog<T extends {}>(body: DialogBody<T>, props: T) {
-    const dialog = new Dialog(body, props);
+export async function openDialog<TProps extends {}, TChoice>(
+    body: DialogBody<TProps & {onChoice: (choice: TChoice) => void}>,
+    props: TProps
+): Promise<TChoice|undefined> {
+    let selection: TChoice|undefined;
+    const onChoice = (choice: TChoice) => selection = choice;
+    const dialog = new Dialog(body, {onChoice, ...props});
     dialog.open();
     await dialog.onClose.next();
+    return selection;
 }
 
 export async function openAlert(text: string, buttonText: string = 'OK'): Promise<void> {

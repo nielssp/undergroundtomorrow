@@ -1,8 +1,10 @@
-import {Fragment, createElement, ref, Property, Deref, bind, For} from 'cstk';
+import {Fragment, createElement, ref, Property, Deref, bind, For, Show, zipWith, ariaBool} from 'cstk';
+import { differenceInYears, parseISO } from 'date-fns';
 import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
-import {Bunker, Location} from './dto';
+import {Bunker, Inhabitant, Location} from './dto';
+import { handleError } from './error';
 import {GameService} from './services/game-service';
-import { formatDistance, getDistance, getSectorName } from './util';
+import { formatDistance, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
 
 export class MapService {
 }
@@ -19,10 +21,7 @@ export function Map({amber, gameService}: {
     context.onDestroy(locations.observe(locations => {
         locationsBySector.clear();
         locations?.forEach(location => {
-            const key = getSectorName({
-                x: Math.floor(location.x / 100),
-                y: Math.floor(location.y / 100)
-            });
+            const key = getSectorName(getSector(location));
             if (!locationsBySector.has(key)) {
                 locationsBySector.set(key, []);
             }
@@ -30,17 +29,29 @@ export function Map({amber, gameService}: {
         });
     }));
 
+    function createExpedition(sector: {x: number, y: number}, location?: Location) {
+        openDialog(CreateExpeditionDialog, {gameService, sector, location});
+    }
+
     function openLocations() {
         const bunker = gameService.bunker.value;
         if (!bunker) {
             return;
         }
-        openDialog(LocationsDialog, {locations: locations.orElse([]), bunker});
+        openDialog(LocationsDialog, {
+            locations: locations.orElse([]),
+            bunker,
+            onExplore: (location: Location) => createExpedition(getSector(location), location),
+        });
     }
 
     function selectSector(sector: {x: number, y: number}) {
         const locations = locationsBySector.get(getSectorName(sector)) || [];
-        openDialog(LocationDialog, {sector, locations});
+        openDialog(LocationDialog, {
+            sector,
+            locations,
+            onExplore: (location?: Location) => createExpedition(sector, location),
+        });
     }
 
     return <>
@@ -55,10 +66,11 @@ export function Map({amber, gameService}: {
 </>;
 }
 
-function LocationsDialog({dialog, locations, bunker}: {
+function LocationsDialog({dialog, locations, bunker, onExplore}: {
     dialog: DialogRef,
     locations: Property<Location[]>,
     bunker: Bunker,
+    onExplore: (location: Location) => void,
 }) {
     const sorted = locations.map(locations => {
         return locations.map(l => {
@@ -70,28 +82,125 @@ function LocationsDialog({dialog, locations, bunker}: {
             <div class='stack-row spacing'>
                 <div class='grow'>{location.props.name}</div>
                 <div>{location.props.distance.map(formatDistance)}</div>
-                <button>Explore</button>
+                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Explore</button>
             </div>
             }</For>
     </div>;
 }
 
-function LocationDialog({dialog, sector, locations}: {
+function LocationDialog({dialog, sector, locations, onExplore}: {
     dialog: DialogRef,
     sector: {x: number, y: number},
     locations: Location[],
+    onExplore: (location?: Location) => void,
 }) {
     return <div class='stack-column spacing padding'>
         <div class='stack-row spacing align-center justify-space-between'>
             <div>Sector {getSectorName(sector)}</div>
-            <button>Explore</button>
+            <button onClick={() => {dialog.close(); onExplore();}}>Explore</button>
         </div>
         <For each={bind(locations)}>{location =>
             <div class='stack-row spacing align-center justify-space-between'>
                 <div>{location.props.name}</div>
-                <button>Explore</button>
+                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Explore</button>
             </div>
             }</For>
+    </div>;
+}
+
+function CreateExpeditionDialog({dialog, gameService, sector, location}: {
+    dialog: DialogRef,
+    gameService: GameService,
+    sector: {x: number, y: number},
+    location?: Location,
+}) {
+    const error = bind(false);
+    const promise = bind(gameService.getInhabitants());
+    const people = promise.await(() => error.value = true).mapDefined(p => p.filter(i => !i.expeditionId));
+
+    const selection = bind<Set<number>>(new Set());
+
+    async function showTeamMember(inhabitant: Inhabitant) {
+        const selected = selection.value.has(inhabitant.id);
+        const choice = await openDialog(TeamMemberDetails, {inhabitant, gameService, selected});
+        if (typeof choice !== 'undefined') {
+            if (choice) {
+                selection.value.add(inhabitant.id);
+            } else {
+                selection.value.delete(inhabitant.id);
+            }
+            selection.value = selection.value;
+        }
+    }
+
+    async function create() {
+        try {
+            await gameService.createExpedition({
+                zoneX: sector.x,
+                zoneY: sector.y,
+                locationId: location?.id,
+                team: [...selection.value],
+            });
+            dialog.close();
+        } catch (error) {
+            handleError(error);
+        }
+    }
+
+    return <div class='stack-column spacing padding' style='overflow: hidden;'>
+        <div>Select expedition team</div>
+        <LoadingIndicator loading={people.not.and(error.not)}/>
+        <Show when={error}>
+            <div>ERROR</div>
+        </Show>
+        <Deref ref={people}>{people =>
+            <>
+                <div class='stack-column spacing' style='overflow-y: auto;' role='listbox'>
+                    <For each={people}>{person =>
+                        <div class='stack-row spacing' tabIndex={0} role='option'
+                            onClick={() => showTeamMember(person.value)}
+                            aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
+                            <div>{person.props.name}</div>
+                        </div>
+                        }</For>
+                </div>
+                <Show when={people.map(p => !p.length)}>
+                    <div>No people</div>
+                </Show>
+            </>
+            }</Deref>
+        <div class='stack-row justify-end'>
+            <button onClick={create} disabled={selection.map(s => !s.size)}>Create</button>
+        </div>
+    </div>;
+}
+
+function TeamMemberDetails({dialog, inhabitant, selected, gameService, onChoice}: {
+    dialog: DialogRef,
+    inhabitant: Inhabitant,
+    selected: boolean,
+    gameService: GameService,
+    onChoice: (choice: boolean) => void,
+}) {
+    function select() {
+        onChoice(!selected);
+        dialog.close();
+    }
+    return <div class='stack-column spacing padding'>
+        <div class='stack-row spacing justify-space-between'>
+            <div>Name:</div>
+            <div>{inhabitant.name}</div>
+        </div>
+        <div class='stack-row spacing justify-space-between'>
+            <div>Age:</div>
+            <div>{gameService.worldTime.map(wt => '' + differenceInYears(wt, parseISO(inhabitant.dateOfBirth)))}</div>
+        </div>
+        <div class='stack-row spacing justify-end'>
+            <button onClick={() => dialog.close()}>Cancel</button>
+            {selected
+                ? <button onClick={select}>Unselect</button>
+                : <button onClick={select}>Select</button>}
+        </div>
     </div>;
 }
 
