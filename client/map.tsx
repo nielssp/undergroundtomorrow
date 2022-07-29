@@ -159,6 +159,7 @@ function CreateExpeditionDialog({dialog, gameService, sector, location}: {
                     <For each={people}>{person =>
                         <div class='stack-row spacing' tabIndex={0} role='option'
                             onClick={() => showTeamMember(person.value)}
+                            onKeyDown={e => e.key === 'Enter' && showTeamMember(person.value)}
                             aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
                             <div>{person.props.name}</div>
                         </div>
