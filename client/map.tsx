@@ -191,7 +191,7 @@ function CreateExpeditionDialog({dialog, gameService, sector, location, close}: 
                     <For each={people}>{person =>
                         <button role='row'
                             onClick={() => showTeamMember(person.value)}
-                            aria-checked={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
+                            aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
                             <div role='gridcell'>{person.props.name}</div>
                         </button>
                         }</For>
