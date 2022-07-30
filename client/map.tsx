@@ -4,7 +4,7 @@ import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
 import {Bunker, Expedition, Inhabitant, Location} from './dto';
 import { ErrorIndicator, handleError } from './error';
 import {GameService} from './services/game-service';
-import { DataSource, dataSource, DerefData, formatDistance, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
+import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
 
 export class MapService {
 }
@@ -86,7 +86,7 @@ function ExpeditionsDialog({dialog, expeditions}: {
                 <For each={expeditions}>{expedition =>
                     <div class='stack-row spacing'>
                         <div class='grow'>Sector {expedition.map(e => getSectorName({x: e.zoneX, y: e.zoneY}))}</div>
-                        <div>{expedition.props.eta.map(d => format(parseISO(d), "MM/dd/yy hh:mm a"))}</div>
+                        <div>ETA {expedition.props.eta.map(d => formatEta(d))}</div>
                     </div>
                     }</For>
                 <Show when={expeditions.map(e => !e.length)}>

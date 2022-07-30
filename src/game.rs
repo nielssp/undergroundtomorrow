@@ -42,6 +42,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_locations)
         .service(get_messages)
         .service(set_message_read)
+        .service(has_unread_messages)
         .service(get_expeditions)
         .service(create_expedition);
 }
@@ -122,6 +123,16 @@ async fn set_message_read(
     let player = validate_player(&request, world_id.into_inner()).await?;
     messages::set_message_read(&pool, player.bunker.id, data.into_inner()).await?;
     Ok(HttpResponse::Ok().json("OK"))
+}
+
+#[post("/world/{world_id:\\d+}/has_unread_messages")]
+async fn has_unread_messages(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(messages::unread_messages_exist(&pool, player.bunker.id).await?))
 }
 
 #[post("/world/{world_id:\\d+}/get_expeditions")]

@@ -1,4 +1,5 @@
 import {Property, Show, createElement, bind, zipWith, Deref, Fragment} from "cstk";
+import { differenceInSeconds, parseISO } from "date-fns";
 import { ErrorIndicator } from "./error";
 
 export function LoadingIndicator({loading}: {
@@ -27,6 +28,23 @@ export function formatDistance(meters: number) {
         return `${meters}m`;
     }
     return `${Math.round(meters / 100) / 10}km`;
+}
+
+export function formatDuration(seconds: number) {
+    let result = '';
+    if (seconds < 0) {
+        seconds *= -1;
+        result = '-';
+    }
+    if (seconds >= 86400) {
+        result += `${Math.floor(seconds / 86400)}d `;
+    }
+    result += `${Math.floor((seconds % 86400) / 3600)}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    return result;
+}
+
+export function formatEta(date: string) {
+    return formatDuration(differenceInSeconds(parseISO(date), new Date()));
 }
 
 export function getSector({x, y}: {x: number, y: number}): {x: number, y: number} {

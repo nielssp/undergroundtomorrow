@@ -18,23 +18,33 @@ function getWorldtime(world: World) {
 
 export class GameService {
     private clockInterval: number|undefined;
+    private messageCheckInterval: number|undefined;
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
     readonly worldTime = bind(new Date());
+    readonly messageNotification = bind(false);
 
     constructor(
         private api: Api,
     ) {
-        this.world.observe(world => {
+        this.world.observe(async world => {
             if (this.clockInterval) {
                 clearInterval(this.clockInterval);
                 this.clockInterval = undefined;
+            }
+            if (this.messageCheckInterval) {
+                clearInterval(this.messageCheckInterval);
+                this.messageCheckInterval = undefined;
             }
             if (world) {
                 this.worldTime.value = getWorldtime(world);
                 this.clockInterval = window.setInterval(() => {
                     this.worldTime.value = getWorldtime(world);
                 }, 1000);
+                this.messageNotification.value = await this.hasUnreadMessages();
+                this.messageCheckInterval = window.setInterval(async () => {
+                    this.messageNotification.value = await this.hasUnreadMessages();
+                }, 30000);
             }
         });
     }
@@ -83,6 +93,10 @@ export class GameService {
 
     setMessageRead(messageId: number) {
         return this.api.rpc<void>(`world/${this.worldId}/set_message_read`, messageId);
+    }
+
+    hasUnreadMessages() {
+        return this.api.rpc<boolean>(`world/${this.worldId}/has_unread_messages`);
     }
 
     getExpeditions() {

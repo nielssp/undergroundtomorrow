@@ -62,6 +62,27 @@ pub async fn add_bunker_location(
     Ok(())
 }
 
+pub async fn get_undiscovered_locations(
+    pool: &PgPool,
+    bunker_id: i32,
+    x: i32,
+    y: i32,
+) -> Result<Vec<Location>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT l.* FROM locations l \
+        WHERE l.id NOT IN (SELECT bl.location_id FROM bunker_locations bl WHERE bl.bunker_id = $1) \
+        AND x BETWEEN $2 AND $3 AND y BETWEEN $4 AND $5 \
+        AND l.world_id = (SELECT world_id FROM bunkers WHERE id = $1)",
+    )
+    .bind(bunker_id)
+    .bind(x * 100)
+    .bind(x * 100 + 99)
+    .bind(y * 100)
+    .bind(y * 100 + 99)
+    .fetch_all(pool)
+    .await?)
+}
+
 pub async fn get_discovered_locations(
     pool: &PgPool,
     bunker_id: i32,

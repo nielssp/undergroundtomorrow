@@ -29,14 +29,25 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
                 .ok_or_else(|| error::internal_error("Unknown location type"))?;
             // TODO: team members
             for (item_type, entry) in &location_type.loot {
-                if rand::random::<f64>() <= entry.chance {
+                if rand::random::<f64>() < entry.chance {
                     let quantity = rand::thread_rng().gen_range(entry.min..entry.max + 1);
                     report_body.push_str(&format!("Found {} ({})\n", item_type, quantity));
                     items::add_item(pool, expedition.bunker_id, item_type, quantity).await?;
                 }
             }
         } else {
-            // TODO: discover locations
+            let locations = locations::get_undiscovered_locations(pool, expedition.bunker_id, expedition.zone_x, expedition.zone_y).await?;
+            let mut n = 0;
+            for location in &locations {
+                if rand::random::<f64>() < 0.5 {
+                    n += 1;
+                    report_body.push_str(&format!("Location discovered: {}\n", location.name));
+                    locations::add_bunker_location(pool, expedition.bunker_id, location.id).await?;
+                }
+            }
+            if n == 0 {
+                report_body.push_str("No new locations discovered");
+            }
         }
         messages::create_system_message(
             pool,

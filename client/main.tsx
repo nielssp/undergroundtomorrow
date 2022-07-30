@@ -117,7 +117,7 @@ function Root({authService, lobbyService, gameService}: {
                                 <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
                                 <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
                                 <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))}>Radio</button></li>
-                                <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class='attention'><Icon name='message'/></button></li>
+                                <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class={{attention: gameService.messageNotification}}><Icon name='message'/></button></li>
                             </menu>
                             <div class='stack-column grow' style='overflow-y: auto;'>
                                 <Show when={tab.eq('status')}>

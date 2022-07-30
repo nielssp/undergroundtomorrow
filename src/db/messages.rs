@@ -70,3 +70,11 @@ pub async fn set_message_read(pool: &PgPool, bunker_id: i32, message_id: i32) ->
         .await?;
     Ok(())
 }
+
+pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<bool, error::Error> {
+    Ok(sqlx::query("SELECT 1 FROM messages WHERE receiver_bunker_id = $1 AND unread = true LIMIT 1")
+        .bind(bunker_id)
+        .fetch_optional(pool)
+        .await?
+        .is_some())
+}
