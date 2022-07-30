@@ -1,24 +1,19 @@
 import {bind, createElement, Deref, For, Fragment, Show, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
+import { ErrorIndicator } from "./error";
 import {GameService} from "./services/game-service";
-import {LoadingIndicator} from "./util";
+import {dataSource, DerefData, LoadingIndicator} from "./util";
 
 export function People({gameService}: {
     gameService: GameService,
 }, context: JSX.Context) {
-    const error = bind(false);
-    const promise = bind(gameService.getInhabitants());
-    const people = promise.await(() => error.value = true);
+    const people = dataSource(() => gameService.getInhabitants());
     return <>
-        <LoadingIndicator loading={people.not.and(error.not)}/>
-        <Show when={error}>
-            <div>ERROR</div>
-        </Show>
-        <Deref ref={people}>{people =>
+        <DerefData data={people}>{people =>
             <>
-                <div class='stack-column spacing'>
+                <div class='stack-column' role='grid'>
                     <For each={people}>{person =>
-                        <div class='stack-row spacing'>
+                        <button class='stack-row spacing' role='row'>
                             <div>{person.props.name}</div>
                             <div>(Age: {zipWith([gameService.worldTime, person.props.dateOfBirth], (wt, dob) => {
                                 return '' + differenceInYears(wt, parseISO(dob));
@@ -26,13 +21,13 @@ export function People({gameService}: {
                             <Show when={person.props.expeditionId}>
                                 <div>(away)</div>
                             </Show>
-                        </div>
+                        </button>
                         }</For>
                 </div>
                 <Show when={people.map(p => !p.length)}>
                     <div>No people</div>
                 </Show>
             </>
-            }</Deref>
+            }</DerefData>
     </>;
 }

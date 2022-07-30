@@ -1,5 +1,5 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use chrono::{DateTime, Utc, Duration};
+use chrono::{DateTime, Duration, Utc};
 use sqlx::PgPool;
 use tracing::info;
 
@@ -7,9 +7,9 @@ use crate::{
     auth::validate_session,
     db::{
         bunkers::{self, Bunker},
-        inhabitants, items, messages,
+        expeditions, inhabitants, items, locations, messages,
         sessions::Session,
-        worlds, locations, expeditions,
+        worlds,
     },
     error,
 };
@@ -93,7 +93,10 @@ async fn get_locations(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(locations::get_discovered_locations(&pool, player.bunker.id).await?))
+    Ok(
+        HttpResponse::Ok()
+            .json(locations::get_discovered_locations(&pool, player.bunker.id).await?),
+    )
 }
 
 #[post("/world/{world_id:\\d+}/get_messages")]
@@ -127,7 +130,9 @@ async fn create_expedition(
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
     let mut expedition_request = data.into_inner();
-    let available = inhabitants::get_available_inhabitants(&pool, player.bunker.id, &expedition_request.team).await?;
+    let available =
+        inhabitants::get_available_inhabitants(&pool, player.bunker.id, &expedition_request.team)
+            .await?;
     if available.is_empty() {
         Err(error::client_error("EMPTY_TEAM"))?;
     }
@@ -136,12 +141,19 @@ async fn create_expedition(
             expedition_request.location_id = None;
         }
     }
-    if expedition_request.zone_x < 0 || expedition_request.zone_x >= 26 || expedition_request.zone_y < 0 || expedition_request.zone_y >= 26 {
+    if expedition_request.zone_x < 0
+        || expedition_request.zone_x >= 26
+        || expedition_request.zone_y < 0
+        || expedition_request.zone_y >= 26
+    {
         Err(error::client_error("INVALID_ZONE"))?;
     }
     let distance = locations::get_distance(
         (player.bunker.x, player.bunker.y),
-        (expedition_request.zone_x * 100 + 50, expedition_request.zone_y * 100 + 50),
+        (
+            expedition_request.zone_x * 100 + 50,
+            expedition_request.zone_y * 100 + 50,
+        ),
     ) as i64;
     let speed: i64 = 5;
     let duration = Duration::minutes(10 + distance / speed);
@@ -151,11 +163,13 @@ async fn create_expedition(
         location_id: expedition_request.location_id,
         zone_x: expedition_request.zone_x,
         zone_y: expedition_request.zone_y,
-        eta, 
-        data: expeditions::ExpeditionData { },
+        eta,
+        data: expeditions::ExpeditionData {},
     };
     let expedition_id = expeditions::create_expedition(&pool, &new_expedition).await?;
-    if !inhabitants::attach_to_expedition(&pool, player.bunker.id, expedition_id, &available).await? {
+    if !inhabitants::attach_to_expedition(&pool, player.bunker.id, expedition_id, &available)
+        .await?
+    {
         expeditions::delete_expedition(&pool, expedition_id).await?;
         Err(error::internal_error("Expedition failed"))?;
     }

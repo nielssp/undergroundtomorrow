@@ -126,13 +126,20 @@ export class Dialog<T extends {}> implements DialogRef {
 }
 
 export async function openDialog<TProps extends {}, TChoice>(
-    body: DialogBody<TProps & {onChoice: (choice: TChoice) => void}>,
+    body: DialogBody<TProps & {close: (choice: TChoice) => void}>,
     props: TProps
 ): Promise<TChoice|undefined> {
     let selection: TChoice|undefined;
-    const onChoice = (choice: TChoice) => selection = choice;
-    const dialog = new Dialog(body, {onChoice, ...props});
+    let doClose: (() => void)|undefined;
+    const close = (choice: TChoice) => {
+        selection = choice;
+        if (doClose) {
+            doClose();
+        }
+    };
+    const dialog = new Dialog(body, {close, ...props});
     dialog.open();
+    doClose = () => dialog.close();
     await dialog.onClose.next();
     return selection;
 }

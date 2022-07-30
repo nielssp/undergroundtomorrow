@@ -1,36 +1,63 @@
 import {bind, createElement, Deref, For, Fragment, Show, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
+import { openDialog } from "./dialog";
+import { Message } from "./dto";
 import {GameService} from "./services/game-service";
-import {LoadingIndicator} from "./util";
+import {dataSource, DerefData, LoadingIndicator} from "./util";
 
 export function Messages({gameService}: {
     gameService: GameService,
 }, context: JSX.Context) {
-    const error = bind(false);
-    const promise = bind(gameService.getMessages());
-    const messages = promise.await(() => error.value = true);
+    const messages = dataSource(() => gameService.getMessages());
+
+    function openMessage(message: Message) {
+        openDialog(ReadMessage, {message});
+    }
+
     return <>
         <div class='stack-row spacing margin-bottom justify-end'>
             <button>New</button>
         </div>
-        <LoadingIndicator loading={messages.not.and(error.not)}/>
-        <Show when={error}>
-            <div>ERROR</div>
-        </Show>
-        <Deref ref={messages}>{messages =>
+        <DerefData data={messages}>{messages =>
             <>
-                <div class='stack-column spacing'>
+                <div class='stack-column' role='grid'>
                     <For each={messages}>{message =>
-                        <div class='stack-row spacing'>
-                            <div class='grow'>{message.props.subject}</div>
-                            <div>{message.props.created.map(d => format(parseISO(d), 'MM/dd/yyyy hh:mm a'))}</div>
-                        </div>
+                        <button role='row' class='stack-row spacing' onClick={() => openMessage(message.value)}>
+                            <div role='gridcell' class='grow'>{message.props.subject}</div>
+                            <div role='gridcell'>{message.props.created.map(d => format(parseISO(d), 'MM/dd/yyyy hh:mm a'))}</div>
+                        </button>
                         }</For>
                 </div>
                 <Show when={messages.map(p => !p.length)}>
                     <div>No messages</div>
                 </Show>
             </>
-            }</Deref>
+            }</DerefData>
     </>;
+}
+
+function ReadMessage({message}: {
+    message: Message,
+}) {
+    return <div class='stack-column spacing padding'>
+        <div class='stack-row spacing'>
+            <div style='font-weight: bold;'>
+                From:
+            </div>
+            <div>
+                {message.senderName}
+            </div>
+        </div>
+        <div class='stack-row spacing'>
+            <div style='font-weight: bold;'>
+                Subject:
+            </div>
+            <div>
+                {message.subject}
+            </div>
+        </div>
+        <div style='white-space: pre;'>
+            {message.body}
+        </div>
+    </div>
 }

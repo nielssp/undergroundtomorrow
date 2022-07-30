@@ -14,13 +14,13 @@ pub struct Item {
 pub async fn add_item(
     pool: &PgPool,
     bunker_id: i32,
-    item_type: String,
+    item_type: &str,
     quantity: i32,
 ) -> Result<(), error::Error> {
     sqlx::query(
         "INSERT INTO items (bunker_id, item_type, quantity) VALUES ($1, $2, $3) \
         ON CONFLICT (bunker_id, item_type) \
-        DO UPDATE SET quantity = quantity + EXCLUDED.quantity",
+        DO UPDATE SET quantity = items.quantity + EXCLUDED.quantity",
     )
     .bind(bunker_id)
     .bind(item_type)

@@ -16,6 +16,8 @@
     --primary-20: hsla(var(--primary-hue), 100%, 50%, 20%);
     --primary-10: hsla(var(--primary-hue), 100%, 50%, 10%);
 
+    --primary-60b: hsla(var(--primary-hue), 100%, 30%, 100%);
+
     --focus: #0ff;
 
     --line-width: 0.15vh;
@@ -99,7 +101,7 @@ body {
 
   &::selection, ::selection {
     background: var(--primary-80);
-    color: var(--primary-10);
+    color: #000;
     text-shadow: none;
   }
 
@@ -210,7 +212,7 @@ button {
     &:active {
         box-shadow: 0 0 0.5vh var(--primary);
         background: var(--primary);
-        color: var(--primary-60);
+        color: var(--primary-60b);
         border-color: var(--primary);
     }
 
@@ -221,8 +223,28 @@ button {
             50% {
                 box-shadow: 0 0 0.5vh var(--primary);
                 background: var(--primary);
-                color: var(--primary-60);
+                color: var(--primary-60b);
                 border-color: var(--primary);
+            }
+        }
+    }
+
+    &[role="row"] {
+        text-align: left;
+        justify-content: flex-start;
+        border-color: transparent;
+        box-shadow: none;
+        &[aria-selected="true"] {
+            font-weight: bold;
+            &:after {
+                margin-left: auto;
+                margin-right: 0.3vh;
+                content: '';
+                display: block;
+                width: 0.5vh;
+                height: 0.5vh;
+                background: var(--primary);
+                box-shadow: 0 0 0.5vh var(--primary);
             }
         }
     }

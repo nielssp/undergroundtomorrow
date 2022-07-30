@@ -90,14 +90,20 @@ pub async fn get_available_inhabitants(
     let params = (0..inhabitant_ids.len())
         .map(|i| format!("${}", i + 2))
         .join(", ");
-    let query_str = format!("SELECT i.id FROM inhabitants i \
-        WHERE i.bunker_id = $1 AND i.id IN ( { } ) AND i.expedition_id IS NULL", params);
+    let query_str = format!(
+        "SELECT i.id FROM inhabitants i \
+        WHERE i.bunker_id = $1 AND i.id IN ( { } ) AND i.expedition_id IS NULL",
+        params
+    );
 
     let mut query = sqlx::query(&query_str).bind(bunker_id);
     for design_id in inhabitant_ids {
         query = query.bind(design_id);
     }
-    Ok(query.try_map(|row| row.try_get("id")).fetch_all(pool).await?)
+    Ok(query
+        .try_map(|row| row.try_get("id"))
+        .fetch_all(pool)
+        .await?)
 }
 
 pub async fn attach_to_expedition(
@@ -112,12 +118,13 @@ pub async fn attach_to_expedition(
     let params = (0..inhabitant_ids.len())
         .map(|i| format!("${}", i + 3))
         .join(", ");
-    let query_str = format!("UPDATE inhabitants SET expedition_id = $1 \
-        WHERE bunker_id = $2 AND id IN ( { } ) AND expedition_id IS NULL", params);
+    let query_str = format!(
+        "UPDATE inhabitants SET expedition_id = $1 \
+        WHERE bunker_id = $2 AND id IN ( { } ) AND expedition_id IS NULL",
+        params
+    );
 
-    let mut query = sqlx::query(&query_str)
-        .bind(expedition_id)
-        .bind(bunker_id);
+    let mut query = sqlx::query(&query_str).bind(expedition_id).bind(bunker_id);
     for design_id in inhabitant_ids {
         query = query.bind(design_id);
     }

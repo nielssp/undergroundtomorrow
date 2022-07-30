@@ -62,7 +62,10 @@ pub async fn add_bunker_location(
     Ok(())
 }
 
-pub async fn get_discovered_locations(pool: &PgPool, bunker_id: i32) -> Result<Vec<Location>, error::Error> {
+pub async fn get_discovered_locations(
+    pool: &PgPool,
+    bunker_id: i32,
+) -> Result<Vec<Location>, error::Error> {
     Ok(sqlx::query_as(
         "SELECT l.* FROM locations l INNER JOIN bunker_locations bl ON bl.location_id = l.id \
         WHERE bl.bunker_id = $1",
@@ -72,13 +75,26 @@ pub async fn get_discovered_locations(pool: &PgPool, bunker_id: i32) -> Result<V
     .await?)
 }
 
-pub async fn is_location_discovered(pool: &PgPool, bunker_id: i32, location_id: i32) -> Result<bool, error::Error> {
-    Ok(sqlx::query("SELECT 1 FROM bunker_locations WHERE bunker_id = $1 AND location_id = $2")
-        .bind(bunker_id)
+pub async fn is_location_discovered(
+    pool: &PgPool,
+    bunker_id: i32,
+    location_id: i32,
+) -> Result<bool, error::Error> {
+    Ok(
+        sqlx::query("SELECT 1 FROM bunker_locations WHERE bunker_id = $1 AND location_id = $2")
+            .bind(bunker_id)
+            .bind(location_id)
+            .fetch_optional(pool)
+            .await?
+            .is_some(),
+    )
+}
+
+pub async fn get_location(pool: &PgPool, location_id: i32) -> Result<Location, error::Error> {
+    Ok(sqlx::query_as("SELECT * FROM locations WHERE id = $1")
         .bind(location_id)
-        .fetch_optional(pool)
-        .await?
-        .is_some())
+        .fetch_one(pool)
+        .await?)
 }
 
 pub fn get_distance(a: (i32, i32), b: (i32, i32)) -> i32 {

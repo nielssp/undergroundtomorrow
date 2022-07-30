@@ -1,10 +1,10 @@
 import {Fragment, createElement, ref, Property, Deref, bind, For, Show, zipWith, ariaBool} from 'cstk';
-import { differenceInYears, parseISO } from 'date-fns';
+import { differenceInYears, format, parseISO } from 'date-fns';
 import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
-import {Bunker, Inhabitant, Location} from './dto';
-import { handleError } from './error';
+import {Bunker, Expedition, Inhabitant, Location} from './dto';
+import { ErrorIndicator, handleError } from './error';
 import {GameService} from './services/game-service';
-import { formatDistance, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
+import { DataSource, dataSource, DerefData, formatDistance, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
 
 export class MapService {
 }
@@ -13,12 +13,11 @@ export function Map({amber, gameService}: {
     amber: Property<boolean>,
     gameService: GameService,
 }, context: JSX.Context) {
-    const error = bind(false);
-    const promise = bind(gameService.getLocations());
-    const locations = promise.await(() => error.value = true);
+    const expeditions = dataSource(() => gameService.getExpeditions());
+    const locations = dataSource(() => gameService.getLocations());
     const locationsBySector: Map<string, Location[]> = new window.Map();
 
-    context.onDestroy(locations.observe(locations => {
+    context.onDestroy(locations.data.observe(locations => {
         locationsBySector.clear();
         locations?.forEach(location => {
             const key = getSectorName(getSector(location));
@@ -29,8 +28,17 @@ export function Map({amber, gameService}: {
         });
     }));
 
-    function createExpedition(sector: {x: number, y: number}, location?: Location) {
-        openDialog(CreateExpeditionDialog, {gameService, sector, location});
+    async function createExpedition(sector: {x: number, y: number}, location?: Location) {
+        const result = await openDialog(CreateExpeditionDialog, {gameService, sector, location});
+        if (result) {
+            expeditions.refresh();
+        }
+    }
+
+    function openExpeditions() {
+        openDialog(ExpeditionsDialog, {
+            expeditions,
+        });
     }
 
     function openLocations() {
@@ -39,7 +47,7 @@ export function Map({amber, gameService}: {
             return;
         }
         openDialog(LocationsDialog, {
-            locations: locations.orElse([]),
+            locations: locations.data.orElse([]),
             bunker,
             onExplore: (location: Location) => createExpedition(getSector(location), location),
         });
@@ -56,14 +64,37 @@ export function Map({amber, gameService}: {
 
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
+        <button onClick={openExpeditions}>Expeditions</button>
         <button onClick={openLocations}>Locations</button>
     </div>
     <Deref ref={gameService.bunker}>{bunker =>
         <div style='flex-grow: 1; display: flex; overflow: hidden;'>
-            <MapCanvas amber={amber} bunker={bunker} locations={locations.orElse([])} onSelect={selectSector}/>
+            <MapCanvas amber={amber} bunker={bunker} locations={locations.data.orElse([])}
+                expeditions={expeditions.data.orElse([])} onSelect={selectSector}/>
         </div>
     }</Deref>
 </>;
+}
+
+function ExpeditionsDialog({dialog, expeditions}: {
+    dialog: DialogRef,
+    expeditions: DataSource<Expedition[]>,
+}) {
+    return <div class='stack-column spacing padding'>
+        <DerefData data={expeditions}>{expeditions =>
+            <>
+                <For each={expeditions}>{expedition =>
+                    <div class='stack-row spacing'>
+                        <div class='grow'>Sector {expedition.map(e => getSectorName({x: e.zoneX, y: e.zoneY}))}</div>
+                        <div>{expedition.props.eta.map(d => format(parseISO(d), "MM/dd/yy hh:mm a"))}</div>
+                    </div>
+                    }</For>
+                <Show when={expeditions.map(e => !e.length)}>
+                    <div>No active expeditions</div>
+                </Show>
+            </>
+            }</DerefData>
+    </div>;
 }
 
 function LocationsDialog({dialog, locations, bunker, onExplore}: {
@@ -108,11 +139,12 @@ function LocationDialog({dialog, sector, locations, onExplore}: {
     </div>;
 }
 
-function CreateExpeditionDialog({dialog, gameService, sector, location}: {
+function CreateExpeditionDialog({dialog, gameService, sector, location, close}: {
     dialog: DialogRef,
     gameService: GameService,
     sector: {x: number, y: number},
     location?: Location,
+    close: (choice: boolean) => void,
 }) {
     const error = bind(false);
     const promise = bind(gameService.getInhabitants());
@@ -141,7 +173,7 @@ function CreateExpeditionDialog({dialog, gameService, sector, location}: {
                 locationId: location?.id,
                 team: [...selection.value],
             });
-            dialog.close();
+            close(true);
         } catch (error) {
             handleError(error);
         }
@@ -155,14 +187,13 @@ function CreateExpeditionDialog({dialog, gameService, sector, location}: {
         </Show>
         <Deref ref={people}>{people =>
             <>
-                <div class='stack-column spacing' style='overflow-y: auto;' role='listbox'>
+                <div class='stack-column' role='grid' style='overflow-y: auto;'>
                     <For each={people}>{person =>
-                        <div class='stack-row spacing' tabIndex={0} role='option'
+                        <button role='row'
                             onClick={() => showTeamMember(person.value)}
-                            onKeyDown={e => e.key === 'Enter' && showTeamMember(person.value)}
-                            aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
-                            <div>{person.props.name}</div>
-                        </div>
+                            aria-checked={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
+                            <div role='gridcell'>{person.props.name}</div>
+                        </button>
                         }</For>
                 </div>
                 <Show when={people.map(p => !p.length)}>
@@ -176,17 +207,20 @@ function CreateExpeditionDialog({dialog, gameService, sector, location}: {
     </div>;
 }
 
-function TeamMemberDetails({dialog, inhabitant, selected, gameService, onChoice}: {
+function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
     dialog: DialogRef,
     inhabitant: Inhabitant,
     selected: boolean,
     gameService: GameService,
-    onChoice: (choice: boolean) => void,
-}) {
+    close: (choice: boolean) => void,
+}, context: JSX.Context) {
+    const primaryButton = ref<HTMLButtonElement>();
     function select() {
-        onChoice(!selected);
-        dialog.close();
+        close(!selected);
     }
+    context.onInit(() => {
+        primaryButton.value?.focus();
+    });
     return <div class='stack-column spacing padding'>
         <div class='stack-row spacing justify-space-between'>
             <div>Name:</div>
@@ -199,16 +233,17 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, onChoice}
         <div class='stack-row spacing justify-end'>
             <button onClick={() => dialog.close()}>Cancel</button>
             {selected
-                ? <button onClick={select}>Unselect</button>
-                : <button onClick={select}>Select</button>}
+                ? <button onClick={select} ref={primaryButton}>Unselect</button>
+                : <button onClick={select} ref={primaryButton}>Select</button>}
         </div>
     </div>;
 }
 
-function MapCanvas({amber, bunker, locations, onSelect}: {
+function MapCanvas({amber, bunker, locations, expeditions, onSelect}: {
     amber: Property<boolean>,
     bunker: Property<Bunker>,
     locations: Property<Location[]>, 
+    expeditions: Property<Expedition[]>, 
     onSelect: (sector: {x: number, y: number}) => void,
 }, context: JSX.Context) {
     const canvasRef = ref<HTMLCanvasElement>();
@@ -273,12 +308,32 @@ function MapCanvas({amber, bunker, locations, onSelect}: {
             ctx.fillRect(location.x / 2600 * canvas.width - 3 * dpr, location.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
         }
 
+        const bunkerX = bunker.value.x / 2600 * canvas.width;
+        const bunkerY = bunker.value.y / 2600 * canvas.height;
+
+        ctx.strokeStyle = `hsl(${hue}, 100%, 35%)`;
+        ctx.lineWidth = 2 * dpr;
+        ctx.setLineDash([4 * dpr, 2 * dpr]);
+        for (let expedition of expeditions.value) {
+            let x = expedition.zoneX / 26 * canvas.width;
+            let y = expedition.zoneY / 26 * canvas.height;
+            ctx.beginPath();
+            ctx.moveTo(bunkerX, bunkerY);
+            ctx.lineTo(x + canvas.width / 52, y + canvas.height / 52);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + canvas.width / 26, y);
+            ctx.lineTo(x + canvas.width / 26, y + canvas.height / 26);
+            ctx.lineTo(x, y + canvas.height / 26);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+
         ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 5 * dpr, bunker.value.y / 2600 * canvas.height - 5 * dpr, 10 * dpr, 10 * dpr);
+        ctx.fillRect(bunkerX - 5 * dpr, bunkerY - 5 * dpr, 10 * dpr, 10 * dpr);
         ctx.fillStyle = '#000';
-        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 4 * dpr, bunker.value.y / 2600 * canvas.height - 4 * dpr, 8 * dpr, 8 * dpr);
+        ctx.fillRect(bunkerX - 4 * dpr, bunkerY - 4 * dpr, 8 * dpr, 8 * dpr);
         ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-        ctx.fillRect(bunker.value.x / 2600 * canvas.width - 3 * dpr, bunker.value.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
+        ctx.fillRect(bunkerX - 3 * dpr, bunkerY - 3 * dpr, 6 * dpr, 6 * dpr);
 
         requestAnimationFrame(render);
     }
@@ -313,11 +368,16 @@ function MapCanvas({amber, bunker, locations, onSelect}: {
         onSelect({x, y});
     }
 
+    function onResize() {
+        repaint = true;
+    }
+
     context.onInit(() => {
         render();
         canvasRef.value?.addEventListener('mousemove', onMosueMove);
         canvasRef.value?.addEventListener('mouseout', onMouseOut);
         canvasRef.value?.addEventListener('click', onClick);
+        window.addEventListener('resize', onResize);
     });
 
     context.onDestroy(() => {
@@ -325,11 +385,13 @@ function MapCanvas({amber, bunker, locations, onSelect}: {
         canvasRef.value?.removeEventListener('mousemove', onMosueMove);
         canvasRef.value?.removeEventListener('mouseout', onMouseOut);
         canvasRef.value?.removeEventListener('click', onClick);
+        window.removeEventListener('resize', onResize);
     });
 
     context.onDestroy(amber.observe(() => repaint = true));
     context.onDestroy(bunker.observe(() => repaint = true));
     context.onDestroy(locations.observe(() => repaint = true));
+    context.onDestroy(expeditions.observe(() => repaint = true));
 
     return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
 }

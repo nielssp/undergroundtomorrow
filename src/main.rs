@@ -14,6 +14,7 @@ mod data;
 mod db;
 mod error;
 mod game;
+mod game_loop;
 mod generate;
 mod lobby;
 mod settings;
@@ -48,6 +49,8 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed running migrations");
 
     auth::start_cleanup_job(pool.clone());
+
+    game_loop::start_loop(pool.clone());
 
     let address = settings.listen.clone();
 
