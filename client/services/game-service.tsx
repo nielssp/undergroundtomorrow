@@ -81,6 +81,10 @@ export class GameService {
         return this.api.rpc<Message[]>(`world/${this.worldId}/get_messages${olderThan ? '?older_than=' + formatISO(olderThan) : ''}`);
     }
 
+    setMessageRead(messageId: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/set_message_read`, messageId);
+    }
+
     getExpeditions() {
         return this.api.rpc<Expedition[]>(`world/${this.worldId}/get_expeditions`);
     }

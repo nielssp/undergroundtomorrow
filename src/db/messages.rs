@@ -13,6 +13,7 @@ pub struct Message {
     pub subject: String,
     pub body: String,
     pub created: DateTime<Utc>,
+    pub unread: bool,
 }
 
 pub struct NewSystemMessage {
@@ -58,5 +59,14 @@ pub async fn create_system_message(
     .bind(Utc::now())
     .execute(pool)
     .await?;
+    Ok(())
+}
+
+pub async fn set_message_read(pool: &PgPool, bunker_id: i32, message_id: i32) -> Result<(), error::Error> {
+    sqlx::query("UPDATE messages SET unread = false WHERE receiver_bunker_id = $1 AND id = $2")
+        .bind(bunker_id)
+        .bind(message_id)
+        .execute(pool)
+        .await?;
     Ok(())
 }

@@ -55,6 +55,10 @@ export class DataSource<T> {
         this.promise.value = this.source();
         await this.promise.value;
     }
+
+    notify() {
+        this.promise.value = this.promise.value;
+    }
 }
 
 export function dataSource<T>(source: () => Promise<T>): DataSource<T> {

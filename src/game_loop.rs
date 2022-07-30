@@ -31,7 +31,7 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
             for (item_type, entry) in &location_type.loot {
                 if rand::random::<f64>() <= entry.chance {
                     let quantity = rand::thread_rng().gen_range(entry.min..entry.max + 1);
-                    report_body.push_str(&format!("Found {} {}\n", quantity, item_type));
+                    report_body.push_str(&format!("Found {} ({})\n", item_type, quantity));
                     items::add_item(pool, expedition.bunker_id, item_type, quantity).await?;
                 }
             }

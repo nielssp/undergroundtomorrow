@@ -11,6 +11,15 @@ export function Messages({gameService}: {
     const messages = dataSource(() => gameService.getMessages());
 
     function openMessage(message: Message) {
+        if (message.unread) {
+            gameService.setMessageRead(message.id).then(() => {
+                const update = messages.data.value?.find(m => m.id === message.id);
+                if (update) {
+                    update.unread = false;
+                    messages.notify();
+                }
+            });
+        }
         openDialog(ReadMessage, {message});
     }
 
@@ -22,7 +31,7 @@ export function Messages({gameService}: {
             <>
                 <div class='stack-column' role='grid'>
                     <For each={messages}>{message =>
-                        <button role='row' class='stack-row spacing' onClick={() => openMessage(message.value)}>
+                        <button role='row' class='stack-row spacing' onClick={() => openMessage(message.value)} style={{fontWeight: message.props.unread.map(unread => unread ? 'bold' : 'normal')}}>
                             <div role='gridcell' class='grow'>{message.props.subject}</div>
                             <div role='gridcell'>{message.props.created.map(d => format(parseISO(d), 'MM/dd/yyyy hh:mm a'))}</div>
                         </button>

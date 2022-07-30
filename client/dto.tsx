@@ -97,6 +97,7 @@ export interface Message {
     subject: string;
     body: string;
     created: string;
+    unread: boolean;
 }
 
 export interface ExpeditionData {
