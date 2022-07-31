@@ -69,6 +69,26 @@ pub async fn add_bunker_location(
     Ok(())
 }
 
+pub async fn add_all_bunker_locations_in_sector(
+    pool: &PgPool,
+    bunker_id: i32,
+    sector: (i32, i32),
+) -> Result<(), error::Error> {
+    sqlx::query(
+        "INSERT INTO bunker_locations (bunker_id, location_id) SELECT $1, id FROM locations \
+        WHERE x BETWEEN $2 AND $3 AND y BETWEEN $4 AND $5 \
+        ON CONFLICT DO NOTHING",
+    )
+    .bind(bunker_id)
+    .bind(sector.0 * 100)
+    .bind(sector.0 * 100 + 99)
+    .bind(sector.1 * 100)
+    .bind(sector.1 * 100 + 99)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
 pub async fn add_bunker_sector(
     pool: &PgPool,
     bunker_id: i32,

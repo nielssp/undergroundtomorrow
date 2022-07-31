@@ -8,7 +8,7 @@ use crate::{
     data::{self, LAST_NAMES},
     db::{bunkers, inhabitants, locations, worlds},
     error,
-    generate::{self, generate_position},
+    generate::{self, generate_position}, util::get_sector,
 };
 
 #[derive(serde::Deserialize)]
@@ -124,5 +124,8 @@ async fn join_world(
     }
     // TODO: starting items
     // TODO: initial locations?
+    let sector = get_sector(x, y);
+    locations::add_all_bunker_locations_in_sector(&pool, bunker_id, sector).await?;
+    locations::add_bunker_sector(&pool, bunker_id, sector.0, sector.1).await?;
     Ok(HttpResponse::Ok().json("OK"))
 }

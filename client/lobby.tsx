@@ -5,7 +5,7 @@ import {handleError} from "./error";
 import {AuthService} from "./services/auth-service";
 import {GameService} from "./services/game-service";
 import {LobbyService} from "./services/lobby-service";
-import {LoadingIndicator} from "./util";
+import {dataSource, DerefData, LoadingIndicator} from "./util";
 
 export function Lobby({user, authService, lobbyService, gameService}: {
     user: Property<User>,
@@ -13,12 +13,10 @@ export function Lobby({user, authService, lobbyService, gameService}: {
     lobbyService: LobbyService,
     gameService: GameService,
 }) {
-    const error = bind(false);
-    const worldPromise = bind(lobbyService.getWorlds());
-    const worlds = worldPromise.await(() => error.value = true);
+    const worlds = dataSource(() => lobbyService.getWorlds());
 
     function reload() {
-        worldPromise.value = lobbyService.getWorlds();
+        worlds.refresh();
     }
 
     async function createWorld() {
@@ -58,11 +56,7 @@ export function Lobby({user, authService, lobbyService, gameService}: {
                 <button onClick={createWorld}>Create World</button>
             </div>
         </Show>
-        <LoadingIndicator loading={worlds.not.and(error.not)}/>
-        <Show when={error}>
-            <div>ERROR</div>
-        </Show>
-        <Deref ref={worlds}>{worlds =>
+        <DerefData data={worlds}>{worlds =>
             <>
                 <div class='stack-column spacing'>
                     <For each={worlds}>{world =>
@@ -81,6 +75,6 @@ export function Lobby({user, authService, lobbyService, gameService}: {
                     <div>No worlds</div>
                 </Show>
             </>
-            }</Deref>
+            }</DerefData>
     </div>;
 }

@@ -65,7 +65,7 @@ function ReadMessage({message}: {
                 {message.subject}
             </div>
         </div>
-        <div style='white-space: pre;'>
+        <div style='white-space: pre-wrap;'>
             {message.body}
         </div>
     </div>
