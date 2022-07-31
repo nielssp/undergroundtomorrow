@@ -56,7 +56,14 @@ export interface Bunker {
     data: BunkerData;
 }
 
+export interface Skill {
+    skillType: string;
+    xp: number;
+    level: number;
+}
+
 export interface InhabitantData {
+    skills: Skill[];
 }
 
 export interface Inhabitant {

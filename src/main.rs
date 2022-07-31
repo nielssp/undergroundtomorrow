@@ -18,6 +18,7 @@ mod game_loop;
 mod generate;
 mod lobby;
 mod settings;
+mod util;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

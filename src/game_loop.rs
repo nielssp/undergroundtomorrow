@@ -3,8 +3,8 @@ use sqlx::PgPool;
 
 use crate::{
     data::LOCATION_TYPES,
-    db::{expeditions, items, locations, messages},
-    error,
+    db::{expeditions, items, locations, messages, inhabitants::{self, SkillType}},
+    error, util::skill_roll,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -21,32 +21,55 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
     let expeditions = expeditions::get_finished_expeditions(pool).await?;
     for expedition in expeditions {
         let mut report_body = "".to_string();
+        let team = inhabitants::get_by_expedition(pool, expedition.id).await?;
         if let Some(location_id) = expedition.location_id {
             let location = locations::get_location(pool, location_id).await?;
             report_body.push_str(&format!("Successfully explored {}\n", location.name));
             let location_type = LOCATION_TYPES
                 .get(&location.data.location_type)
                 .ok_or_else(|| error::internal_error("Unknown location type"))?;
-            // TODO: team members
-            for (item_type, entry) in &location_type.loot {
-                if rand::random::<f64>() < entry.chance {
-                    let quantity = rand::thread_rng().gen_range(entry.min..entry.max + 1);
-                    report_body.push_str(&format!("Found {} ({})\n", item_type, quantity));
-                    items::add_item(pool, expedition.bunker_id, item_type, quantity).await?;
+            for mut member in team {
+                let mut update = false;
+                let scavenging_level = inhabitants::get_inhabitant_skill_level(&member, SkillType::Scavenging);
+                for (item_type, entry) in &location_type.loot {
+                    if skill_roll(entry.chance, scavenging_level) {
+                        let quantity = rand::thread_rng().gen_range(entry.min..entry.max + 1);
+                        report_body.push_str(&format!("Found {} ({})\n", item_type, quantity));
+                        items::add_item(pool, expedition.bunker_id, item_type, quantity).await?;
+                        if inhabitants::add_xp_to_skill(&mut member, SkillType::Scavenging, 60) {
+                            report_body.push_str(&format!("{} got better at scavening\n", member.name));
+                        }
+                        update = true;
+                    }
+                }
+                if update {
+                    inhabitants::update_inhabitant_data(pool, &member).await?;
                 }
             }
         } else {
             let locations = locations::get_undiscovered_locations(pool, expedition.bunker_id, expedition.zone_x, expedition.zone_y).await?;
-            let mut n = 0;
+            let mut discovered = 0;
             for location in &locations {
-                if rand::random::<f64>() < 0.5 {
-                    n += 1;
-                    report_body.push_str(&format!("Location discovered: {}\n", location.name));
-                    locations::add_bunker_location(pool, expedition.bunker_id, location.id).await?;
+                for member in &team {
+                    let exploration_level = inhabitants::get_inhabitant_skill_level(&member, SkillType::Exploration);
+                    if skill_roll(0.25, exploration_level) {
+                        discovered += 1;
+                        report_body.push_str(&format!("Location discovered: {}\n", location.name));
+                        locations::add_bunker_location(pool, expedition.bunker_id, location.id).await?;
+                        break;
+                    }
                 }
             }
-            if n == 0 {
+            if discovered == 0 {
                 report_body.push_str("No new locations discovered");
+            } else {
+                let xp = discovered * 40;
+                for mut member in team {
+                    if inhabitants::add_xp_to_skill(&mut member, SkillType::Exploration, xp) {
+                        report_body.push_str(&format!("{} got better at exploration\n", member.name));
+                    }
+                    inhabitants::update_inhabitant_data(pool, &member).await?;
+                }
             }
         }
         messages::create_system_message(

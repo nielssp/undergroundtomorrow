@@ -15,7 +15,7 @@ pub struct Inhabitant {
     pub data: Json<InhabitantData>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Copy, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum SkillType {
     Combat,
@@ -26,6 +26,8 @@ pub enum SkillType {
     Botany,
     Medicine,
     FirstAid,
+    Scavenging,
+    Exploration,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -74,6 +76,18 @@ pub async fn get_inhabitants(
     Ok(
         sqlx::query_as("SELECT * FROM inhabitants WHERE bunker_id = $1 ORDER BY name ASC")
             .bind(bunker_id)
+            .fetch_all(pool)
+            .await?,
+    )
+}
+
+pub async fn get_by_expedition(
+    pool: &PgPool,
+    expedition_id: i32,
+) -> Result<Vec<Inhabitant>, error::Error> {
+    Ok(
+        sqlx::query_as("SELECT * FROM inhabitants WHERE expedition_id = $1")
+            .bind(expedition_id)
             .fetch_all(pool)
             .await?,
     )
@@ -129,6 +143,42 @@ pub async fn attach_to_expedition(
         query = query.bind(design_id);
     }
     Ok(query.execute(pool).await?.rows_affected() > 0)
+}
+
+pub async fn update_inhabitant_data(
+    pool: &PgPool,
+    inhabitant: &Inhabitant,
+) -> Result<(), error::Error> {
+    sqlx::query("UPDATE inhabitants SET data = $2 WHERE id = $1")
+        .bind(inhabitant.id)
+        .bind(Json(&inhabitant.data))
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub fn get_inhabitant_skill_level(inhabitant: &Inhabitant, skill_type: SkillType) -> i32 {
+    get_skill_level(inhabitant.data.skills.iter().find(|s| s.skill_type == skill_type).map(|s| s.xp).unwrap_or_else(|| 0))
+}
+
+pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i32) -> bool {
+    let existing = inhabitant.data.skills.iter_mut().find(|s| s.skill_type == skill_type);
+    if let Some(mut skill) = existing {
+        skill.xp += xp;
+        let previous_level = skill.level;
+        skill.level = get_skill_level(xp);
+        return skill.level > previous_level;
+    } else {
+        let new = Skill {
+            skill_type,
+            xp,
+            level: get_skill_level(xp),
+        };
+        let level_up = new.level > 0;
+        inhabitant.data.skills.push(new);
+        return level_up;
+
+    }
 }
 
 pub fn get_skill_level(xp: i32) -> i32 {
