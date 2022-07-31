@@ -166,7 +166,7 @@ pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i
     if let Some(mut skill) = existing {
         skill.xp += xp;
         let previous_level = skill.level;
-        skill.level = get_skill_level(xp);
+        skill.level = get_skill_level(skill.xp);
         return skill.level > previous_level;
     } else {
         let new = Skill {
