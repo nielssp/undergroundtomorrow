@@ -15,6 +15,7 @@ import { Register } from './register';
 import { AuthService } from './services/auth-service';
 import {GameService} from './services/game-service';
 import {LobbyService} from './services/lobby-service';
+import { Status } from './status';
 import {LoadingIndicator} from './util';
 
 function Root({authService, lobbyService, gameService}: {
@@ -121,11 +122,7 @@ function Root({authService, lobbyService, gameService}: {
                             </menu>
                             <div class='stack-column grow' style='overflow-y: auto;'>
                                 <Show when={tab.eq('status')}>
-                                    <div>Welcome back, {user.props.username}.</div>
-                                    <div class='margin-top stack-row spacing'>
-                                        <button onClick={() => gameService.world.value = undefined}>Switch</button>
-                                        <button onClick={() => authService.invalidate()}>Log Out</button>
-                                    </div>
+                                    <Status gameService={gameService} authService={authService} user={user}/>
                                 </Show>
                                 <Show when={tab.eq('people')}>
                                     <People gameService={gameService}/>

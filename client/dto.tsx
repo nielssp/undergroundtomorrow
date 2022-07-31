@@ -42,8 +42,13 @@ export interface NewWorld {
     timeOffset: number;
 }
 
+export interface ReactorStatus {
+    level: number;
+    condition: number;
+}
 
 export interface BunkerData {
+    reactor: ReactorStatus;
 }
 
 export interface Bunker {

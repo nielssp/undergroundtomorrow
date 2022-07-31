@@ -8,7 +8,8 @@ use crate::{
     data::{self, LAST_NAMES},
     db::{bunkers, inhabitants, locations, worlds},
     error,
-    generate::{self, generate_position}, util::get_sector,
+    generate::{self, generate_position},
+    util::get_sector,
 };
 
 #[derive(serde::Deserialize)]
@@ -101,7 +102,7 @@ async fn join_world(
             number: bunker_number,
             x,
             y,
-            data: bunkers::BunkerData {},
+            data: bunkers::BunkerData::default(),
         },
     )
     .await?;

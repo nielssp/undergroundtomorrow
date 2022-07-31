@@ -62,7 +62,11 @@ pub async fn create_system_message(
     Ok(())
 }
 
-pub async fn set_message_read(pool: &PgPool, bunker_id: i32, message_id: i32) -> Result<(), error::Error> {
+pub async fn set_message_read(
+    pool: &PgPool,
+    bunker_id: i32,
+    message_id: i32,
+) -> Result<(), error::Error> {
     sqlx::query("UPDATE messages SET unread = false WHERE receiver_bunker_id = $1 AND id = $2")
         .bind(bunker_id)
         .bind(message_id)
@@ -72,9 +76,11 @@ pub async fn set_message_read(pool: &PgPool, bunker_id: i32, message_id: i32) ->
 }
 
 pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<bool, error::Error> {
-    Ok(sqlx::query("SELECT 1 FROM messages WHERE receiver_bunker_id = $1 AND unread = true LIMIT 1")
-        .bind(bunker_id)
-        .fetch_optional(pool)
-        .await?
-        .is_some())
+    Ok(sqlx::query(
+        "SELECT 1 FROM messages WHERE receiver_bunker_id = $1 AND unread = true LIMIT 1",
+    )
+    .bind(bunker_id)
+    .fetch_optional(pool)
+    .await?
+    .is_some())
 }

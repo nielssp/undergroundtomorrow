@@ -14,9 +14,70 @@ pub struct Bunker {
     pub data: Json<BunkerData>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct BunkerData {}
+pub struct BunkerData {
+    #[serde(default)]
+    pub reactor: ReactorStatus,
+    #[serde(default)]
+    pub water_treatment: WaterTreatmentStatus,
+    #[serde(default)]
+    pub infirmary: InfirmaryStatus,
+    #[serde(default)]
+    pub workshop: WorkshopStatus,
+    #[serde(default)]
+    pub horticulture: HorticultureStatus,
+    #[serde(default)]
+    pub air_recycling: AirRecyclingStatus,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ReactorStatus {
+    pub level: i32,
+    pub condition: i32,
+    pub fuel: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct WaterTreatmentStatus {
+    pub level: i32,
+    pub condition: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct InfirmaryStatus {
+    pub level: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkshopStatus {
+    pub level: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct HorticultureStatus {
+    pub level: i32,
+    pub condition: i32,
+    pub crops: Vec<Crop>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Crop {
+    pub plant_type: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AirRecyclingStatus {
+    pub level: i32,
+    pub condition: i32,
+}
 
 pub struct NewBunker {
     pub user_id: i64,

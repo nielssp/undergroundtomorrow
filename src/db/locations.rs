@@ -145,12 +145,12 @@ pub async fn get_explored_sectors(
     pool: &PgPool,
     bunker_id: i32,
 ) -> Result<Vec<Sector>, error::Error> {
-    Ok(sqlx::query_as(
-        "SELECT x, y FROM bunker_sectors WHERE bunker_id = $1",
+    Ok(
+        sqlx::query_as("SELECT x, y FROM bunker_sectors WHERE bunker_id = $1")
+            .bind(bunker_id)
+            .fetch_all(pool)
+            .await?,
     )
-    .bind(bunker_id)
-    .fetch_all(pool)
-    .await?)
 }
 
 pub async fn is_location_discovered(

@@ -271,7 +271,7 @@ select[size="1"] {
     font-family: inherit;
     background-color: var(--primary-30);
     color: inherit;
-    border: 0.1vh solid var(--primary-30);
+    border: 0.1vh solid transparent;
     box-shadow: 0 0 0.5vh var(--primary-30);
     transition: all linear 0.1s;
 

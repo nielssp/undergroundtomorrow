@@ -109,10 +109,7 @@ async fn get_sectors(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(
-        HttpResponse::Ok()
-            .json(locations::get_explored_sectors(&pool, player.bunker.id).await?),
-    )
+    Ok(HttpResponse::Ok().json(locations::get_explored_sectors(&pool, player.bunker.id).await?))
 }
 
 #[post("/world/{world_id:\\d+}/get_messages")]
@@ -194,7 +191,7 @@ async fn create_expedition(
         ),
     ) as i64;
     let speed: i64 = 5;
-    let duration = Duration::minutes(10 + distance / speed);
+    let duration = Duration::minutes(10 + 2 * distance / speed);
     let eta = Utc::now() + duration;
     let new_expedition = expeditions::NewExpedition {
         bunker_id: player.bunker.id,

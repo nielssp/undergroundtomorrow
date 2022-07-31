@@ -43,6 +43,10 @@ pub struct Skill {
 pub struct InhabitantData {
     #[serde(default)]
     pub skills: Vec<Skill>,
+    #[serde(default)]
+    pub assignment: Option<String>,
+    #[serde(default)]
+    pub team: Option<String>,
 }
 
 pub struct NewInhabitant {
@@ -158,11 +162,23 @@ pub async fn update_inhabitant_data(
 }
 
 pub fn get_inhabitant_skill_level(inhabitant: &Inhabitant, skill_type: SkillType) -> i32 {
-    get_skill_level(inhabitant.data.skills.iter().find(|s| s.skill_type == skill_type).map(|s| s.xp).unwrap_or_else(|| 0))
+    get_skill_level(
+        inhabitant
+            .data
+            .skills
+            .iter()
+            .find(|s| s.skill_type == skill_type)
+            .map(|s| s.xp)
+            .unwrap_or_else(|| 0),
+    )
 }
 
 pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i32) -> bool {
-    let existing = inhabitant.data.skills.iter_mut().find(|s| s.skill_type == skill_type);
+    let existing = inhabitant
+        .data
+        .skills
+        .iter_mut()
+        .find(|s| s.skill_type == skill_type);
     if let Some(mut skill) = existing {
         skill.xp += xp;
         let previous_level = skill.level;
@@ -177,7 +193,6 @@ pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i
         let level_up = new.level > 0;
         inhabitant.data.skills.push(new);
         return level_up;
-
     }
 }
 
