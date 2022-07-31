@@ -40,6 +40,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_inhabitants)
         .service(get_items)
         .service(get_locations)
+        .service(get_sectors)
         .service(get_messages)
         .service(set_message_read)
         .service(has_unread_messages)
@@ -98,6 +99,19 @@ async fn get_locations(
     Ok(
         HttpResponse::Ok()
             .json(locations::get_discovered_locations(&pool, player.bunker.id).await?),
+    )
+}
+
+#[post("/world/{world_id:\\d+}/get_sectors")]
+async fn get_sectors(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    Ok(
+        HttpResponse::Ok()
+            .json(locations::get_explored_sectors(&pool, player.bunker.id).await?),
     )
 }
 

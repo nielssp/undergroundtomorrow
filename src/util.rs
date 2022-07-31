@@ -6,3 +6,7 @@ pub fn skill_roll(chance: f64, skill_level: i32) -> bool {
     let probability = (outcomes - die_sides.powi(chances - 1)) / outcomes;
     return rand::random::<f64>() < probability;
 }
+
+pub fn get_sector_name(sector: (i32, i32)) -> String {
+    format!("{}{}", std::char::from_u32(0x41 + sector.0 as u32).unwrap_or('?'), sector.1 + 1)
+}

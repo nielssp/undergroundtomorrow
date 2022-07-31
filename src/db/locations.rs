@@ -32,6 +32,13 @@ pub struct NewLocation {
     pub data: LocationData,
 }
 
+#[derive(serde::Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct Sector {
+    pub x: i32,
+    pub y: i32,
+}
+
 pub async fn create_location(pool: &PgPool, location: &NewLocation) -> Result<i32, error::Error> {
     Ok(sqlx::query(
         "INSERT INTO locations (world_id, name, x, y, data) VALUES ($1, $2, $3, $4, $5) RETURNING id"
@@ -57,6 +64,24 @@ pub async fn add_bunker_location(
     )
     .bind(bunker_id)
     .bind(location_id)
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+pub async fn add_bunker_sector(
+    pool: &PgPool,
+    bunker_id: i32,
+    x: i32,
+    y: i32,
+) -> Result<(), error::Error> {
+    sqlx::query(
+        "INSERT INTO bunker_sectors (bunker_id, x, y) VALUES ($1, $2, $3) \
+        ON CONFLICT DO NOTHING",
+    )
+    .bind(bunker_id)
+    .bind(x)
+    .bind(y)
     .execute(pool)
     .await?;
     Ok(())
@@ -90,6 +115,18 @@ pub async fn get_discovered_locations(
     Ok(sqlx::query_as(
         "SELECT l.* FROM locations l INNER JOIN bunker_locations bl ON bl.location_id = l.id \
         WHERE bl.bunker_id = $1",
+    )
+    .bind(bunker_id)
+    .fetch_all(pool)
+    .await?)
+}
+
+pub async fn get_explored_sectors(
+    pool: &PgPool,
+    bunker_id: i32,
+) -> Result<Vec<Sector>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT x, y FROM bunker_sectors WHERE bunker_id = $1",
     )
     .bind(bunker_id)
     .fetch_all(pool)

@@ -12,7 +12,7 @@ export function People({gameService}: {
     const people = dataSource(() => gameService.getInhabitants());
 
     function openDetails(person: Inhabitant) {
-        openDialog(Details, {person});
+        openDialog(Details, {person, gameService});
     }
 
     return <>
@@ -39,8 +39,9 @@ export function People({gameService}: {
     </>;
 }
 
-function Details({person}: {
+function Details({person, gameService}: {
     person: Inhabitant,
+    gameService: GameService,
 }) {
     return <div class='padding spacing stack-column'>
         <div class='stack-row spacing justify-space-between'>
@@ -48,12 +49,16 @@ function Details({person}: {
             <div>{person.name}</div>
         </div>
         <div class='stack-row spacing justify-space-between'>
+            <div style='font-weight: bold'>Age:</div>
+            <div>{gameService.worldTime.map(wt => '' + differenceInYears(wt, parseISO(person.dateOfBirth)))}</div>
+        </div>
+        <div class='stack-row spacing justify-space-between'>
             <div style='font-weight: bold'>Date of birth:</div>
             <div>{format(parseISO(person.dateOfBirth), 'MM/dd/yy')}</div>
         </div>
         <For each={bind(person.data.skills)}>{skill =>
             <div class='stack-row spacing justify-space-between'>
-                <div style='font-weight: bold'>{skill.props.skillType}</div>
+                <div style='font-weight: bold'>{skill.props.skillType}:</div>
                 <div>Level {skill.props.level}</div>
             </div>
         }</For>

@@ -96,6 +96,11 @@ export interface Location {
     data: LocationData;
 }
 
+export interface Sector {
+    x: number;
+    y: number;
+}
+
 export interface Message {
     id: number;
     receiverBunkerId: number;

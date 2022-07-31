@@ -1,7 +1,7 @@
 import {Fragment, createElement, ref, Property, Deref, bind, For, Show, zipWith, ariaBool} from 'cstk';
 import { differenceInYears, format, parseISO } from 'date-fns';
 import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
-import {Bunker, Expedition, Inhabitant, Location} from './dto';
+import {Bunker, Expedition, Inhabitant, Location, Sector} from './dto';
 import { ErrorIndicator, handleError } from './error';
 import {GameService} from './services/game-service';
 import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
@@ -15,6 +15,7 @@ export function Map({amber, gameService}: {
 }, context: JSX.Context) {
     const expeditions = dataSource(() => gameService.getExpeditions());
     const locations = dataSource(() => gameService.getLocations());
+    const sectors = dataSource(() => gameService.getSectors());
     const locationsBySector: Map<string, Location[]> = new window.Map();
 
     context.onDestroy(locations.data.observe(locations => {
@@ -64,13 +65,13 @@ export function Map({amber, gameService}: {
 
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
-        <button onClick={openExpeditions}>Expeditions</button>
+        <button onClick={openExpeditions}>Missions</button>
         <button onClick={openLocations}>Locations</button>
     </div>
     <Deref ref={gameService.bunker}>{bunker =>
         <div style='flex-grow: 1; display: flex; overflow: hidden;'>
             <MapCanvas amber={amber} bunker={bunker} locations={locations.data.orElse([])}
-                expeditions={expeditions.data.orElse([])} onSelect={selectSector}/>
+                sectors={sectors.data.orElse([])} expeditions={expeditions.data.orElse([])} onSelect={selectSector}/>
         </div>
     }</Deref>
 </>;
@@ -90,7 +91,7 @@ function ExpeditionsDialog({dialog, expeditions}: {
                     </div>
                     }</For>
                 <Show when={expeditions.map(e => !e.length)}>
-                    <div>No active expeditions</div>
+                    <div>No active missions</div>
                 </Show>
             </>
             }</DerefData>
@@ -180,7 +181,7 @@ function CreateExpeditionDialog({dialog, gameService, sector, location, close}: 
     }
 
     return <div class='stack-column spacing padding' style='overflow: hidden;'>
-        <div>Select expedition team</div>
+        <div>Select team</div>
         <LoadingIndicator loading={people.not.and(error.not)}/>
         <Show when={error}>
             <div>ERROR</div>
@@ -239,10 +240,11 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
     </div>;
 }
 
-function MapCanvas({amber, bunker, locations, expeditions, onSelect}: {
+function MapCanvas({amber, bunker, locations, sectors, expeditions, onSelect}: {
     amber: Property<boolean>,
     bunker: Property<Bunker>,
     locations: Property<Location[]>, 
+    sectors: Property<Sector[]>, 
     expeditions: Property<Expedition[]>, 
     onSelect: (sector: {x: number, y: number}) => void,
 }, context: JSX.Context) {
@@ -280,9 +282,12 @@ function MapCanvas({amber, bunker, locations, expeditions, onSelect}: {
         ctx.globalCompositeOperation = 'multiply';
         ctx.fillStyle = `hsl(${hue}, 100%, 25%)`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = `hsla(${hue}, 100%, 25%, 25%)`;
+        for (let sector of sectors.value) {
+            ctx.fillRect(canvas.width / 26 * sector.x, canvas.height / 26 * sector.y, canvas.width / 26, canvas.height / 26);
+        }
         if (sector) {
-            ctx.globalCompositeOperation = 'lighter';
-            ctx.fillStyle = `hsla(${hue}, 100%, 25%, 25%)`;
             ctx.fillRect(canvas.width / 26 * sector[0], canvas.height / 26 * sector[1], canvas.width / 26, canvas.height / 26);
         }
         ctx.globalCompositeOperation = 'source-over';
@@ -391,6 +396,7 @@ function MapCanvas({amber, bunker, locations, expeditions, onSelect}: {
     context.onDestroy(amber.observe(() => repaint = true));
     context.onDestroy(bunker.observe(() => repaint = true));
     context.onDestroy(locations.observe(() => repaint = true));
+    context.onDestroy(sectors.observe(() => repaint = true));
     context.onDestroy(expeditions.observe(() => repaint = true));
 
     return <canvas style='flex-grow: 1; width: 100%;' ref={canvasRef}/>;
