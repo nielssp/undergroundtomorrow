@@ -34,10 +34,18 @@ struct ExpeditionRequest {
     team: Vec<i32>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SetTeamRequest {
+    inhabitant_id: i32,
+    team: Option<String>,
+}
+
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_world)
         .service(get_bunker)
         .service(get_inhabitants)
+        .service(set_team)
         .service(get_items)
         .service(get_locations)
         .service(get_sectors)
@@ -77,6 +85,21 @@ async fn get_inhabitants(
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
     Ok(HttpResponse::Ok().json(inhabitants::get_inhabitants(&pool, player.bunker.id).await?))
+}
+
+#[post("/world/{world_id:\\d+}/set_team")]
+async fn set_team(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<SetTeamRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    let mut inhabitant = inhabitants::get_inhabitant(&pool, player.bunker.id, data.inhabitant_id).await?
+        .ok_or_else(|| error::client_error("INHABITANT_NOT_FOUND"))?; 
+    inhabitant.data.team = data.into_inner().team;
+    inhabitants::update_inhabitant_data(&pool, &inhabitant).await?;
+    Ok(HttpResponse::NoContent().finish())
 }
 
 #[post("/world/{world_id:\\d+}/get_items")]
@@ -133,7 +156,7 @@ async fn set_message_read(
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
     messages::set_message_read(&pool, player.bunker.id, data.into_inner()).await?;
-    Ok(HttpResponse::Ok().json("OK"))
+    Ok(HttpResponse::NoContent().finish())
 }
 
 #[post("/world/{world_id:\\d+}/has_unread_messages")]
@@ -208,7 +231,7 @@ async fn create_expedition(
         expeditions::delete_expedition(&pool, expedition_id).await?;
         Err(error::internal_error("Expedition failed"))?;
     }
-    Ok(HttpResponse::Ok().json("OK"))
+    Ok(HttpResponse::NoContent().finish())
 }
 
 pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web::Result<Player> {

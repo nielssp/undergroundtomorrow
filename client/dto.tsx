@@ -69,6 +69,8 @@ export interface Skill {
 
 export interface InhabitantData {
     skills: Skill[];
+    assignment?: string;
+    team?: string;
 }
 
 export interface Inhabitant {

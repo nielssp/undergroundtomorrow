@@ -73,6 +73,20 @@ pub async fn create_inhabitant(
     .try_get(0)?)
 }
 
+pub async fn get_inhabitant(
+    pool: &PgPool,
+    bunker_id: i32,
+    inhabitant_id: i32,
+) -> Result<Option<Inhabitant>, error::Error> {
+    Ok(
+        sqlx::query_as("SELECT * FROM inhabitants WHERE bunker_id = $1 AND id = $2")
+            .bind(bunker_id)
+            .bind(inhabitant_id)
+            .fetch_optional(pool)
+            .await?,
+    )
+}
+
 pub async fn get_inhabitants(
     pool: &PgPool,
     bunker_id: i32,

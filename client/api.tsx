@@ -44,6 +44,9 @@ export class Api {
             body: JSON.stringify(data),
         });
         await this.handleError(response);
+        if (response.status === 204) {
+            return undefined as any;
+        }
         return response.json();
     }
 }

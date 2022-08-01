@@ -78,6 +78,10 @@ export class GameService {
         return this.api.rpc<Inhabitant[]>(`world/${this.worldId}/get_inhabitants`);
     }
 
+    setTeam(inhabitantId: number, team: String|undefined) {
+        return this.api.rpc<void>(`world/${this.worldId}/set_team`, {inhabitantId, team});
+    }
+
     getItems() {
         return this.api.rpc<Item[]>(`world/${this.worldId}/get_items`);
     }
