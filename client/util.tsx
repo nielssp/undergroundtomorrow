@@ -39,7 +39,7 @@ export function formatDuration(seconds: number) {
     if (seconds >= 86400) {
         result += `${Math.floor(seconds / 86400)}d `;
     }
-    result += `${Math.floor((seconds % 86400) / 3600)}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+    result += `${Math.floor((seconds % 86400) / 3600)}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
     return result;
 }
 

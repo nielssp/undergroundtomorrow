@@ -3,6 +3,7 @@ import { differenceInYears, format, parseISO } from 'date-fns';
 import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
 import {Bunker, Expedition, Inhabitant, Location, Sector} from './dto';
 import { ErrorIndicator, handleError } from './error';
+import { CreateExpeditionDialog } from './expedition';
 import {GameService} from './services/game-service';
 import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
 
@@ -137,106 +138,6 @@ function LocationDialog({dialog, sector, locations, onExplore}: {
                 <button onClick={() => {dialog.close(); onExplore(location.value);}}>Explore</button>
             </div>
             }</For>
-    </div>;
-}
-
-function CreateExpeditionDialog({dialog, gameService, sector, location, close}: {
-    dialog: DialogRef,
-    gameService: GameService,
-    sector: {x: number, y: number},
-    location?: Location,
-    close: (choice: boolean) => void,
-}) {
-    const error = bind(false);
-    const promise = bind(gameService.getInhabitants());
-    const people = promise.await(() => error.value = true).mapDefined(p => p.filter(i => !i.expeditionId));
-
-    const selection = bind<Set<number>>(new Set());
-
-    async function showTeamMember(inhabitant: Inhabitant) {
-        const selected = selection.value.has(inhabitant.id);
-        const choice = await openDialog(TeamMemberDetails, {inhabitant, gameService, selected});
-        if (typeof choice !== 'undefined') {
-            if (choice) {
-                selection.value.add(inhabitant.id);
-            } else {
-                selection.value.delete(inhabitant.id);
-            }
-            selection.value = selection.value;
-        }
-    }
-
-    async function create() {
-        try {
-            await gameService.createExpedition({
-                zoneX: sector.x,
-                zoneY: sector.y,
-                locationId: location?.id,
-                team: [...selection.value],
-            });
-            close(true);
-        } catch (error) {
-            handleError(error);
-        }
-    }
-
-    return <div class='stack-column spacing padding' style='overflow: hidden;'>
-        <div>Select team</div>
-        <LoadingIndicator loading={people.not.and(error.not)}/>
-        <Show when={error}>
-            <div>ERROR</div>
-        </Show>
-        <Deref ref={people}>{people =>
-            <>
-                <div class='stack-column' role='grid' style='overflow-y: auto;'>
-                    <For each={people}>{person =>
-                        <button role='row'
-                            onClick={() => showTeamMember(person.value)}
-                            aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
-                            <div role='gridcell'>{person.props.name}</div>
-                        </button>
-                        }</For>
-                </div>
-                <Show when={people.map(p => !p.length)}>
-                    <div>No people</div>
-                </Show>
-            </>
-            }</Deref>
-        <div class='stack-row justify-end'>
-            <button onClick={create} disabled={selection.map(s => !s.size)}>Create</button>
-        </div>
-    </div>;
-}
-
-function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
-    dialog: DialogRef,
-    inhabitant: Inhabitant,
-    selected: boolean,
-    gameService: GameService,
-    close: (choice: boolean) => void,
-}, context: JSX.Context) {
-    const primaryButton = ref<HTMLButtonElement>();
-    function select() {
-        close(!selected);
-    }
-    context.onInit(() => {
-        primaryButton.value?.focus();
-    });
-    return <div class='stack-column spacing padding'>
-        <div class='stack-row spacing justify-space-between'>
-            <div>Name:</div>
-            <div>{inhabitant.name}</div>
-        </div>
-        <div class='stack-row spacing justify-space-between'>
-            <div>Age:</div>
-            <div>{gameService.worldTime.map(wt => '' + differenceInYears(wt, parseISO(inhabitant.dateOfBirth)))}</div>
-        </div>
-        <div class='stack-row spacing justify-end'>
-            <button onClick={() => dialog.close()}>Cancel</button>
-            {selected
-                ? <button onClick={select} ref={primaryButton}>Unselect</button>
-                : <button onClick={select} ref={primaryButton}>Select</button>}
-        </div>
     </div>;
 }
 

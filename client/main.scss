@@ -31,7 +31,7 @@
 }
 
 html {
-  height: 100%;
+    height: 100%;
 }
 
 @import './layout.scss';
@@ -83,59 +83,59 @@ body {
 }
 
 .display {
-  padding: 0.5vh 1vh 1.5vh;
-  font-size: 2vh;
-  border-radius: 1.75vh;
-  color: var(--primary);
-  text-shadow: 0 0 0.5vh var(--primary);
-  position: absolute;
-  top: 0.5vh;
-  left: 0.5vh;
-  right: 0.5vh;
-  bottom: 0.5vh;
-  overflow: hidden;
-  background: #000 radial-gradient(var(--primary-20), var(--primary-10));
-  box-shadow: inset 0 0 2vh #000;
-  display: flex;
-  flex-direction: column;
-
-  &::selection, ::selection {
-    background: var(--primary-80);
-    color: #000;
-    text-shadow: none;
-  }
-
-  .invert {
-    background: var(--primary-80);
-    box-shadow: 0 0 0.5vh var(--primary);
-    color: var(--primary-10);
-    text-shadow: none;
+    padding: 0.5vh 1vh 1.5vh;
+    font-size: 2vh;
+    border-radius: 1.75vh;
+    color: var(--primary);
+    text-shadow: 0 0 0.5vh var(--primary);
+    position: absolute;
+    top: 0.5vh;
+    left: 0.5vh;
+    right: 0.5vh;
+    bottom: 0.5vh;
+    overflow: hidden;
+    background: #000 radial-gradient(var(--primary-20), var(--primary-10));
+    box-shadow: inset 0 0 2vh #000;
+    display: flex;
+    flex-direction: column;
 
     &::selection, ::selection {
-      background: var(--primary-10);
-      color: var(--primary-80);
-      text-shadow: none;
+        background: var(--primary-80);
+        color: #000;
+        text-shadow: none;
     }
-  }
 
-  .box {
-    border: var(--line-width) solid var(--line-color);
-    box-shadow: 0 0 0.5vh var(--primary), inset 0 0 0.5vh var(--primary);
-  }
+    .invert {
+        background: var(--primary-80);
+        box-shadow: 0 0 0.5vh var(--primary);
+        color: var(--primary-10);
+        text-shadow: none;
 
-  &:after {
-      display: block;
-      pointer-events: none;
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 10000;
-      background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.1) 51%);
-      background-size: 100% 0.4vh;
-  }
+        &::selection, ::selection {
+            background: var(--primary-10);
+            color: var(--primary-80);
+            text-shadow: none;
+        }
+    }
+
+    .box {
+        border: var(--line-width) solid var(--line-color);
+        box-shadow: 0 0 0.5vh var(--primary), inset 0 0 0.5vh var(--primary);
+    }
+
+    &:after {
+        display: block;
+        pointer-events: none;
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10000;
+        background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.1) 51%);
+        background-size: 100% 0.4vh;
+    }
 }
 
 .backdrop {
@@ -380,4 +380,9 @@ menu[role="tablist"] {
             background: var(--primary-20);
         }
     }
+}
+
+hr {
+    border: 0;
+    border-bottom: var(--line-width) solid var(--primary-60);
 }
