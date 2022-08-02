@@ -26,6 +26,26 @@ export function Status({gameService, user, authService}: {
                     <div>Reactor</div>
                     <div>{bunker.props.data.props.reactor.props.condition}%</div>
                 </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Water treatment</div>
+                    <div>{bunker.props.data.props.waterTreatment.props.condition}%</div>
+                </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Air recycling</div>
+                    <div>{bunker.props.data.props.airRecycling.props.condition}%</div>
+                </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Horticulture</div>
+                    <div>{bunker.props.data.props.horticulture.props.condition}%</div>
+                </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Infirmary</div>
+                    <div>{bunker.props.data.props.infirmary.props.level}</div>
+                </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Workshop</div>
+                    <div>{bunker.props.data.props.workshop.props.level}</div>
+                </div>
             </>
             }</DerefData>
     </div>

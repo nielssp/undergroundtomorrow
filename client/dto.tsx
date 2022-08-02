@@ -47,8 +47,41 @@ export interface ReactorStatus {
     condition: number;
 }
 
+export interface WaterTreatmentStatus {
+    level: number;
+    condition: number;
+}
+
+export interface InfirmaryStatus {
+    level: number;
+}
+
+export interface WorkshopStatus {
+    level: number;
+}
+
+export interface Crop {
+    plantType: string;
+}
+
+export interface HorticultureStatus {
+    level: number;
+    condition: number;
+    crops: Crop[];
+}
+
+export interface AirRecyclingStatus {
+    level: number;
+    condition: number;
+}
+
 export interface BunkerData {
     reactor: ReactorStatus;
+    waterTreatment: WaterTreatmentStatus;
+    infirmary: InfirmaryStatus;
+    workshop: WorkshopStatus;
+    horticulture: HorticultureStatus;
+    airRecycling: AirRecyclingStatus;
 }
 
 export interface Bunker {

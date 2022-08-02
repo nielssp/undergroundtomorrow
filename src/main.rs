@@ -12,6 +12,7 @@ use crate::settings::Settings;
 mod auth;
 mod data;
 mod db;
+mod dto;
 mod error;
 mod game;
 mod game_loop;

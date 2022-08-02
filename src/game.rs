@@ -95,8 +95,9 @@ async fn set_team(
     data: web::Json<SetTeamRequest>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    let mut inhabitant = inhabitants::get_inhabitant(&pool, player.bunker.id, data.inhabitant_id).await?
-        .ok_or_else(|| error::client_error("INHABITANT_NOT_FOUND"))?; 
+    let mut inhabitant = inhabitants::get_inhabitant(&pool, player.bunker.id, data.inhabitant_id)
+        .await?
+        .ok_or_else(|| error::client_error("INHABITANT_NOT_FOUND"))?;
     inhabitant.data.team = data.into_inner().team;
     inhabitants::update_inhabitant_data(&pool, &inhabitant).await?;
     Ok(HttpResponse::NoContent().finish())
