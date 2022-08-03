@@ -100,19 +100,15 @@ export interface Skill {
     level: number;
 }
 
-export interface InhabitantData {
-    skills: Skill[];
-    assignment?: string;
-    team?: string;
-}
-
 export interface Inhabitant {
     id: number;
     bunkerId: number;
     expeditionId?: number;
     name: string;
     dateOfBirth: string;
-    data: InhabitantData;
+    skills: Skill[];
+    assignment?: string;
+    team?: string;
 }
 
 export interface Item {
@@ -122,18 +118,13 @@ export interface Item {
     quantity: number;
 }
 
-export interface LocationData {
-    locationType: string;
-    abundance: number;
-}
-
 export interface Location {
     id: number;
     worldId: number;
     name: string;
     x: number;
     y: number;
-    data: LocationData;
+    locationType: string;
 }
 
 export interface Sector {

@@ -17,6 +17,7 @@ pub struct Expedition {
     pub zone_y: i32,
     pub eta: DateTime<Utc>,
     pub data: Json<ExpeditionData>,
+    pub created: DateTime<Utc>,
 }
 
 pub struct NewExpedition {
@@ -33,8 +34,8 @@ pub async fn create_expedition(
     expedition: &NewExpedition,
 ) -> Result<i32, error::Error> {
     Ok(sqlx::query(
-        "INSERT INTO expeditions (bunker_id, location_id, zone_x, zone_y, eta, data) \
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        "INSERT INTO expeditions (bunker_id, location_id, zone_x, zone_y, eta, data, created) \
+        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
     )
     .bind(expedition.bunker_id)
     .bind(expedition.location_id)
@@ -42,6 +43,7 @@ pub async fn create_expedition(
     .bind(expedition.zone_y)
     .bind(expedition.eta)
     .bind(Json(&expedition.data))
+    .bind(Utc::now())
     .fetch_one(pool)
     .await?
     .try_get(0)?)

@@ -11,7 +11,7 @@ use crate::{
         sessions::Session,
         worlds,
     },
-    error,
+    error, dto::{InhabitantDto, LocationDto},
 };
 
 pub struct Player {
@@ -84,7 +84,12 @@ async fn get_inhabitants(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(inhabitants::get_inhabitants(&pool, player.bunker.id).await?))
+    let inhabitants: Vec<InhabitantDto> = inhabitants::get_inhabitants(&pool, player.bunker.id)
+        .await?
+        .into_iter()
+        .map(|p| p.into())
+        .collect();
+    Ok(HttpResponse::Ok().json(inhabitants))
 }
 
 #[post("/world/{world_id:\\d+}/set_team")]
@@ -120,10 +125,12 @@ async fn get_locations(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(
-        HttpResponse::Ok()
-            .json(locations::get_discovered_locations(&pool, player.bunker.id).await?),
-    )
+    let locations: Vec<LocationDto> = locations::get_discovered_locations(&pool, player.bunker.id)
+        .await?
+        .into_iter()
+        .map(|p| p.into())
+        .collect();
+    Ok(HttpResponse::Ok().json(locations))
 }
 
 #[post("/world/{world_id:\\d+}/get_sectors")]

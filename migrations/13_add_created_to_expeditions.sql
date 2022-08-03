@@ -1,0 +1,1 @@
+ALTER TABLE "expeditions" ADD COLUMN "created" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;

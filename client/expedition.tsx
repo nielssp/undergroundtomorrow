@@ -42,7 +42,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     function selectTeam(team: string) {
         selection.value.clear();
         people.data.value?.forEach(person => {
-            if (person.data.team === team) {
+            if (person.team === team) {
                 selection.value.add(person.id);
             }
         });
@@ -74,7 +74,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     context.onDestroy(people.data.getAndObserve(people => {
         if (people) {
             const unique = new Set<string>();
-            people.forEach(p => p.data.team && unique.add(p.data.team));
+            people.forEach(p => p.team && unique.add(p.team));
             teams.value = [...unique].sort((a, b) => a.localeCompare(b));
         }
     }));

@@ -42,11 +42,15 @@ pub struct Skill {
 #[serde(rename_all = "camelCase")]
 pub struct InhabitantData {
     #[serde(default)]
+    pub health: i32,
+    #[serde(default)]
     pub skills: Vec<Skill>,
     #[serde(default)]
     pub assignment: Option<String>,
     #[serde(default)]
     pub team: Option<String>,
+    #[serde(default)]
+    pub surface_exposure: i32,
 }
 
 pub struct NewInhabitant {

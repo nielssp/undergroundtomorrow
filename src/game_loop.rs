@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use chrono::Utc;
 use rand::Rng;
 use sqlx::PgPool;
 
@@ -37,8 +40,7 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
             let location_type = LOCATION_TYPES
                 .get(&location.data.location_type)
                 .ok_or_else(|| error::internal_error("Unknown location type"))?;
-            for mut member in team {
-                let mut update = false;
+            for mut member in &mut team {
                 let scavenging_level =
                     inhabitants::get_inhabitant_skill_level(&member, SkillType::Scavenging);
                 for (item_type, entry) in &location_type.loot {
@@ -50,11 +52,7 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
                             report_body
                                 .push_str(&format!("{} got better at scavening\n", member.name));
                         }
-                        update = true;
                     }
-                }
-                if update {
-                    inhabitants::update_inhabitant_data(pool, &member).await?;
                 }
             }
         } else {
@@ -91,7 +89,6 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
                         report_body
                             .push_str(&format!("{} got better at exploration\n", member.name));
                     }
-                    inhabitants::update_inhabitant_data(pool, &member).await?;
                 }
             }
             if discovered >= locations.len() as i32 {
@@ -110,6 +107,11 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
                     }
                 }
             }
+        }
+        let exposure = (Utc::now() - expedition.created).num_hours() as i32;
+        for member in &mut team {
+            member.data.surface_exposure += exposure;
+            inhabitants::update_inhabitant_data(pool, &member).await?;
         }
         messages::create_system_message(
             pool,

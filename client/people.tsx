@@ -19,7 +19,7 @@ export function People({gameService}: {
     context.onDestroy(people.data.getAndObserve(people => {
         if (people) {
             const unique = new Set<string>();
-            people.forEach(p => p.data.team && unique.add(p.data.team));
+            people.forEach(p => p.team && unique.add(p.team));
             teams.value = [...unique].sort((a, b) => a.localeCompare(b));
         }
     }));
@@ -79,11 +79,11 @@ function Details({person, gameService, teams}: {
             <div style='font-weight: bold'>Date of birth:</div>
             <div>{format(parseISO(person.dateOfBirth), 'MM/dd/yy')}</div>
         </div>
-        {!person.data.team ? '' : <div class='stack-row spacing justify-space-between'>
+        {!person.team ? '' : <div class='stack-row spacing justify-space-between'>
             <div style='font-weight: bold'>Team:</div>
-            <div>{person.data.team}</div>
+            <div>{person.team}</div>
         </div>}
-        <For each={bind(person.data.skills)}>{skill =>
+        <For each={bind(person.skills)}>{skill =>
             <div class='stack-row spacing justify-space-between'>
                 <div style='font-weight: bold'>{skill.props.skillType}:</div>
                 <div>Level {skill.props.level}</div>
