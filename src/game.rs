@@ -221,8 +221,9 @@ async fn create_expedition(
             expedition_request.zone_y * 100 + 50,
         ),
     ) as i64;
+    let world_time = worlds::get_world_time(&pool, player.world_id).await?;
     let speed: i64 = 5;
-    let duration = Duration::minutes(10 + 2 * distance / speed);
+    let duration = Duration::minutes(10 + 2 * distance / speed) / world_time.time_acceleration;
     let eta = Utc::now() + duration;
     let new_expedition = expeditions::NewExpedition {
         bunker_id: player.bunker.id,

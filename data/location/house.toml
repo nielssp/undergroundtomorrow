@@ -1,22 +1,22 @@
-name = "Apartment Building"
-quantity = 400
+name = "House"
+quantity = 150
 
 [loot.Medicine]
 min = 1
 max = 1
-chance = 0.05
+chance = 0.025
 
 [loot.Steel]
 min = 1
 max = 2
-chance = 0.1
+chance = 0.05
 
 [loot.Cloth]
 min = 2
 max = 4
-chance = 0.2
+chance = 0.1
 
 [loot.Book]
 min = 1
 max = 1
-chance = 0.2
+chance = 0.1

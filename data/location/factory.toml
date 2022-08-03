@@ -1,0 +1,7 @@
+name = "Factory"
+quantity = 100
+
+[loot.Steel]
+min = 5
+max = 10
+chance = 0.5

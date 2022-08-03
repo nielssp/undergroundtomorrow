@@ -1,0 +1,12 @@
+name = "Police Station"
+quantity = 15
+
+[loot."9mm pistol"]
+min = 1
+max = 2
+chance = 0.1
+
+[loot."9mm ammo"]
+min = 10
+max = 50
+chance = 0.2

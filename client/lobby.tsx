@@ -1,6 +1,6 @@
-import {bind, createElement, Deref, Fragment, For, Show, Property} from "cstk";
-import {openPrompt} from "./dialog";
-import {User} from "./dto";
+import {bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith} from "cstk";
+import {openDialog, openPrompt} from "./dialog";
+import {NewWorld, User} from "./dto";
 import {handleError} from "./error";
 import {AuthService} from "./services/auth-service";
 import {GameService} from "./services/game-service";
@@ -20,15 +20,9 @@ export function Lobby({user, authService, lobbyService, gameService}: {
     }
 
     async function createWorld() {
-        const name = await openPrompt('World Name');
-        if (name) {
-            await lobbyService.createWorld({
-                name,
-                open: true,
-                startYear: 2072,
-                timeAcceleration: 1,
-                timeOffset: -3600 * 5,
-            });
+        const world = await openDialog(CreateWorld, {});
+        if (world) {
+            await lobbyService.createWorld(world);
             reload();
         }
     }
@@ -77,4 +71,56 @@ export function Lobby({user, authService, lobbyService, gameService}: {
             </>
             }</DerefData>
     </div>;
+}
+
+function CreateWorld({close}: {
+    close: (world: NewWorld) => void,
+}) {
+    const name = new TextControl('');
+    const year = new IntControl(2072);
+    const acceleration = new IntControl(1);
+    acceleration.min = 1;
+    const timeZone = new IntControl(-5);
+    const invalid = zipWith([name, acceleration], (n, a) => !n || !a);
+
+    function submit(e: Event) {
+        e.preventDefault();
+        close({
+            name: name.value,
+            open: true,
+            startYear: year.value,
+            timeAcceleration: acceleration.value,
+            timeOffset: 3600 * timeZone.value,
+        });
+    }
+
+    return <form class='padding stack-column spacing' onSubmit={submit}>
+        <div class='stack-row spacing justify-space-between'>
+            <Field control={name}>
+                <label>Name</label>
+                <input type='text'/>
+            </Field>
+        </div>
+        <div class='stack-row spacing justify-space-between'>
+            <Field control={year}>
+                <label>Year</label>
+                <input type='number'/>
+            </Field>
+        </div>
+        <div class='stack-row spacing justify-space-between'>
+            <Field control={acceleration}>
+                <label>Acceleration</label>
+                <input type='number'/>
+            </Field>
+        </div>
+        <div class='stack-row spacing justify-space-between'>
+            <Field control={timeZone}>
+                <label>Time Zone</label>
+                <input type='number'/>
+            </Field>
+        </div>
+        <div class='stack-row spacing justify-end'>
+            <button type='submit' disabled={invalid}>Create</button>
+        </div>
+    </form>;
 }

@@ -1,0 +1,17 @@
+name = "Pharmacy"
+quantity = 50
+
+[loot.Medicine]
+min = 1
+max = 10
+chance = 0.2
+
+[loot.Steel]
+min = 5
+max = 10
+chance = 0.5
+
+[loot.Cloth]
+min = 2
+max = 4
+chance = 0.4

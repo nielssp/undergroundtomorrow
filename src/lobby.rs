@@ -106,7 +106,7 @@ async fn join_world(
         },
     )
     .await?;
-    let world_time = worlds::get_world_time(&world);
+    let world_time = world.now();
     let mut last_names: Vec<&String> = Vec::with_capacity(20);
     for _ in 0..20 {
         last_names.push(&LAST_NAMES[rand::random::<usize>() % LAST_NAMES.len()]);
@@ -126,7 +126,7 @@ async fn join_world(
     // TODO: starting items
     // TODO: initial locations?
     let sector = get_sector(x, y);
-    locations::add_all_bunker_locations_in_sector(&pool, bunker_id, sector).await?;
+    locations::add_all_bunker_locations_in_sector(&pool, world.id, bunker_id, sector).await?;
     locations::add_bunker_sector(&pool, bunker_id, sector.0, sector.1).await?;
     Ok(HttpResponse::Ok().json("OK"))
 }

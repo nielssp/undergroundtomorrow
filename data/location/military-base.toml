@@ -1,0 +1,22 @@
+name = "Military Base"
+quantity = 5
+
+[loot."9mm pistol"]
+min = 1
+max = 2
+chance = 0.02
+
+[loot."9mm ammo"]
+min = 10
+max = 100
+chance = 0.04
+
+[loot."Assault rifle"]
+min = 1
+max = 5
+chance = 0.01
+
+[loot."Rifle ammo"]
+min = 10
+max = 100
+chance = 0.03

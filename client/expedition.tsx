@@ -53,7 +53,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     function showConfirmation() {
         memberNames.value = people.data.value?.filter(p => selection.value.has(p.id)).map(p => p.name) || [];
         const speed = 5;
-        eta.value = formatDuration((10 + 0.2 * distance / speed) * 60);
+        eta.value = formatDuration((10 + 0.2 * distance / speed) * 60 / gameService.world.value!.timeAcceleration);
         confirm.value = true;
     }
 

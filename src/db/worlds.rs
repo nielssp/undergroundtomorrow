@@ -27,6 +27,15 @@ pub struct NewWorld {
     pub time_offset: i32,
 }
 
+#[derive(sqlx::FromRow)]
+pub struct WorldTime {
+    pub id: i32,
+    pub created: DateTime<Utc>,
+    pub start_year: i32,
+    pub time_acceleration: i32,
+    pub time_offset: i32,
+}
+
 pub async fn get_worlds(pool: &PgPool, user_id: i64) -> Result<Vec<World>, error::Error> {
     Ok(sqlx::query_as(
         "SELECT id, name, open, created, start_year, time_acceleration, time_offset, \
@@ -83,9 +92,30 @@ pub async fn create_world(pool: &PgPool, data: &NewWorld) -> Result<i32, error::
     Ok(id)
 }
 
-pub fn get_world_time(world: &World) -> NaiveDateTime {
-    let duration = Utc::now().signed_duration_since(world.created);
-    let date = NaiveDate::from_yo(world.start_year, world.created.ordinal());
-    let start_time = NaiveDateTime::new(date, world.created.naive_utc().time());
-    start_time + duration * world.time_acceleration + Duration::seconds(world.time_offset as i64)
+pub async fn get_world_time(pool: &PgPool, world_id: i32) -> Result<WorldTime, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT id, created, start_year, time_acceleration, time_offset \
+            FROM worlds WHERE id = $1",
+    )
+    .bind(world_id)
+    .fetch_one(pool)
+    .await?)
+}
+
+impl World {
+    pub fn now(&self) -> NaiveDateTime {
+        let duration = Utc::now().signed_duration_since(self.created);
+        let date = NaiveDate::from_yo(self.start_year, self.created.ordinal());
+        let start_time = NaiveDateTime::new(date, self.created.naive_utc().time());
+        start_time + duration * self.time_acceleration + Duration::seconds(self.time_offset as i64)
+    }
+}
+
+impl WorldTime {
+    pub fn now(&self) -> NaiveDateTime {
+        let duration = Utc::now().signed_duration_since(self.created);
+        let date = NaiveDate::from_yo(self.start_year, self.created.ordinal());
+        let start_time = NaiveDateTime::new(date, self.created.naive_utc().time());
+        start_time + duration * self.time_acceleration + Duration::seconds(self.time_offset as i64)
+    }
 }
