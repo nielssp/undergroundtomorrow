@@ -63,7 +63,12 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                 zoneX: sector.x,
                 zoneY: sector.y,
                 locationId: location?.id,
-                team: [...selection.value],
+                team: [...selection.value].map(inhabitantId => {
+                    return {
+                        inhabitantId,
+                        ammo: 0,
+                    };
+                }),
             });
             close(true);
         } catch (error) {

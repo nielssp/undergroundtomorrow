@@ -85,7 +85,7 @@ function Details({person, gameService, teams}: {
         </div>}
         <For each={bind(person.skills)}>{skill =>
             <div class='stack-row spacing justify-space-between'>
-                <div style='font-weight: bold'>{skill.props.skillType}:</div>
+                <div style='font-weight: bold'>{skill.props.skillType.map(mapSkillType)}:</div>
                 <div>Level {skill.props.level}</div>
             </div>
         }</For>
@@ -130,4 +130,31 @@ function SetTeam({person, teams, close}: {
             </div>
         </form>
     </div>;
+}
+
+function mapSkillType(skillType: string): string {
+    switch (skillType) {
+        case 'combat':
+            return 'Combat';
+        case 'handToHand':
+            return 'Hand-to-hand';
+        case 'guns':
+            return 'Guns';
+        case 'science':
+            return 'Science';
+        case 'reactor':
+            return 'Reactor';
+        case 'botany':
+            return 'Botany';
+        case 'medicine':
+            return 'Medicine';
+        case 'firstAid':
+            return 'First aid';
+        case 'scavenging':
+            return 'Scavenging';
+        case 'exploration':
+            return 'Exploration';
+        default:
+            return 'Unknown skill';
+    }
 }

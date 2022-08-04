@@ -1,22 +1,22 @@
 name = "Hospital"
 quantity = 10
 
-[loot.Medicine]
+[loot.medicine]
 min = 1
 max = 10
 chance = 0.2
 
-[loot.Steel]
+[loot.steel]
 min = 5
 max = 10
 chance = 0.5
 
-[loot.Cloth]
+[loot.cloth]
 min = 2
 max = 4
 chance = 0.4
 
-[loot."Nuclear Material"]
+[loot.nuclear-material]
 min = 1
 max = 2
 chance = 0.01

@@ -5,7 +5,7 @@ use rand::Rng;
 use sqlx::PgPool;
 
 use crate::{
-    data::LOCATION_TYPES,
+    data::{ITEM_TYPES, LOCATION_TYPES},
     db::{
         expeditions,
         inhabitants::{self, SkillType},
@@ -43,11 +43,21 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
             for mut member in &mut team {
                 let scavenging_level =
                     inhabitants::get_inhabitant_skill_level(&member, SkillType::Scavenging);
-                for (item_type, entry) in &location_type.loot {
+                for (item_type_id, entry) in &location_type.loot {
                     if skill_roll(entry.chance, scavenging_level) {
+                        let item_type = ITEM_TYPES
+                            .get(item_type_id)
+                            .ok_or_else(|| error::internal_error("Item type not found"))?;
                         let quantity = rand::thread_rng().gen_range(entry.min..entry.max + 1);
-                        report_body.push_str(&format!("Found {} ({})\n", item_type, quantity));
-                        items::add_item(pool, expedition.bunker_id, item_type, quantity).await?;
+                        if quantity == 1 {
+                            report_body.push_str(&format!("Found {}\n", &item_type.name));
+                        } else {
+                            report_body.push_str(&format!(
+                                "Found {} ({})\n",
+                                &item_type.name_plural, quantity
+                            ));
+                        }
+                        items::add_item(pool, expedition.bunker_id, item_type_id, quantity).await?;
                         if inhabitants::add_xp_to_skill(&mut member, SkillType::Scavenging, 60) {
                             report_body
                                 .push_str(&format!("{} got better at scavening\n", member.name));

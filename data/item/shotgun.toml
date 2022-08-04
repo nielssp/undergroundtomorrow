@@ -1,0 +1,7 @@
+name = "Shotgun"
+name_plural = "Shotguns"
+weapon = true
+damage = 20
+range = 10
+ammo = "shotgun-shell"
+

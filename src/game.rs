@@ -1,5 +1,6 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
 use chrono::{DateTime, Duration, Utc};
+use itertools::Itertools;
 use sqlx::PgPool;
 use tracing::info;
 
@@ -11,7 +12,8 @@ use crate::{
         sessions::Session,
         worlds,
     },
-    error, dto::{InhabitantDto, LocationDto},
+    dto::{InhabitantDto, ItemDto, LocationDto},
+    error,
 };
 
 pub struct Player {
@@ -27,11 +29,19 @@ struct MessageQuery {
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct TeamMember {
+    inhabitant_id: i32,
+    weapon_type: Option<String>,
+    ammo: i32,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ExpeditionRequest {
     zone_x: i32,
     zone_y: i32,
     location_id: Option<i32>,
-    team: Vec<i32>,
+    team: Vec<TeamMember>,
 }
 
 #[derive(serde::Deserialize)]
@@ -115,7 +125,12 @@ async fn get_items(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(items::get_items(&pool, player.bunker.id).await?))
+    let items: Vec<ItemDto> = items::get_items(&pool, player.bunker.id)
+        .await?
+        .into_iter()
+        .map(|i| i.into())
+        .collect();
+    Ok(HttpResponse::Ok().json(items))
 }
 
 #[post("/world/{world_id:\\d+}/get_locations")]
@@ -128,7 +143,7 @@ async fn get_locations(
     let locations: Vec<LocationDto> = locations::get_discovered_locations(&pool, player.bunker.id)
         .await?
         .into_iter()
-        .map(|p| p.into())
+        .map(|l| l.into())
         .collect();
     Ok(HttpResponse::Ok().json(locations))
 }
@@ -196,9 +211,16 @@ async fn create_expedition(
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
     let mut expedition_request = data.into_inner();
-    let available =
-        inhabitants::get_available_inhabitants(&pool, player.bunker.id, &expedition_request.team)
-            .await?;
+    let available = inhabitants::get_available_inhabitants(
+        &pool,
+        player.bunker.id,
+        &expedition_request
+            .team
+            .iter()
+            .map(|m| m.inhabitant_id)
+            .collect_vec(),
+    )
+    .await?;
     if available.is_empty() {
         Err(error::client_error("EMPTY_TEAM"))?;
     }

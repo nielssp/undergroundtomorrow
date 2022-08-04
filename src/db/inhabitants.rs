@@ -51,6 +51,10 @@ pub struct InhabitantData {
     pub team: Option<String>,
     #[serde(default)]
     pub surface_exposure: i32,
+    #[serde(default)]
+    pub weapon_type: Option<String>,
+    #[serde(default)]
+    pub ammo: i32,
 }
 
 pub struct NewInhabitant {

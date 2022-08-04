@@ -209,8 +209,12 @@ function MapCanvas({amber, bunker, locations, sectors, expeditions, onSelect}: {
             ctx.stroke();
         }
 
-        ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
         for (let location of locations.value) {
+            if (location.locationType === 'house' || location.locationType === 'apartment_building' || location.locationType === 'factory') {
+                ctx.fillStyle = `hsl(${hue}, 100%, 40%)`;
+            } else {
+                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+            }
             ctx.fillRect(location.x / 2600 * canvas.width - 3 * dpr, location.y / 2600 * canvas.height - 3 * dpr, 6 * dpr, 6 * dpr);
         }
 

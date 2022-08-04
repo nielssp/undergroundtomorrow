@@ -1,5 +1,6 @@
 import {Property, Show, createElement, bind, zipWith, Deref, Fragment} from "cstk";
 import { differenceInSeconds, parseISO } from "date-fns";
+import { Item } from "./dto";
 import { ErrorIndicator } from "./error";
 
 export function LoadingIndicator({loading}: {
@@ -92,4 +93,11 @@ export function DerefData<T>({data, children}: {
         <ErrorIndicator error={data.error} onRetry={() => data.refresh()}/>
         <Deref ref={data.data}>{children}</Deref>
     </>;
+}
+
+export function getItemName(item: Item) {
+    if (item.quantity === 1) {
+        return item.itemType.name;
+    }
+    return item.itemType.namePlural;
 }

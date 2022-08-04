@@ -1,6 +1,13 @@
 use chrono::NaiveDate;
 
-use crate::db::{inhabitants::{Inhabitant, Skill}, locations::Location};
+use crate::{
+    data::{get_item_type, ItemType},
+    db::{
+        inhabitants::{Inhabitant, Skill},
+        items::Item,
+        locations::Location,
+    },
+};
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,6 +59,24 @@ impl From<Location> for LocationDto {
             x: source.x,
             y: source.y,
             location_type: data.location_type,
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemDto {
+    pub id: i32,
+    pub item_type: ItemType,
+    pub quantity: i32,
+}
+
+impl From<Item> for ItemDto {
+    fn from(source: Item) -> ItemDto {
+        ItemDto {
+            id: source.id,
+            item_type: get_item_type(&source.item_type),
+            quantity: source.quantity,
         }
     }
 }

@@ -27,11 +27,30 @@ pub struct LocationType {
     pub loot: HashMap<String, LootEntry>,
 }
 
+#[derive(Clone, serde::Serialize, serde::Deserialize, Default)]
+#[serde(rename_all(serialize = "camelCase"))]
+pub struct ItemType {
+    #[serde(default)]
+    pub id: String,
+    pub name: String,
+    pub name_plural: String,
+    #[serde(default)]
+    pub weapon: bool,
+    #[serde(default)]
+    pub damage: i32,
+    #[serde(default)]
+    pub range: i32,
+    #[serde(default)]
+    pub ammo_type: Option<String>,
+}
+
 lazy_static! {
     pub static ref FIRST_NAMES: Vec<String> =
         load_names("data/first-names.txt").expect("Failed reading first names");
     pub static ref LAST_NAMES: Vec<String> =
         load_names("data/last-names.txt").expect("Failed reading last names");
+    pub static ref ITEM_TYPES: HashMap<String, ItemType> =
+        load_item_types("data/item").expect("Failed reading item types");
     pub static ref LOCATION_TYPES: HashMap<String, LocationType> =
         load_location_types("data/location").expect("Failed reading location types");
 }
@@ -42,14 +61,12 @@ fn load_names(path: &str) -> std::io::Result<Vec<String>> {
 }
 
 fn load_location_types(dir: &str) -> std::io::Result<HashMap<String, LocationType>> {
-    info!("Reading techs from {}", dir);
+    info!("Reading location types from {}", dir);
     let mut map = HashMap::new();
     for entry in read_dir(Path::new(dir))? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_dir() {
-            // recurse?
-        } else {
+        if !path.is_dir() {
             let mut file = File::open(&path)?;
             let mut content = String::new();
             file.read_to_string(&mut content)?;
@@ -60,6 +77,14 @@ fn load_location_types(dir: &str) -> std::io::Result<HashMap<String, LocationTyp
                 .to_str()
                 .unwrap()
                 .replace(".toml", "");
+            for item_type in location_type.loot.keys() {
+                if !ITEM_TYPES.contains_key(item_type) {
+                    panic!(
+                        "Unknown item type '{}' in loot table of location '{}'",
+                        item_type, id
+                    );
+                }
+            }
             map.insert(
                 id.clone(),
                 LocationType {
@@ -70,4 +95,49 @@ fn load_location_types(dir: &str) -> std::io::Result<HashMap<String, LocationTyp
         }
     }
     Ok(map)
+}
+
+fn load_item_types(dir: &str) -> std::io::Result<HashMap<String, ItemType>> {
+    info!("Reading item types from {}", dir);
+    let mut map = HashMap::new();
+    for entry in read_dir(Path::new(dir))? {
+        let entry = entry?;
+        let path = entry.path();
+        if !path.is_dir() {
+            let mut file = File::open(&path)?;
+            let mut content = String::new();
+            file.read_to_string(&mut content)?;
+            let item_type: ItemType = toml::from_str(&content)?;
+            let id = path
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .replace(".toml", "");
+            map.insert(id.clone(), ItemType { id, ..item_type });
+        }
+    }
+    for item_type in map.values() {
+        if let Some(ammo_type) = &item_type.ammo_type {
+            if !map.contains_key(ammo_type) {
+                panic!(
+                    "Unknown ammo type '{}' in item type '{}'",
+                    ammo_type, item_type.id
+                );
+            }
+        }
+    }
+    Ok(map)
+}
+
+pub fn get_item_type(item_type: &str) -> ItemType {
+    ITEM_TYPES
+        .get(item_type)
+        .cloned()
+        .unwrap_or_else(|| ItemType {
+            id: item_type.to_owned(),
+            name: item_type.to_owned(),
+            name_plural: item_type.to_owned(),
+            ..Default::default()
+        })
 }

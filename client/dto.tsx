@@ -111,10 +111,17 @@ export interface Inhabitant {
     team?: string;
 }
 
+export interface ItemType {
+    name: string;
+    namePlural: string;
+    equipable: boolean;
+    damage: number;
+    range: number;
+}
+
 export interface Item {
     id: number;
-    bunkerId: number;
-    itemType: string;
+    itemType: ItemType;
     quantity: number;
 }
 
@@ -156,9 +163,15 @@ export interface Expedition {
     data: ExpeditionData;
 }
 
+export interface TeamMember {
+    inhabitantId: number;
+    weaponType?: string;
+    ammo: number;
+}
+
 export interface ExpeditionRequest {
     zoneX: number;
     zoneY: number;
     locationId?: number;
-    team: number[];
+    team: TeamMember[];
 }

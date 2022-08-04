@@ -1,7 +1,7 @@
 name = "Factory"
 quantity = 100
 
-[loot.Steel]
+[loot.steel]
 min = 5
 max = 10
 chance = 0.5

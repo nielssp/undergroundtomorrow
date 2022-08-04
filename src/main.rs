@@ -32,6 +32,7 @@ async fn main() -> std::io::Result<()> {
     info!("{} first names loaded", data::FIRST_NAMES.len());
     info!("{} last names loaded", data::LAST_NAMES.len());
     info!("{} location types loaded", data::LOCATION_TYPES.len());
+    info!("{} item types loaded", data::ITEM_TYPES.len());
 
     info!("Starting Underground Tomorrow server...");
 

@@ -1,0 +1,5 @@
+name = "Golf Club"
+name_plural = "Golf Clubs"
+weapon = true
+damage = 2
+range = 1

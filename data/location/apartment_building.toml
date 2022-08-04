@@ -1,22 +1,22 @@
 name = "Apartment Building"
 quantity = 400
 
-[loot.Medicine]
+[loot.medicine]
 min = 1
 max = 1
 chance = 0.05
 
-[loot.Steel]
+[loot.steel]
 min = 1
 max = 2
 chance = 0.1
 
-[loot.Cloth]
+[loot.cloth]
 min = 2
 max = 4
 chance = 0.2
 
-[loot.Book]
+[loot.book]
 min = 1
 max = 1
 chance = 0.2
