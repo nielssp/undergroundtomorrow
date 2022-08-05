@@ -3,4 +3,4 @@ name_plural = "9mm Pistols"
 weapon = true
 damage = 9
 range = 20
-ammo = "9mm-round"
+ammo_type = "9mm-round"

@@ -234,17 +234,24 @@ button {
         justify-content: flex-start;
         border-color: transparent;
         box-shadow: none;
-        &[aria-selected="true"] {
-            font-weight: bold;
-            &:after {
+
+        &.selectable {
+            & > * {
+                margin-right: 0.5vh;
+            }
+            &::after {
                 margin-left: auto;
-                margin-right: 0.3vh;
                 content: '';
                 display: block;
                 width: 0.5vh;
                 height: 0.5vh;
-                background: var(--primary);
-                box-shadow: 0 0 0.5vh var(--primary);
+            }
+            &[aria-selected="true"] {
+                font-weight: bold;
+                &::after {
+                    background: var(--primary);
+                    box-shadow: 0 0 0.5vh var(--primary);
+                }
             }
         }
     }

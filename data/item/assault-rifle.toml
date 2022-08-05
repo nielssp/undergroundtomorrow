@@ -3,5 +3,5 @@ name_plural = "Assault Rifles"
 weapon = true
 damage = 15
 range = 50
-ammo = "556-round"
+ammo_type = "556-round"
 

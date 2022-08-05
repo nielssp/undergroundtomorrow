@@ -1,4 +1,4 @@
-import {Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList} from 'cstk';
+import {Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList, Deref} from 'cstk';
 import { differenceInYears, parseISO } from 'date-fns';
 import { DialogRef, openDialog } from './dialog';
 import {Inhabitant, Item, ItemType, Location} from './dto';
@@ -101,7 +101,31 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     }
 
     async function selectWeapon(index: number, member: Equiped) {
-        await openDialog(SelectWeapon, {weapons: weapons.value, ammoTypes: ammoTypes.value});
+        if (member.weaponType) {
+            weapons.value.get(member.weaponType.id)!.quantity++;
+            if (member.ammo && member.weaponType.ammoType) {
+                ammoTypes.value.get(member.weaponType.ammoType)!.quantity += member.ammo;
+            }
+        }
+        const selection = await openDialog(SelectWeapon, {
+            weapon: member.weaponType,
+            ammo: member.ammo,
+            weapons: weapons.value,
+            ammoTypes: ammoTypes.value,
+        });
+        if (selection) {
+            member.weaponType = selection.weapon;
+            member.ammo = selection.ammo;
+        }
+        if (member.weaponType) {
+            weapons.value.get(member.weaponType.id)!.quantity--;
+            if (member.ammo && member.weaponType.ammoType) {
+                ammoTypes.value.get(member.weaponType.ammoType)!.quantity -= member.ammo;
+            }
+        }
+        weapons.value = weapons.value;
+        ammoTypes.value = ammoTypes.value;
+        members.items[index].value = member;
     }
 
     async function create() {
@@ -110,10 +134,11 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                 zoneX: sector.x,
                 zoneY: sector.y,
                 locationId: location?.id,
-                team: [...selection.value].map(inhabitantId => {
+                team: members.items.map(member => {
                     return {
-                        inhabitantId,
-                        ammo: 0,
+                        inhabitantId: member.value.inhabitantId,
+                        weaponType: member.value.weaponType?.id,
+                        ammo: member.value.ammo,
                     };
                 }),
             });
@@ -153,6 +178,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                             <For each={people}>{person =>
                                 <button role='row'
                                     onClick={() => showTeamMember(person.value)}
+                                    class='selectable'
                                     aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
                                     <div role='gridcell'>{person.props.name}</div>
                                 </button>
@@ -177,7 +203,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                 <For each={members}>{(member, index) =>
                     <button role='row' class='stack-row spacing justify-space-between' onClick={() => selectWeapon(index.value, member.value)}>
                         <div role='gridcell'>{member.props.name}</div>
-                        <div role='gridcell'>{member.map(p => p.weaponType ? `${p.weaponType} [${p.ammo}]` : 'No weapon')}</div>
+                        <div role='gridcell'>{member.map(p => p.weaponType ? p.weaponType.name + (p.weaponType.ammoType ? ` [${p.ammo}]` : '') : 'No weapon')}</div>
                     </button>
                 }</For>
             </div>
@@ -245,23 +271,63 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
 }
 
 
-function SelectWeapon({weapons, ammoTypes}: {
+function SelectWeapon({weapon, ammo, weapons, ammoTypes, close}: {
+    weapon: ItemType|undefined,
+    ammo: number,
     weapons: Map<string, Item>,
     ammoTypes: Map<string, Item>,
+    close: (selection: {weapon: ItemType|undefined, ammo: number}) => void,
 }) {
     const selection = ref<string>();
+    const ammoRequired = ref<Item>();
+    const ammoAmount = bind(ammo);
+
+    function select(weapon: ItemType) {
+        selection.value = weapon.id;
+        if (weapon.ammoType) {
+            const ammoType = ammoTypes.get(weapon.ammoType);
+            if (ammoType) {
+                ammoRequired.value = ammoType;
+                ammoAmount.value = Math.min(ammoAmount.value, ammoType.quantity);
+            } else {
+                ammoRequired.value = undefined;
+                ammoAmount.value = 0;
+            }
+        } else {
+            ammoRequired.value = undefined;
+            ammoAmount.value = 0;
+        }
+    }
+
+    function unselect() {
+        selection.value = undefined;
+    }
+
+    function ok() {
+        close({
+            weapon: selection.value ? weapons.get(selection.value)?.itemType : undefined,
+            ammo: ammoAmount.value,
+        });
+    }
+
+    if (weapon) {
+        select(weapon);
+    }
+
+    selection.observe(x => console.log('x', x));
+
     return <div class='stack-column spacing padding'>
         <div class='stack-column' role='grid'>
-            <button role='row'>
-                <div role='gridcell' aria-selected={ariaBool(selection.undefined)} onClick={() => selection.value = undefined}>
+            <button role='row' class='selectable' aria-selected={ariaBool(selection.undefined)} onClick={unselect}>
+                <div role='gridcell'>
                     No weapon
                 </div>
             </button>
             <For each={bind([...weapons.values()])}>{weapon => 
                 <Show when={weapon.map(w => w.quantity > 0)}>
-                    <button role='row' aria-selected={ariaBool(selection.eq(weapon.props.itemType.props.id))} onClick={() => selection.value = weapon.value.itemType.id}>
+                    <button role='row' class='selectable' aria-selected={ariaBool(selection.eq(weapon.props.itemType.props.id))} onClick={() => select(weapon.value.itemType)}>
                         <div role='gridcell' class='stack-row spacing'>
-                            <div>{weapon.map(getItemName)}</div>
+                            <div>{weapon.props.itemType.props.name}</div>
                             <Show when={weapon.props.quantity.map(q => q > 1)}>
                                 <div>({weapon.props.quantity})</div>
                             </Show>
@@ -269,6 +335,25 @@ function SelectWeapon({weapons, ammoTypes}: {
                     </button>
                 </Show>
             }</For>
+        </div>
+        <Deref ref={ammoRequired}>{ammoType => 
+            <>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Ammo:</div>
+                    <div>{ammoType.props.itemType.props.namePlural}</div>
+                </div>
+                <div class='stack-row spacing justify-space-between'>
+                    <div>Amount:</div>
+                    <div>{ammoAmount} / {ammoType.props.quantity}</div>
+                </div>
+                <div class='stack-row spacing justify-end'>
+                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value--}>-</button>
+                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value++}>+</button>
+                </div>
+            </>
+        }</Deref>
+        <div class='stack-row spacing justify-end'>
+            <button onClick={ok}>OK</button>
         </div>
     </div>;
 }
