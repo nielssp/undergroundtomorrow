@@ -1,10 +1,17 @@
-import {Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool} from 'cstk';
+import {Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList} from 'cstk';
 import { differenceInYears, parseISO } from 'date-fns';
 import { DialogRef, openDialog } from './dialog';
-import {Inhabitant, Location} from './dto';
+import {Inhabitant, Item, ItemType, Location} from './dto';
 import { handleError } from './error';
 import {GameService} from './services/game-service';
-import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration } from './util';
+import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration, getItemName } from './util';
+
+interface Equiped {
+    inhabitantId: number;
+    name: string;
+    weaponType?: ItemType;
+    ammo: number;
+}
 
 export function CreateExpeditionDialog({dialog, gameService, sector, location, close}: {
     dialog: DialogRef,
@@ -16,14 +23,16 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     const people = dataSource(() => gameService.getInhabitants().then(people => people.filter(p => !p.expeditionId)));
     const teams = bind<string[]>([]);
     const custom = bind(false);
-    const confirm = bind(false);
+    const page = bind<'team'|'equipment'|'confirm'>('team');
     const distance = getDistance({
         x: sector.x * 100 + 50,
         y: sector.y * 100 + 50,
     }, gameService.bunker.value || {x: 0, y: 0});
 
     const selection = bind<Set<number>>(new Set());
-    const memberNames = bind<string[]>([]);
+    const weapons = bind<Map<string, Item>>(new Map());
+    const ammoTypes = bind<Map<string, Item>>(new Map());
+    const members = bindList<Equiped>([]);
     const eta = bind<string>('');
 
     async function showTeamMember(inhabitant: Inhabitant) {
@@ -47,14 +56,52 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
             }
         });
         selection.value = selection.value;
-        showConfirmation();
+        teamSelected();
     }
 
-    function showConfirmation() {
-        memberNames.value = people.data.value?.filter(p => selection.value.has(p.id)).map(p => p.name) || [];
+    async function teamSelected() {
+        const items = await gameService.getItems();
+        const ammoTypeIds = new Set<string>();
+        weapons.value = new Map(items.filter(i => i.itemType.weapon).map(i => {
+            if (i.itemType.ammoType) {
+                ammoTypeIds.add(i.itemType.ammoType);
+            }
+            return [i.itemType.id, i];
+        }));
+        ammoTypes.value = new Map(items.filter(i => ammoTypeIds.has(i.itemType.id)).map(i => [i.itemType.id, i]));
+        members.updateAll(people.data.value?.filter(p => selection.value.has(p.id)).map(p => {
+            let weaponType: ItemType|undefined;
+            let ammo = 0;
+            if (p.weaponType) {
+                const weapon = weapons.value.get(p.weaponType);
+                if (weapon && weapon.quantity > 0) {
+                    weapon.quantity--;
+                    weaponType = weapon.itemType;
+                    if (weaponType.ammoType && p.ammo) {
+                        const ammoType = ammoTypes.value.get(weaponType.ammoType);
+                        if (ammoType) {
+                            ammo = Math.min(p.ammo, ammoType.quantity);
+                            ammoType.quantity -= ammo;
+                        }
+                    }
+                }
+            }
+            return {
+                inhabitantId: p.id,
+                name: p.name,
+                weaponType: weaponType,
+                ammo: ammo,
+            };
+        }) || []);
+        weapons.value = weapons.value;
+        ammoTypes.value = ammoTypes.value;
         const speed = 5;
         eta.value = formatDuration((10 + 0.2 * distance / speed) * 60 / gameService.world.value!.timeAcceleration);
-        confirm.value = true;
+        page.value = 'equipment';
+    }
+
+    async function selectWeapon(index: number, member: Equiped) {
+        await openDialog(SelectWeapon, {weapons: weapons.value, ammoTypes: ammoTypes.value});
     }
 
     async function create() {
@@ -85,7 +132,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     }));
 
     return <div class='stack-column spacing padding' style='overflow: hidden;'>
-        <Show when={confirm.not}>
+        <Show when={page.eq('team')}>
             <Show when={teams.map(t => t.length).and(custom.not)}>
                 <div>Select team</div>
                 <div class='stack-column' role='grid' style='overflow-y: auto;'>
@@ -120,11 +167,26 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                     <Show when={custom}>
                         <button onClick={() => custom.value = false} style='margin-right: auto;'>Back</button>
                     </Show>
-                    <button onClick={showConfirmation} disabled={selection.map(s => !s.size)}>Continue</button>
+                    <button onClick={teamSelected} disabled={selection.map(s => !s.size)}>Continue</button>
                 </div>
             </Show>
         </Show>
-        <Show when={confirm}>
+        <Show when={page.eq('equipment')}>
+            <div>Select equipment</div>
+            <div class='stack-column' role='grid'>
+                <For each={members}>{(member, index) =>
+                    <button role='row' class='stack-row spacing justify-space-between' onClick={() => selectWeapon(index.value, member.value)}>
+                        <div role='gridcell'>{member.props.name}</div>
+                        <div role='gridcell'>{member.map(p => p.weaponType ? `${p.weaponType} [${p.ammo}]` : 'No weapon')}</div>
+                    </button>
+                }</For>
+            </div>
+            <div class='stack-row justify-space-between'>
+                <button onClick={() => page.value = 'team'}>Back</button>
+                <button onClick={() => page.value = 'confirm'}>Continue</button>
+            </div>
+        </Show>
+        <Show when={page.eq('confirm')}>
             <div>Confirm mission</div>
             <div class='stack-row justify-space-between'>
                 <strong>Sector:</strong>
@@ -140,10 +202,10 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
             </div>
             <strong>Team:</strong>
             <div class='stack-column align-end margin-bottom'>
-                <For each={memberNames}>{name => <div>{name}</div>}</For>
+                <For each={members}>{member => <div>{member.props.name}</div>}</For>
             </div>
             <div class='stack-row justify-space-between'>
-                <button onClick={() => confirm.value = false}>Back</button>
+                <button onClick={() => page.value = 'equipment'}>Back</button>
                 <button onClick={create} disabled={selection.map(s => !s.size)}>Confirm</button>
             </div>
         </Show>
@@ -182,3 +244,31 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
     </div>;
 }
 
+
+function SelectWeapon({weapons, ammoTypes}: {
+    weapons: Map<string, Item>,
+    ammoTypes: Map<string, Item>,
+}) {
+    const selection = ref<string>();
+    return <div class='stack-column spacing padding'>
+        <div class='stack-column' role='grid'>
+            <button role='row'>
+                <div role='gridcell' aria-selected={ariaBool(selection.undefined)} onClick={() => selection.value = undefined}>
+                    No weapon
+                </div>
+            </button>
+            <For each={bind([...weapons.values()])}>{weapon => 
+                <Show when={weapon.map(w => w.quantity > 0)}>
+                    <button role='row' aria-selected={ariaBool(selection.eq(weapon.props.itemType.props.id))} onClick={() => selection.value = weapon.value.itemType.id}>
+                        <div role='gridcell' class='stack-row spacing'>
+                            <div>{weapon.map(getItemName)}</div>
+                            <Show when={weapon.props.quantity.map(q => q > 1)}>
+                                <div>({weapon.props.quantity})</div>
+                            </Show>
+                        </div>
+                    </button>
+                </Show>
+            }</For>
+        </div>
+    </div>;
+}

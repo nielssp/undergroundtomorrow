@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use crate::{
     data::{get_item_type, ItemType},
     db::{
-        inhabitants::{Inhabitant, Skill},
+        inhabitants::{Inhabitant, Skill, Assignment},
         items::Item,
         locations::Location,
     },
@@ -18,7 +18,7 @@ pub struct InhabitantDto {
     pub date_of_birth: NaiveDate,
     pub health: i32,
     pub skills: Vec<Skill>,
-    pub assignment: Option<String>,
+    pub assignment: Option<Assignment>,
     pub team: Option<String>,
 }
 

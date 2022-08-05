@@ -28,6 +28,8 @@ pub enum SkillType {
     FirstAid,
     Scavenging,
     Exploration,
+    Repair,
+    Cooking,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -38,6 +40,18 @@ pub struct Skill {
     pub xp: i32,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, PartialEq, Copy, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum Assignment {
+    Reactor,
+    Infirmary,
+    Horticulture,
+    Workshop,
+    WaterTreatment,
+    Maintenance,
+    Cafeteria,
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct InhabitantData {
@@ -46,7 +60,7 @@ pub struct InhabitantData {
     #[serde(default)]
     pub skills: Vec<Skill>,
     #[serde(default)]
-    pub assignment: Option<String>,
+    pub assignment: Option<Assignment>,
     #[serde(default)]
     pub team: Option<String>,
     #[serde(default)]

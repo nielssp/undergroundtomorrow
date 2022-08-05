@@ -109,14 +109,18 @@ export interface Inhabitant {
     skills: Skill[];
     assignment?: string;
     team?: string;
+    weaponType?: string;
+    ammo: number;
 }
 
 export interface ItemType {
+    id: string;
     name: string;
     namePlural: string;
-    equipable: boolean;
+    weapon: boolean;
     damage: number;
     range: number;
+    ammoType?: string;
 }
 
 export interface Item {
