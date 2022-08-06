@@ -1,0 +1,7 @@
+name = "Axe"
+name_plural = "Axes"
+weapon = true
+melee_weapon = true
+damage = 3
+range = 1
+

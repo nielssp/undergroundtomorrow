@@ -1,5 +1,5 @@
 name = "Police Station"
-quantity = 15
+quantity = 20
 
 [loot.9mm-pistol]
 min = 1

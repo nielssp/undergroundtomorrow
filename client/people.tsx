@@ -156,6 +156,8 @@ function mapSkillType(skillType: string): string {
             return 'Scavenging';
         case 'exploration':
             return 'Exploration';
+        case 'stealth':
+            return 'Stealth';
         default:
             return 'Unknown skill';
     }

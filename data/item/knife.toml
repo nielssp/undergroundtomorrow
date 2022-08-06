@@ -1,0 +1,7 @@
+name = "Knife"
+name_plural = "Knives"
+weapon = true
+melee_weapon = true
+damage = 3
+range = 1
+
