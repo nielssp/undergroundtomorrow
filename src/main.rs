@@ -20,6 +20,7 @@ mod generate;
 mod lobby;
 mod settings;
 mod util;
+mod expedition;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

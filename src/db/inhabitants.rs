@@ -1,6 +1,6 @@
 use chrono::{Date, NaiveDate, Utc};
 use itertools::Itertools;
-use sqlx::{types::Json, PgPool, Row};
+use sqlx::{types::Json, PgPool, Row, query::Query, Postgres, postgres::PgArguments};
 
 use crate::error;
 
@@ -133,11 +133,11 @@ pub async fn get_by_expedition(
     )
 }
 
-pub async fn get_available_inhabitants(
+pub async fn get_inhabitants_by_id(
     pool: &PgPool,
     bunker_id: i32,
     inhabitant_ids: &Vec<i32>,
-) -> Result<Vec<i32>, error::Error> {
+) -> Result<Vec<Inhabitant>, error::Error> {
     if inhabitant_ids.is_empty() {
         return Ok(vec![]);
     }
@@ -145,53 +145,42 @@ pub async fn get_available_inhabitants(
         .map(|i| format!("${}", i + 2))
         .join(", ");
     let query_str = format!(
-        "SELECT i.id FROM inhabitants i \
-        WHERE i.bunker_id = $1 AND i.id IN ( { } ) AND i.expedition_id IS NULL",
+        "SELECT * FROM inhabitants i \
+        WHERE i.bunker_id = $1 AND i.id IN ( { } )",
         params
     );
 
-    let mut query = sqlx::query(&query_str).bind(bunker_id);
-    for design_id in inhabitant_ids {
-        query = query.bind(design_id);
+    let mut query = sqlx::query_as(&query_str).bind(bunker_id);
+    for inhabitant_id in inhabitant_ids {
+        query = query.bind(inhabitant_id);
     }
     Ok(query
-        .try_map(|row| row.try_get("id"))
         .fetch_all(pool)
         .await?)
 }
 
-pub async fn attach_to_expedition(
-    pool: &PgPool,
-    bunker_id: i32,
-    expedition_id: i32,
-    inhabitant_ids: &Vec<i32>,
-) -> Result<bool, error::Error> {
-    if inhabitant_ids.is_empty() {
-        return Ok(false);
-    }
-    let params = (0..inhabitant_ids.len())
-        .map(|i| format!("${}", i + 3))
-        .join(", ");
-    let query_str = format!(
-        "UPDATE inhabitants SET expedition_id = $1 \
-        WHERE bunker_id = $2 AND id IN ( { } ) AND expedition_id IS NULL",
-        params
-    );
+pub fn update_inhabitant_data_query(
+    inhabitant: &Inhabitant,
+) -> Query<Postgres, PgArguments> {
+    sqlx::query("UPDATE inhabitants SET data = $2 WHERE id = $1")
+        .bind(inhabitant.id)
+        .bind(Json(&inhabitant.data))
+}
 
-    let mut query = sqlx::query(&query_str).bind(expedition_id).bind(bunker_id);
-    for design_id in inhabitant_ids {
-        query = query.bind(design_id);
-    }
-    Ok(query.execute(pool).await?.rows_affected() > 0)
+pub fn attach_to_expedition_query(
+    inhabitant_id: i32,
+    expedition_id: i32,
+) -> Query<'static, Postgres, PgArguments> {
+    sqlx::query("UPDATE inhabitants SET expedition_id = $2 WHERE id = $1 AND expedition_id IS NULL")
+        .bind(inhabitant_id)
+        .bind(expedition_id)
 }
 
 pub async fn update_inhabitant_data(
     pool: &PgPool,
     inhabitant: &Inhabitant,
 ) -> Result<(), error::Error> {
-    sqlx::query("UPDATE inhabitants SET data = $2 WHERE id = $1")
-        .bind(inhabitant.id)
-        .bind(Json(&inhabitant.data))
+    update_inhabitant_data_query(inhabitant)
         .execute(pool)
         .await?;
     Ok(())

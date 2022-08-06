@@ -14,7 +14,7 @@ export function Items({gameService}: {
                     <For each={items}>{item =>
                         <div class='stack-row spacing'>
                             <div>{item.map(getItemName)}</div>
-                            <Show when={item.props.quantity.map(q => q > 1)}>
+                            <Show when={item.props.quantity.map(q => q !== 1)}>
                                 <div>({item.props.quantity})</div>
                             </Show>
                         </div>

@@ -20,6 +20,8 @@ pub struct InhabitantDto {
     pub skills: Vec<Skill>,
     pub assignment: Option<Assignment>,
     pub team: Option<String>,
+    pub weapon_type: Option<String>,
+    pub ammo: i32,
 }
 
 impl From<Inhabitant> for InhabitantDto {
@@ -34,6 +36,8 @@ impl From<Inhabitant> for InhabitantDto {
             skills: data.skills,
             assignment: data.assignment,
             team: data.team,
+            weapon_type: data.weapon_type,
+            ammo: data.ammo,
         }
     }
 }

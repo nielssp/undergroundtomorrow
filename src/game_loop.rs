@@ -122,6 +122,15 @@ pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
         for member in &mut team {
             member.data.surface_exposure += exposure;
             inhabitants::update_inhabitant_data(pool, &member).await?;
+            if let Some(weapon_type_id) = &member.data.weapon_type {
+                items::add_item(pool, expedition.bunker_id, &weapon_type_id, 1).await?;
+                let weapon_type = ITEM_TYPES.get(weapon_type_id).ok_or_else(|| error::client_error("INVALID_WEAPON_TYPE"))?;
+                if let Some(ammo_type_id) = &weapon_type.ammo_type {
+                    if member.data.ammo > 0 {
+                        items::add_item(pool, expedition.bunker_id, &ammo_type_id, member.data.ammo).await?;
+                    }
+                }
+            }
         }
         messages::create_system_message(
             pool,
