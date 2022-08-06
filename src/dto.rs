@@ -1,9 +1,10 @@
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 
 use crate::{
     data::{get_item_type, ItemType},
     db::{
-        inhabitants::{Inhabitant, Skill, Assignment},
+        expeditions::Expedition,
+        inhabitants::{Assignment, Inhabitant, Skill},
         items::Item,
         locations::Location,
     },
@@ -81,6 +82,33 @@ impl From<Item> for ItemDto {
             id: source.id,
             item_type: get_item_type(&source.item_type),
             quantity: source.quantity,
+        }
+    }
+}
+
+#[derive(serde::Serialize, sqlx::FromRow)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpeditionDto {
+    pub id: i32,
+    pub location_id: Option<i32>,
+    pub zone_x: i32,
+    pub zone_y: i32,
+    pub eta: DateTime<Utc>,
+    pub created: DateTime<Utc>,
+    pub distance: i32,
+}
+
+impl From<Expedition> for ExpeditionDto {
+    fn from(source: Expedition) -> ExpeditionDto {
+        let data = source.data.0;
+        ExpeditionDto {
+            id: source.id,
+            location_id: source.location_id,
+            zone_x: source.zone_x,
+            zone_y: source.zone_y,
+            eta: source.eta,
+            created: source.created,
+            distance: data.distance,
         }
     }
 }

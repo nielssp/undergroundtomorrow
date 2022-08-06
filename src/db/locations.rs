@@ -176,9 +176,3 @@ pub async fn get_location(pool: &PgPool, location_id: i32) -> Result<Location, e
         .fetch_one(pool)
         .await?)
 }
-
-pub fn get_distance(a: (i32, i32), b: (i32, i32)) -> i32 {
-    let delta_x = a.0 - b.0;
-    let delta_y = a.1 - b.1;
-    ((delta_x * delta_x + delta_y * delta_y) as f64).sqrt() as i32
-}

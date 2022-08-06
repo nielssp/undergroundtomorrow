@@ -136,10 +136,12 @@ function mapSkillType(skillType: string): string {
     switch (skillType) {
         case 'combat':
             return 'Combat';
-        case 'handToHand':
-            return 'Hand-to-hand';
+        case 'unarmed':
+            return 'Unarmed';
         case 'guns':
             return 'Guns';
+        case 'meleeWeapons':
+            return 'Melee Weapons';
         case 'science':
             return 'Science';
         case 'reactor':

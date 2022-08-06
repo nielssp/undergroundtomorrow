@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use sqlx::{PgPool, query::Query, Postgres, postgres::PgArguments};
+use sqlx::{postgres::PgArguments, query::Query, PgPool, Postgres};
 
 use crate::error;
 
@@ -51,15 +51,13 @@ pub async fn remove_item(
     quantity: i32,
 ) -> Result<bool, error::Error> {
     Ok(remove_items_query(bunker_id, item_type, quantity)
-    .execute(pool)
-    .await?
-    .rows_affected() > 0)
+        .execute(pool)
+        .await?
+        .rows_affected()
+        > 0)
 }
 
-pub async fn remove_empty_items(
-    pool: &PgPool,
-    bunker_id: i32,
-) -> Result<(), error::Error> {
+pub async fn remove_empty_items(pool: &PgPool, bunker_id: i32) -> Result<(), error::Error> {
     sqlx::query("DELETE FROM items WHERE bunker_id = $1 AND quantity <= 0")
         .bind(bunker_id)
         .execute(pool)
@@ -97,7 +95,5 @@ pub async fn get_items_by_id(
     for item_type in item_types {
         query = query.bind(item_type);
     }
-    Ok(query
-        .fetch_all(pool)
-        .await?)
+    Ok(query.fetch_all(pool).await?)
 }

@@ -95,8 +95,8 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
         }) || []);
         weapons.value = weapons.value;
         ammoTypes.value = ammoTypes.value;
-        const speed = 5;
-        eta.value = formatDuration((10 + 0.2 * distance / speed) * 60 / gameService.world.value!.timeAcceleration);
+        const speed = 5 * 1000 / 60;
+        eta.value = formatDuration((10 + 2 * distance / speed) * 60 / gameService.world.value!.timeAcceleration);
         page.value = 'equipment';
     }
 

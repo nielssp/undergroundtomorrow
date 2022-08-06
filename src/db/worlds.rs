@@ -102,6 +102,15 @@ pub async fn get_world_time(pool: &PgPool, world_id: i32) -> Result<WorldTime, e
     .await?)
 }
 
+pub async fn get_world_times(pool: &PgPool) -> Result<Vec<WorldTime>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT id, created, start_year, time_acceleration, time_offset \
+            FROM worlds",
+    )
+    .fetch_all(pool)
+    .await?)
+}
+
 impl World {
     pub fn now(&self) -> NaiveDateTime {
         let duration = Utc::now().signed_duration_since(self.created);

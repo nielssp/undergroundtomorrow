@@ -10,17 +10,18 @@ extern crate lazy_static;
 use crate::settings::Settings;
 
 mod auth;
+mod battle;
 mod data;
 mod db;
 mod dto;
 mod error;
+mod expedition;
 mod game;
 mod game_loop;
 mod generate;
 mod lobby;
 mod settings;
 mod util;
-mod expedition;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

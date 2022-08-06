@@ -5,7 +5,10 @@ use crate::error;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ExpeditionData {}
+pub struct ExpeditionData {
+    #[serde(default)]
+    pub distance: i32,
+}
 
 #[derive(serde::Serialize, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
@@ -69,10 +72,15 @@ pub async fn get_expeditions(
     )
 }
 
-pub async fn get_finished_expeditions(pool: &PgPool) -> Result<Vec<Expedition>, error::Error> {
-    Ok(
-        sqlx::query_as("SELECT * FROM expeditions WHERE eta <= CURRENT_TIMESTAMP")
-            .fetch_all(pool)
-            .await?,
+pub async fn get_finished_expeditions(
+    pool: &PgPool,
+    world_id: i32,
+) -> Result<Vec<Expedition>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM expeditions WHERE eta <= CURRENT_TIMESTAMP \
+            AND bunker_id IN (SELECT id FROM bunkers WHERE world_id = $1)",
     )
+    .bind(world_id)
+    .fetch_all(pool)
+    .await?)
 }

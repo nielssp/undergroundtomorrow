@@ -154,9 +154,6 @@ export interface Message {
     unread: boolean;
 }
 
-export interface ExpeditionData {
-}
-
 export interface Expedition {
     id: number;
     bunkerId: number;
@@ -164,7 +161,8 @@ export interface Expedition {
     zoneX: number;
     zoneY: number;
     eta: string;
-    data: ExpeditionData;
+    created: string;
+    distance: number;
 }
 
 export interface TeamMember {

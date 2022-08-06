@@ -1,6 +1,7 @@
 name = "Baseball Bat"
 name_plural = "Baseball Bats"
 weapon = true
+melee_weapon = true
 damage = 2
 range = 1
 

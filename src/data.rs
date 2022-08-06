@@ -37,6 +37,8 @@ pub struct ItemType {
     #[serde(default)]
     pub weapon: bool,
     #[serde(default)]
+    pub melee_weapon: bool,
+    #[serde(default)]
     pub damage: i32,
     #[serde(default)]
     pub range: i32,

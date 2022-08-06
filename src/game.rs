@@ -12,7 +12,7 @@ use crate::{
         sessions::Session,
         worlds,
     },
-    dto::{InhabitantDto, ItemDto, LocationDto},
+    dto::{ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
     error, expedition,
 };
 
@@ -182,7 +182,12 @@ async fn get_expeditions(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(expeditions::get_expeditions(&pool, player.bunker.id).await?))
+    let expeditions: Vec<ExpeditionDto> = expeditions::get_expeditions(&pool, player.bunker.id)
+        .await?
+        .into_iter()
+        .map(|e| e.into())
+        .collect();
+    Ok(HttpResponse::Ok().json(expeditions))
 }
 
 #[post("/world/{world_id:\\d+}/create_expedition")]

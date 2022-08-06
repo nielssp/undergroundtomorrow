@@ -1,6 +1,6 @@
 use chrono::{Date, NaiveDate, Utc};
 use itertools::Itertools;
-use sqlx::{types::Json, PgPool, Row, query::Query, Postgres, postgres::PgArguments};
+use sqlx::{postgres::PgArguments, query::Query, types::Json, PgPool, Postgres, Row};
 
 use crate::error;
 
@@ -19,8 +19,6 @@ pub struct Inhabitant {
 #[serde(rename_all = "camelCase")]
 pub enum SkillType {
     Combat,
-    HandToHand,
-    Guns,
     Science,
     Reactor,
     Botany,
@@ -30,6 +28,11 @@ pub enum SkillType {
     Exploration,
     Repair,
     Cooking,
+    Stealth,
+    Movement,
+    MeleeWeapons,
+    Guns,
+    Unarmed,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -69,6 +72,8 @@ pub struct InhabitantData {
     pub weapon_type: Option<String>,
     #[serde(default)]
     pub ammo: i32,
+    #[serde(default)]
+    pub hp: i32,
 }
 
 pub struct NewInhabitant {
@@ -154,14 +159,10 @@ pub async fn get_inhabitants_by_id(
     for inhabitant_id in inhabitant_ids {
         query = query.bind(inhabitant_id);
     }
-    Ok(query
-        .fetch_all(pool)
-        .await?)
+    Ok(query.fetch_all(pool).await?)
 }
 
-pub fn update_inhabitant_data_query(
-    inhabitant: &Inhabitant,
-) -> Query<Postgres, PgArguments> {
+pub fn update_inhabitant_data_query(inhabitant: &Inhabitant) -> Query<Postgres, PgArguments> {
     sqlx::query("UPDATE inhabitants SET data = $2 WHERE id = $1")
         .bind(inhabitant.id)
         .bind(Json(&inhabitant.data))
