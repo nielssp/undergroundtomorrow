@@ -1,5 +1,5 @@
-import {bind, ref} from "cstk";
-import {addSeconds, differenceInCalendarYears, differenceInSeconds, formatISO, parseISO, setYear} from "date-fns";
+import {bind, Property, ref, zipWith} from "cstk";
+import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, formatISO, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
 import {Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, Location, Message, Sector, World} from "../dto";
 /*
@@ -49,6 +49,11 @@ export class GameService {
         });
     }
 
+    getAge(dob: string): Property<number> {
+        const date = parseISO(dob);
+        return this.worldTime.map(wt => differenceInYears(wt, date));
+    }
+
     private get worldId() {
         if (this.world.value) {
             return this.world.value.id;
@@ -78,8 +83,12 @@ export class GameService {
         return this.api.rpc<Inhabitant[]>(`world/${this.worldId}/get_inhabitants`);
     }
 
-    setTeam(inhabitantId: number, team: String|undefined) {
+    setTeam(inhabitantId: number, team: string|undefined) {
         return this.api.rpc<void>(`world/${this.worldId}/set_team`, {inhabitantId, team});
+    }
+
+    setAssignment(inhabitantId: number, assignment: string|undefined) {
+        return this.api.rpc<void>(`world/${this.worldId}/set_assignment`, {inhabitantId, assignment});
     }
 
     getItems() {

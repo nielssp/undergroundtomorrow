@@ -9,6 +9,9 @@ export function getErrorMessage(error: ApiError|any) {
         return 'Not allowed to access resource';
     } else if (error.status === 404) {
         return 'Resource not found';
+    } else if (error.status === 400) {
+        console.error(error);
+        return 'Client error: ' + error.code;
     } else {
         console.error(error);
         return 'Unknown server error';

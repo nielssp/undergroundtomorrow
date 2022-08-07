@@ -1,4 +1,4 @@
-use chrono::{Date, NaiveDate, Utc};
+use chrono::{Date, Datelike, NaiveDate, NaiveDateTime, Utc};
 use itertools::Itertools;
 use sqlx::{postgres::PgArguments, query::Query, types::Json, PgPool, Postgres, Row};
 
@@ -73,7 +73,9 @@ pub struct InhabitantData {
     #[serde(default)]
     pub ammo: i32,
     #[serde(default)]
-    pub hp: i32,
+    pub hp: i32, // TODO: wounded state
+    #[serde(default)]
+    pub energy: i32, // TODO: sleep state etc
 }
 
 pub struct NewInhabitant {
@@ -226,6 +228,24 @@ pub fn get_skill_level(xp: i32) -> i32 {
     ((xp as f64) / 50.0 + 1.0).log2() as i32
 }
 
+pub fn get_age(now: NaiveDateTime, dob: NaiveDate) -> i32 {
+    let date = now.date();
+    let age = date.year() - dob.year();
+    if let Some(adjusted_date) = date.with_year(dob.year()).or_else(|| {
+        date.with_day(date.day() - 1)
+            .map(|d| d.with_year(dob.year()))
+            .flatten()
+    }) {
+        if adjusted_date < dob {
+            age - 1
+        } else {
+            age
+        }
+    } else {
+        age
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -237,5 +257,17 @@ mod tests {
         assert_eq!(1, get_skill_level(50));
         assert_eq!(1, get_skill_level(149));
         assert_eq!(2, get_skill_level(150));
+    }
+
+    #[test]
+    fn can_get_get() {
+        let now = NaiveDate::from_ymd(2070, 06, 01).and_hms(12, 0, 0);
+        assert_eq!(0, get_age(now, NaiveDate::from_ymd(2069, 06, 02)));
+        assert_eq!(1, get_age(now, NaiveDate::from_ymd(2069, 06, 01)));
+        assert_eq!(2, get_age(now, NaiveDate::from_ymd(2068, 06, 01)));
+        let now = NaiveDate::from_ymd(2020, 02, 29).and_hms(12, 0, 0);
+        assert_eq!(9, get_age(now, NaiveDate::from_ymd(2010, 03, 01)));
+        assert_eq!(10, get_age(now, NaiveDate::from_ymd(2010, 02, 28)));
+        assert_eq!(8, get_age(now, NaiveDate::from_ymd(2012, 02, 29)));
     }
 }

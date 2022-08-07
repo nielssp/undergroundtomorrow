@@ -8,7 +8,7 @@ use crate::{
     data::ITEM_TYPES,
     db::{
         bunkers::Bunker,
-        expeditions, inhabitants,
+        expeditions, inhabitants::{self, get_age},
         items::{self, Item},
         locations, worlds,
     },
@@ -78,6 +78,9 @@ pub async fn create(
             .iter()
             .find(|m| m.inhabitant_id == inhabintant.id)
             .ok_or_else(|| error::internal_error("Inhabitant not in list"))?;
+        if get_age(world_time.now(), inhabintant.date_of_birth) < 16 {
+            Err(error::client_error("INHABITANT_TOO_YOUNG"))?;
+        }
         if let Some(weapon_type_id) = &member.weapon_type {
             let item = items
                 .get_mut(weapon_type_id)

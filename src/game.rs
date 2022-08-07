@@ -8,7 +8,9 @@ use crate::{
     auth::validate_session,
     db::{
         bunkers::{self, Bunker},
-        expeditions, inhabitants, items, locations, messages,
+        expeditions,
+        inhabitants::{self, Assignment, get_age},
+        items, locations, messages,
         sessions::Session,
         worlds,
     },
@@ -34,11 +36,19 @@ struct SetTeamRequest {
     team: Option<String>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SetAssignmentRequest {
+    inhabitant_id: i32,
+    assignment: Option<Assignment>,
+}
+
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_world)
         .service(get_bunker)
         .service(get_inhabitants)
         .service(set_team)
+        .service(set_assignment)
         .service(get_items)
         .service(get_locations)
         .service(get_sectors)
@@ -96,7 +106,31 @@ async fn set_team(
     let mut inhabitant = inhabitants::get_inhabitant(&pool, player.bunker.id, data.inhabitant_id)
         .await?
         .ok_or_else(|| error::client_error("INHABITANT_NOT_FOUND"))?;
+    let world_time = worlds::get_world_time(&pool, player.world_id).await?;
+    if get_age(world_time.now(), inhabitant.date_of_birth) < 16 {
+        Err(error::client_error("INHABITANT_TOO_YOUNG"))?;
+    }
     inhabitant.data.team = data.into_inner().team;
+    inhabitants::update_inhabitant_data(&pool, &inhabitant).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/set_assignment")]
+async fn set_assignment(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<SetAssignmentRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    let mut inhabitant = inhabitants::get_inhabitant(&pool, player.bunker.id, data.inhabitant_id)
+        .await?
+        .ok_or_else(|| error::client_error("INHABITANT_NOT_FOUND"))?;
+    let world_time = worlds::get_world_time(&pool, player.world_id).await?;
+    if get_age(world_time.now(), inhabitant.date_of_birth) < 16 {
+        Err(error::client_error("INHABITANT_TOO_YOUNG"))?;
+    }
+    inhabitant.data.assignment = data.into_inner().assignment;
     inhabitants::update_inhabitant_data(&pool, &inhabitant).await?;
     Ok(HttpResponse::NoContent().finish())
 }

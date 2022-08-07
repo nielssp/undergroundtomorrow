@@ -100,6 +100,20 @@ export interface Skill {
     level: number;
 }
 
+export const assignmentMap = {
+    reactor: 'Reactor',
+    infirmary: 'Infirmary',
+    horticulture: 'Horticulture',
+    workshop: 'Workshop',
+    waterTreatment: 'Water Treatment',
+    maintenance: 'Maintenance',
+    cafeteria: 'Cafeteria',
+};
+
+export type Assignment = keyof typeof assignmentMap;
+
+export const assignments = Object.keys(assignmentMap) as Assignment[];
+
 export interface Inhabitant {
     id: number;
     bunkerId: number;
@@ -107,7 +121,7 @@ export interface Inhabitant {
     name: string;
     dateOfBirth: string;
     skills: Skill[];
-    assignment?: string;
+    assignment?: Assignment;
     team?: string;
     weaponType?: string;
     ammo: number;

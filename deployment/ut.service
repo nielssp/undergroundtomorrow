@@ -1,0 +1,12 @@
+[Unit]
+Description=underground-tomorrow
+
+[Service]
+User=niels
+WorkingDirectory=/svr
+Type=simple
+Restart=on-failure
+ExecStart=/svr/start.sh
+
+[Install]
+WantedBy=multi-user.target

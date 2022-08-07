@@ -1,8 +1,8 @@
-import {bind, createElement, Deref, Field, For, Fragment, Show, TextControl, ValueProperty, zipWith} from "cstk";
+import {ariaBool, bind, createElement, Deref, Field, For, Fragment, Show, TextControl, ValueProperty, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
 import { openDialog } from "./dialog";
-import { Inhabitant } from "./dto";
-import { ErrorIndicator } from "./error";
+import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
+import { ErrorIndicator, handleError } from "./error";
 import {GameService} from "./services/game-service";
 import {dataSource, DerefData, LoadingIndicator} from "./util";
 
@@ -12,8 +12,9 @@ export function People({gameService}: {
     const people = dataSource(() => gameService.getInhabitants());
     const teams = bind<string[]>([]);
 
-    function openDetails(person: Inhabitant) {
-        openDialog(Details, {person, gameService, teams});
+    async function openDetails(person: Inhabitant) {
+        await openDialog(Details, {person, gameService, teams});
+        people.notify();
     }
 
     context.onDestroy(people.data.getAndObserve(people => {
@@ -31,9 +32,7 @@ export function People({gameService}: {
                     <For each={people}>{person =>
                         <button class='stack-row spacing' role='row' onClick={() => openDetails(person.value)}>
                             <div>{person.props.name}</div>
-                            <div>(Age: {zipWith([gameService.worldTime, person.props.dateOfBirth], (wt, dob) => {
-                                return '' + differenceInYears(wt, parseISO(dob));
-                            })})</div>
+                            <div>(Age: {person.props.dateOfBirth.flatMap(dob => gameService.getAge(dob))})</div>
                             <Show when={person.props.expeditionId}>
                                 <div style='margin-left: auto;'>(on mission)</div>
                             </Show>
@@ -48,20 +47,43 @@ export function People({gameService}: {
     </>;
 }
 
-function Details({person, gameService, teams}: {
+function Details({gameService, teams, ...props}: {
     person: Inhabitant,
     gameService: GameService,
     teams: ValueProperty<string[]>,
 }) {
+    const person = bind(props.person);
+
+    const age = gameService.getAge(props.person.dateOfBirth);
+
+    async function setAssignment() {
+        const choice = await openDialog(SetAssignment, {person: person.value});
+        if (choice) {
+            const assignment = choice.length ? choice[0] : undefined;
+            try {
+                await gameService.setAssignment(person.value.id, assignment);
+                person.value.assignment = assignment;
+                person.value = person.value;
+            } catch (error) {
+                handleError(error);
+            }
+        }
+    }
 
     async function setTeam() {
-        const choice = await openDialog(SetTeam, {person, teams});
+        const choice = await openDialog(SetTeam, {person: person.value, teams});
         if (choice) {
             const team = choice.length ? choice[0] : undefined;
-            await gameService.setTeam(person.id, team);
-            if (team && !teams.value.includes(team)) {
-                teams.value.push(team);
-                teams.value = teams.value;
+            try {
+                await gameService.setTeam(person.value.id, team);
+                person.value.team = team;
+                person.value = person.value;
+                if (team && !teams.value.includes(team)) {
+                    teams.value.push(team);
+                    teams.value = teams.value;
+                }
+            } catch (error) {
+                handleError(error);
             }
         }
     }
@@ -69,29 +91,40 @@ function Details({person, gameService, teams}: {
     return <div class='padding spacing stack-column'>
         <div class='stack-row spacing justify-space-between'>
             <div style='font-weight: bold'>Name:</div>
-            <div>{person.name}</div>
+            <div>{person.props.name}</div>
         </div>
         <div class='stack-row spacing justify-space-between'>
             <div style='font-weight: bold'>Age:</div>
-            <div>{gameService.worldTime.map(wt => '' + differenceInYears(wt, parseISO(person.dateOfBirth)))}</div>
+            <div>{age}</div>
         </div>
         <div class='stack-row spacing justify-space-between'>
             <div style='font-weight: bold'>Date of birth:</div>
-            <div>{format(parseISO(person.dateOfBirth), 'MM/dd/yy')}</div>
+            <div>{format(parseISO(person.value.dateOfBirth), 'MM/dd/yy')}</div>
         </div>
-        {!person.team ? '' : <div class='stack-row spacing justify-space-between'>
-            <div style='font-weight: bold'>Team:</div>
-            <div>{person.team}</div>
-        </div>}
-        <For each={bind(person.skills)}>{skill =>
+        <Deref ref={person.props.assignment}>{assignment => 
+            <div class='stack-row spacing justify-space-between'>
+                <div style='font-weight: bold'>Assignment:</div>
+                <div>{assignment.map(mapAssignment)}</div>
+            </div>
+        }</Deref>
+        <Deref ref={person.props.team}>{team => 
+            <div class='stack-row spacing justify-space-between'>
+                <div style='font-weight: bold'>Team:</div>
+                <div>{team}</div>
+            </div>
+        }</Deref>
+        <For each={person.props.skills}>{skill =>
             <div class='stack-row spacing justify-space-between'>
                 <div style='font-weight: bold'>{skill.props.skillType.map(mapSkillType)}:</div>
                 <div>Level {skill.props.level}</div>
             </div>
         }</For>
-        <div class='stack-row justify-end'>
-            <button onClick={setTeam}>Set Team</button>
-        </div>
+        <Show when={age.map(a => a >= 16)}>
+            <div class='stack-row justify-end spacing'>
+                <button onClick={setAssignment}>Set Job</button>
+                <button onClick={setTeam}>Set Team</button>
+            </div>
+        </Show>
     </div>;
 }
 
@@ -109,11 +142,11 @@ function SetTeam({person, teams, close}: {
 
     return <div class='padding spacing stack-column'>
         <div role='grid' class='stack-column'>
-            <button role='row' class='stack-row spacing justify-space-between' onClick={() => close([])}>
+            <button role='row' class='selectable' aria-selected={ariaBool(bind(!person.team))} onClick={() => close([])}>
                 <div role='gridcell'>No Team</div>
             </button>
             <For each={teams}>{team =>
-                <button role='row' class='stack-row spacing justify-space-between' onClick={() => close([team.value])}>
+                <button role='row' class='selectable' aria-selected={ariaBool(team.eq(person.team))} onClick={() => close([team.value])}>
                     <div role='gridcell'>{team}</div>
                 </button>
                 }</For>
@@ -129,6 +162,24 @@ function SetTeam({person, teams, close}: {
                 <button disabled={newTeam.not}>Create</button>
             </div>
         </form>
+    </div>;
+}
+
+function SetAssignment({person, close}: {
+    person: Inhabitant,
+    close: (assignment: [Assignment]|[]) => void,
+}) {
+    return <div class='padding spacing stack-column'>
+        <div role='grid' class='stack-column'>
+            <button role='row' class='selectable' aria-selected={ariaBool(bind(!person.assignment))} onClick={() => close([])}>
+                <div role='gridcell'>No Assignment</div>
+            </button>
+            <For each={bind(assignments)}>{assignment =>
+                <button role='row' class='selectable' aria-selected={ariaBool(assignment.eq(person.assignment))} onClick={() => close([assignment.value])}>
+                    <div role='gridcell'>{assignment.map(mapAssignment)}</div>
+                </button>
+                }</For>
+        </div>
     </div>;
 }
 
@@ -159,6 +210,13 @@ function mapSkillType(skillType: string): string {
         case 'stealth':
             return 'Stealth';
         default:
-            return 'Unknown skill';
+            return skillType;
     }
+}
+
+function mapAssignment(assignment: Assignment): string {
+    if (assignmentMap.hasOwnProperty(assignment)) {
+        return assignmentMap[assignment];
+    }
+    return assignment;
 }
