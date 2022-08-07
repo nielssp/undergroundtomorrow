@@ -49,7 +49,12 @@ export class GameService {
         });
     }
 
-    getAge(dob: string): Property<number> {
+    getAge(dob: string): number {
+        const date = parseISO(dob);
+        return differenceInYears(this.worldTime.value, date);
+    }
+
+    bindAge(dob: string): Property<number> {
         const date = parseISO(dob);
         return this.worldTime.map(wt => differenceInYears(wt, date));
     }

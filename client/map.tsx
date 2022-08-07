@@ -81,14 +81,17 @@ export function Map({amber, gameService}: {
 function ExpeditionsDialog({dialog, expeditions}: {
     dialog: DialogRef,
     expeditions: DataSource<Expedition[]>,
-}) {
+}, context: JSX.Context) {
+    const emitter = bind(null);
+    const interval = setInterval(() => emitter.value = null, 1000);
+    context.onDestroy(() => clearInterval(interval));
     return <div class='stack-column spacing padding'>
         <DerefData data={expeditions}>{expeditions =>
             <>
                 <For each={expeditions}>{expedition =>
                     <div class='stack-row spacing'>
                         <div class='grow'>Sector {expedition.map(e => getSectorName({x: e.zoneX, y: e.zoneY}))}</div>
-                        <div>ETA {expedition.props.eta.map(d => formatEta(d))}</div>
+                        <div>ETA {emitter.flatMap(() => expedition.props.eta.map(d => formatEta(d)))}</div>
                     </div>
                     }</For>
                 <Show when={expeditions.map(e => !e.length)}>

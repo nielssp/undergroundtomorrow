@@ -32,7 +32,7 @@ export function People({gameService}: {
                     <For each={people}>{person =>
                         <button class='stack-row spacing' role='row' onClick={() => openDetails(person.value)}>
                             <div>{person.props.name}</div>
-                            <div>(Age: {person.props.dateOfBirth.flatMap(dob => gameService.getAge(dob))})</div>
+                            <div>(Age: {person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
                             <Show when={person.props.expeditionId}>
                                 <div style='margin-left: auto;'>(on mission)</div>
                             </Show>
@@ -54,7 +54,7 @@ function Details({gameService, teams, ...props}: {
 }) {
     const person = bind(props.person);
 
-    const age = gameService.getAge(props.person.dateOfBirth);
+    const age = gameService.bindAge(props.person.dateOfBirth);
 
     async function setAssignment() {
         const choice = await openDialog(SetAssignment, {person: person.value});
@@ -113,7 +113,7 @@ function Details({gameService, teams, ...props}: {
                 <div>{team}</div>
             </div>
         }</Deref>
-        <For each={person.props.skills}>{skill =>
+        <For each={person.props.skills.map(skills => skills.sort((a, b) => b.xp - a.xp))}>{skill =>
             <div class='stack-row spacing justify-space-between'>
                 <div style='font-weight: bold'>{skill.props.skillType.map(mapSkillType)}:</div>
                 <div>Level {skill.props.level}</div>

@@ -20,7 +20,12 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     location?: Location,
     close: (choice: boolean) => void,
 }, context: JSX.Context) {
-    const people = dataSource(() => gameService.getInhabitants().then(people => people.filter(p => !p.expeditionId)));
+    const people = dataSource(() => gameService.getInhabitants().then(people => people.filter(p => {
+        if (p.expeditionId) {
+            return false;
+        }
+        return gameService.getAge(p.dateOfBirth) >= 16;
+    })));
     const teams = bind<string[]>([]);
     const custom = bind(false);
     const page = bind<'team'|'equipment'|'confirm'>('team');
@@ -346,9 +351,11 @@ function SelectWeapon({weapon, ammo, weapons, ammoTypes, close}: {
                     <div>Amount:</div>
                     <div>{ammoAmount} / {ammoType.props.quantity}</div>
                 </div>
-                <div class='stack-row spacing justify-end'>
-                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value--}>-</button>
-                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value++}>+</button>
+                <div class='stack-row spacing justify-space-between'>
+                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value = Math.max(0, ammoAmount.value - 10)}>-10</button>
+                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value--}>-1</button>
+                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value++}>+1</button>
+                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value = Math.min(ammoType.value.quantity, ammoAmount.value + 10)}>+10</button>
                 </div>
             </>
         }</Deref>
