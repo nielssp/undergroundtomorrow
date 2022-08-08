@@ -1,3 +1,5 @@
+use tracing::debug;
+
 use crate::{
     db::{bunkers::Bunker, inhabitants::Inhabitant},
     error,
@@ -40,8 +42,10 @@ pub fn handle_tick(
             if inhabitant.data.health >= 25
                 && water_quality >= 100
                 && air_quality >= 100
+                && inhabitant.data.surface_exposure < 1
                 && roll_dice(0.01, inhabitant.data.health / 25)
             {
+                debug!("{} recovered from disease", inhabitant.name);
                 inhabitant.data.sick = false;
             } else {
                 inhabitant.data.health -= 1;
@@ -51,8 +55,10 @@ pub fn handle_tick(
             0.01,
             inhabitant.data.surface_exposure + 20 - water_quality * air_quality / 500,
         ) {
+            debug!("{} got sick", inhabitant.name);
             inhabitant.data.sick = true;
             inhabitant.data.recovering = false;
+            inhabitant.changed = true;
         }
         if !inhabitant.data.bleeding
             && !inhabitant.data.infection
