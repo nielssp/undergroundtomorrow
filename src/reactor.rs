@@ -2,13 +2,14 @@ use rand::Rng;
 use sqlx::PgPool;
 
 use crate::{
+    data::ITEM_TYPES,
     db::{
-        bunkers::{Bunker, self},
+        bunkers::{self, Bunker},
         inhabitants::{self, Assignment, Inhabitant, SkillType},
-        messages, items,
+        items, messages,
     },
     error,
-    util::{roll_dice, skill_roll}, data::ITEM_TYPES,
+    util::{roll_dice, skill_roll},
 };
 
 #[derive(serde::Deserialize)]
@@ -41,12 +42,15 @@ pub async fn handle_tick(
     bunker.data.reactor.maintenance = (bunker.data.reactor.maintenance - 1).max(0);
     if bunker.data.reactor.malfunction {
         for mut inhabitant in reactor_workers {
+            if !bunker.data.reactor.malfunction && bunker.data.reactor.maintenance >= 100 {
+                break;
+            }
             let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Reactor);
             if skill_roll(0.1, level) {
                 bunker.data.reactor.malfunction = false;
-                let improvement = rand::thread_rng().gen_range(1..5) + level;
-                bunker.data.reactor.maintenance =
-                    (bunker.data.reactor.maintenance + improvement).min(100);
+                let improvement = (rand::thread_rng().gen_range(1..3) + level)
+                    .min(100 - bunker.data.reactor.maintenance);
+                bunker.data.reactor.maintenance += improvement;
                 inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Reactor, improvement * 10);
                 inhabitant.changed = true;
             }
@@ -67,11 +71,14 @@ pub async fn handle_tick(
         }
     } else {
         for mut inhabitant in reactor_workers {
+            if bunker.data.reactor.maintenance >= 100 {
+                break;
+            }
             let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Reactor);
             if skill_roll(0.1, level) {
-                let improvement = rand::thread_rng().gen_range(1..5) + level;
-                bunker.data.reactor.maintenance =
-                    (bunker.data.reactor.maintenance + improvement).min(100);
+                let improvement = (rand::thread_rng().gen_range(1..3) + level)
+                    .min(100 - bunker.data.reactor.maintenance);
+                bunker.data.reactor.maintenance += improvement;
                 inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Reactor, improvement * 10);
                 inhabitant.changed = true;
             }
@@ -108,7 +115,9 @@ pub async fn refuel(
     refueling_request: &RefuelingRequest,
 ) -> Result<(), error::Error> {
     let mut tx = pool.begin().await?;
-    let item_type = ITEM_TYPES.get(&refueling_request.item_type).ok_or_else(|| error::client_error("UNKNOWN_ITEM_TYPE"))?;
+    let item_type = ITEM_TYPES
+        .get(&refueling_request.item_type)
+        .ok_or_else(|| error::client_error("UNKNOWN_ITEM_TYPE"))?;
     if item_type.reactivity < 1 {
         Err(error::client_error("INVALID_FUEL_TYPE"))?;
     }

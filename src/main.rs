@@ -9,6 +9,7 @@ extern crate lazy_static;
 
 use crate::settings::Settings;
 
+mod air_recycling;
 mod auth;
 mod battle;
 mod data;
@@ -24,7 +25,6 @@ mod reactor;
 mod settings;
 mod util;
 mod water_treatment;
-mod air_recycling;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

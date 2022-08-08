@@ -1,7 +1,15 @@
 use rand::Rng;
 use sqlx::PgPool;
 
-use crate::{db::{inhabitants::{Assignment, Inhabitant, SkillType, self}, bunkers::Bunker, messages}, error, util::{skill_roll, roll_dice}};
+use crate::{
+    db::{
+        bunkers::Bunker,
+        inhabitants::{self, Assignment, Inhabitant, SkillType},
+        messages,
+    },
+    error,
+    util::{roll_dice, skill_roll},
+};
 
 pub async fn handle_tick(
     pool: &PgPool,
@@ -11,17 +19,24 @@ pub async fn handle_tick(
 ) -> Result<i32, error::Error> {
     let workers: Vec<_> = inhabitants
         .iter_mut()
-        .filter(|i| i.expedition_id.is_none() && i.data.assignment == Some(Assignment::AirRecycling))
+        .filter(|i| {
+            i.expedition_id.is_none() && i.data.assignment == Some(Assignment::AirRecycling)
+        })
         .collect();
     bunker.data.air_recycling.maintenance = (bunker.data.air_recycling.maintenance - 1).max(0);
     if bunker.data.air_recycling.malfunction {
         for mut inhabitant in workers {
+            if !bunker.data.air_recycling.malfunction
+                && bunker.data.air_recycling.maintenance >= 100
+            {
+                break;
+            }
             let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
             if skill_roll(0.1, level) {
                 bunker.data.air_recycling.malfunction = false;
-                let improvement = rand::thread_rng().gen_range(1..5) + level;
-                bunker.data.air_recycling.maintenance =
-                    (bunker.data.air_recycling.maintenance + improvement).min(100);
+                let improvement = (rand::thread_rng().gen_range(1..3) + level)
+                    .min(100 - bunker.data.air_recycling.maintenance);
+                bunker.data.air_recycling.maintenance += improvement;
                 inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
                 inhabitant.changed = true;
             }
@@ -42,16 +57,22 @@ pub async fn handle_tick(
         }
     } else {
         for mut inhabitant in workers {
+            if bunker.data.air_recycling.maintenance >= 100 {
+                break;
+            }
             let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
             if skill_roll(0.1, level) {
-                let improvement = rand::thread_rng().gen_range(1..5) + level;
-                bunker.data.air_recycling.maintenance =
-                    (bunker.data.air_recycling.maintenance + improvement).min(100);
+                let improvement = (rand::thread_rng().gen_range(1..3) + level)
+                    .min(100 - bunker.data.air_recycling.maintenance);
+                bunker.data.air_recycling.maintenance += improvement;
                 inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
                 inhabitant.changed = true;
             }
         }
-        if roll_dice(0.01, 101 - bunker.data.air_recycling.maintenance * power_level / 100) {
+        if roll_dice(
+            0.01,
+            101 - bunker.data.air_recycling.maintenance * power_level / 100,
+        ) {
             bunker.data.air_recycling.malfunction = true;
             messages::create_system_message(
                 pool,
@@ -73,4 +94,3 @@ pub async fn handle_tick(
     }
     Ok(air_quality)
 }
-

@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::{types::Json, PgPool, Row, postgres::PgArguments, query::Query, Postgres};
+use sqlx::{postgres::PgArguments, query::Query, types::Json, PgPool, Postgres, Row};
 
 use crate::error;
 
@@ -165,9 +165,7 @@ pub async fn update_bunker_data_and_tick(
     Ok(())
 }
 
-pub fn update_bunker_data_query(
-    bunker: &Bunker,
-) -> Query<Postgres, PgArguments> {
+pub fn update_bunker_data_query(bunker: &Bunker) -> Query<Postgres, PgArguments> {
     sqlx::query("UPDATE bunkers SET data = $2 WHERE id = $1")
         .bind(bunker.id)
         .bind(&bunker.data)
