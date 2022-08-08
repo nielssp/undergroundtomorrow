@@ -53,6 +53,7 @@ pub enum Assignment {
     Horticulture,
     Workshop,
     WaterTreatment,
+    AirRecycling,
     Maintenance,
     Cafeteria,
 }

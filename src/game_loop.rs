@@ -8,7 +8,7 @@ use crate::{
         inhabitants::{self, Assignment},
         worlds::{self, WorldTime},
     },
-    error, expedition, reactor,
+    error, expedition, reactor, water_treatment, air_recycling,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -34,7 +34,9 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
     for mut bunker in bunkers {
         let mut inhabitants = inhabitants::get_inhabitants(pool, bunker.id).await?;
 
-        reactor::handle_tick(pool, &mut bunker, &mut inhabitants).await?;
+        let power_level = reactor::handle_tick(pool, &mut bunker, &mut inhabitants).await?;
+        let water_quality = water_treatment::handle_tick(pool, &mut bunker, &mut inhabitants, power_level).await?;
+        let air_quality = air_recycling::handle_tick(pool, &mut bunker, &mut inhabitants, power_level).await?;
 
         for inhabitant in inhabitants {
             if inhabitant.changed {

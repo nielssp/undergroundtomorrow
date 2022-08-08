@@ -49,8 +49,8 @@ export interface ReactorStatus {
 }
 
 export interface WaterTreatmentStatus {
-    level: number;
-    condition: number;
+    maintenance: number;
+    malfunction: boolean;
 }
 
 export interface InfirmaryStatus {
@@ -72,8 +72,8 @@ export interface HorticultureStatus {
 }
 
 export interface AirRecyclingStatus {
-    level: number;
-    condition: number;
+    maintenance: number;
+    malfunction: boolean;
 }
 
 export interface Bunker {
@@ -101,6 +101,7 @@ export const assignmentMap = {
     horticulture: 'Horticulture',
     workshop: 'Workshop',
     waterTreatment: 'Water Treatment',
+    airRecycling: 'Air Recycling',
     maintenance: 'Maintenance',
     cafeteria: 'Cafeteria',
 };

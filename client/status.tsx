@@ -1,7 +1,7 @@
 import {bind, createElement, Deref, For, Fragment, Property, Show, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
 import { openDialog } from "./dialog";
-import { ReactorStatus, User } from "./dto";
+import { AirRecyclingStatus, ReactorStatus, User, WaterTreatmentStatus } from "./dto";
 import { handleError } from "./error";
 import { AuthService } from "./services/auth-service";
 import {GameService} from "./services/game-service";
@@ -25,14 +25,8 @@ export function Status({gameService, user, authService}: {
         <DerefData data={bunkerData}>{bunker =>
             <>
                 <Reactor gameService={gameService} status={bunker.props.reactor} onReload={() => bunkerData.refresh()}/>
-                <div class='stack-row spacing justify-space-between'>
-                    <div>Water treatment</div>
-                    <div>{bunker.props.waterTreatment.props.condition}%</div>
-                </div>
-                <div class='stack-row spacing justify-space-between'>
-                    <div>Air recycling</div>
-                    <div>{bunker.props.airRecycling.props.condition}%</div>
-                </div>
+                <WaterTreatment gameService={gameService} status={bunker.props.waterTreatment} onReload={() => bunkerData.refresh()}/>
+                <AirRecycling gameService={gameService} status={bunker.props.airRecycling} onReload={() => bunkerData.refresh()}/>
                 <div class='stack-row spacing justify-space-between'>
                     <div>Horticulture</div>
                     <div>{bunker.props.horticulture.props.condition}%</div>
@@ -108,5 +102,37 @@ export function SelectFuel({gameService, close}: {
                 </Show>
             </>
             }</DerefData>
+    </div>;
+}
+
+export function WaterTreatment({gameService, status, onReload}: {
+    gameService: GameService,
+    status: Property<WaterTreatmentStatus>,
+    onReload: () => void,
+}) {
+    return <div class='stack-column'>
+        <div class='stack-row spacing justify-space-between'>
+            <strong>Water Treatment</strong>
+            <div>Maintenance {status.props.maintenance}%</div>
+        </div>
+        <div class='stack-row spacing align-center'>
+            <Show when={status.props.malfunction}><div>MALFUNCTION</div></Show>
+        </div>
+    </div>;
+}
+
+export function AirRecycling({gameService, status, onReload}: {
+    gameService: GameService,
+    status: Property<AirRecyclingStatus>,
+    onReload: () => void,
+}) {
+    return <div class='stack-column'>
+        <div class='stack-row spacing justify-space-between'>
+            <strong>Air Recycling</strong>
+            <div>Maintenance {status.props.maintenance}%</div>
+        </div>
+        <div class='stack-row spacing align-center'>
+            <Show when={status.props.malfunction}><div>MALFUNCTION</div></Show>
+        </div>
     </div>;
 }

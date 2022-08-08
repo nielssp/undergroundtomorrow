@@ -47,8 +47,10 @@ pub struct ReactorStatus {
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct WaterTreatmentStatus {
-    pub level: i32,
-    pub condition: i32,
+    #[serde(default)]
+    pub maintenance: i32,
+    #[serde(default)]
+    pub malfunction: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -80,8 +82,10 @@ pub struct Crop {
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct AirRecyclingStatus {
-    pub level: i32,
-    pub condition: i32,
+    #[serde(default)]
+    pub maintenance: i32,
+    #[serde(default)]
+    pub malfunction: bool,
 }
 
 pub struct NewBunker {

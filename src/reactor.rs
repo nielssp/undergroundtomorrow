@@ -21,8 +21,7 @@ pub async fn handle_tick(
     pool: &PgPool,
     bunker: &mut Bunker,
     inhabitants: &mut Vec<Inhabitant>,
-) -> Result<(), error::Error> {
-    // TODO: return power level
+) -> Result<i32, error::Error> {
     let reactor_workers: Vec<_> = inhabitants
         .iter_mut()
         .filter(|i| i.expedition_id.is_none() && i.data.assignment == Some(Assignment::Reactor))
@@ -93,7 +92,14 @@ pub async fn handle_tick(
             .await?;
         }
     }
-    Ok(())
+    let mut power_level = 100;
+    if bunker.data.reactor.fuel < 1 {
+        power_level /= 2;
+    }
+    if bunker.data.reactor.malfunction {
+        power_level /= 2;
+    }
+    Ok(power_level)
 }
 
 pub async fn refuel(

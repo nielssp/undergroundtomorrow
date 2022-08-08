@@ -23,6 +23,8 @@ mod lobby;
 mod reactor;
 mod settings;
 mod util;
+mod water_treatment;
+mod air_recycling;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
