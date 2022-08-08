@@ -55,5 +55,12 @@ function ShowItem({item}: {
                 <div>{item.itemType.damage}</div>
             </div>
         </Show>
+        <Show when={bind(item.itemType.reactivity)}>
+            <div>Reactor Fuel</div>
+            <div class='stack-row spacing justify-space-between'>
+                <strong>Reactivity</strong>
+                <div>{item.itemType.reactivity}</div>
+            </div>
+        </Show>
     </div>;
 }

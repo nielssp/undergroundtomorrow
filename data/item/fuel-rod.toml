@@ -1,2 +1,3 @@
 name = "Fuel Rod"
 name_plural = "Fuel Rods"
+reactivity = 10000

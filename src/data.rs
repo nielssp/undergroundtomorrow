@@ -44,6 +44,8 @@ pub struct ItemType {
     pub range: i32,
     #[serde(default)]
     pub ammo_type: Option<String>,
+    #[serde(default)]
+    pub reactivity: i32,
 }
 
 lazy_static! {

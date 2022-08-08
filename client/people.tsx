@@ -36,6 +36,13 @@ export function People({gameService}: {
                             <Show when={person.props.expeditionId}>
                                 <div style='margin-left: auto;'>(on mission)</div>
                             </Show>
+                            <Show when={person.props.expeditionId.not}>
+                                <Deref ref={person.props.assignment}>{assignment =>
+                                    <div style='margin-left: auto;'>
+                                        {assignment.map(mapAssignment)}
+                                    </div>
+                                }</Deref>
+                            </Show>
                         </button>
                         }</For>
                 </div>

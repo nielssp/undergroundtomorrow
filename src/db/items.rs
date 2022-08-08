@@ -12,12 +12,11 @@ pub struct Item {
     pub quantity: i32,
 }
 
-pub async fn add_item(
-    pool: &PgPool,
+pub fn add_item_query(
     bunker_id: i32,
     item_type: &str,
     quantity: i32,
-) -> Result<(), error::Error> {
+) -> Query<Postgres, PgArguments> {
     sqlx::query(
         "INSERT INTO items (bunker_id, item_type, quantity) VALUES ($1, $2, $3) \
         ON CONFLICT (bunker_id, item_type) \
@@ -26,8 +25,17 @@ pub async fn add_item(
     .bind(bunker_id)
     .bind(item_type)
     .bind(quantity)
-    .execute(pool)
-    .await?;
+}
+
+pub async fn add_item(
+    pool: &PgPool,
+    bunker_id: i32,
+    item_type: &str,
+    quantity: i32,
+) -> Result<(), error::Error> {
+    add_item_query(bunker_id, item_type, quantity)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 

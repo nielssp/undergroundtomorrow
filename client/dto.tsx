@@ -43,8 +43,9 @@ export interface NewWorld {
 }
 
 export interface ReactorStatus {
-    level: number;
-    condition: number;
+    maintenance: number;
+    fuel: number;
+    malfunction: boolean;
 }
 
 export interface WaterTreatmentStatus {
@@ -75,23 +76,17 @@ export interface AirRecyclingStatus {
     condition: number;
 }
 
-export interface BunkerData {
+export interface Bunker {
+    id: number;
+    number: number;
+    x: number;
+    y: number;
     reactor: ReactorStatus;
     waterTreatment: WaterTreatmentStatus;
     infirmary: InfirmaryStatus;
     workshop: WorkshopStatus;
     horticulture: HorticultureStatus;
     airRecycling: AirRecyclingStatus;
-}
-
-export interface Bunker {
-    id: number;
-    userId: number;
-    worldId: number;
-    number: number;
-    x: number;
-    y: number;
-    data: BunkerData;
 }
 
 export interface Skill {
@@ -116,7 +111,6 @@ export const assignments = Object.keys(assignmentMap) as Assignment[];
 
 export interface Inhabitant {
     id: number;
-    bunkerId: number;
     expeditionId?: number;
     name: string;
     dateOfBirth: string;
@@ -135,6 +129,7 @@ export interface ItemType {
     damage: number;
     range: number;
     ammoType?: string;
+    reactivity: number;
 }
 
 export interface Item {

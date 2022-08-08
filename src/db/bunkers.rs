@@ -1,4 +1,5 @@
-use sqlx::{types::Json, PgPool, Row};
+use chrono::{DateTime, Utc};
+use sqlx::{types::Json, PgPool, Row, postgres::PgArguments, query::Query, Postgres};
 
 use crate::error;
 
@@ -11,6 +12,7 @@ pub struct Bunker {
     pub number: i32,
     pub x: i32,
     pub y: i32,
+    pub next_tick: DateTime<Utc>,
     pub data: Json<BunkerData>,
 }
 
@@ -34,9 +36,12 @@ pub struct BunkerData {
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ReactorStatus {
-    pub level: i32,
-    pub condition: i32,
+    #[serde(default)]
+    pub maintenance: i32,
+    #[serde(default)]
     pub fuel: i32,
+    #[serde(default)]
+    pub malfunction: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -129,4 +134,37 @@ pub async fn create_bunker(pool: &PgPool, bunker: &NewBunker) -> Result<i32, err
     .fetch_one(pool)
     .await?
     .try_get(0)?)
+}
+
+pub async fn get_bunkers_by_next_tick(
+    pool: &PgPool,
+    world_id: i32,
+) -> Result<Vec<Bunker>, error::Error> {
+    Ok(sqlx::query_as(
+        "SELECT * FROM bunkers WHERE world_id = $1 AND next_tick <= CURRENT_TIMESTAMP",
+    )
+    .bind(world_id)
+    .fetch_all(pool)
+    .await?)
+}
+
+pub async fn update_bunker_data_and_tick(
+    pool: &PgPool,
+    bunker: &Bunker,
+) -> Result<(), error::Error> {
+    sqlx::query("UPDATE bunkers SET next_tick = $2, data = $3 WHERE id = $1")
+        .bind(bunker.id)
+        .bind(bunker.next_tick)
+        .bind(&bunker.data)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
+pub fn update_bunker_data_query(
+    bunker: &Bunker,
+) -> Query<Postgres, PgArguments> {
+    sqlx::query("UPDATE bunkers SET data = $2 WHERE id = $1")
+        .bind(bunker.id)
+        .bind(&bunker.data)
 }

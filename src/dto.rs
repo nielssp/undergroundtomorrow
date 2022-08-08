@@ -3,6 +3,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use crate::{
     data::{get_item_type, ItemType},
     db::{
+        bunkers::{
+            AirRecyclingStatus, Bunker, HorticultureStatus, InfirmaryStatus, ReactorStatus,
+            WaterTreatmentStatus, WorkshopStatus,
+        },
         expeditions::Expedition,
         inhabitants::{Assignment, Inhabitant, Skill},
         items::Item,
@@ -86,7 +90,7 @@ impl From<Item> for ItemDto {
     }
 }
 
-#[derive(serde::Serialize, sqlx::FromRow)]
+#[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpeditionDto {
     pub id: i32,
@@ -109,6 +113,39 @@ impl From<Expedition> for ExpeditionDto {
             eta: source.eta,
             created: source.created,
             distance: data.distance,
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BunkerDto {
+    pub id: i32,
+    pub number: i32,
+    pub x: i32,
+    pub y: i32,
+    pub reactor: ReactorStatus,
+    pub water_treatment: WaterTreatmentStatus,
+    pub infirmary: InfirmaryStatus,
+    pub workshop: WorkshopStatus,
+    pub horticulture: HorticultureStatus,
+    pub air_recycling: AirRecyclingStatus,
+}
+
+impl From<Bunker> for BunkerDto {
+    fn from(source: Bunker) -> BunkerDto {
+        let data = source.data.0;
+        BunkerDto {
+            id: source.id,
+            number: source.number,
+            x: source.x,
+            y: source.y,
+            reactor: data.reactor,
+            water_treatment: data.water_treatment,
+            infirmary: data.infirmary,
+            workshop: data.workshop,
+            horticulture: data.horticulture,
+            air_recycling: data.air_recycling,
         }
     }
 }

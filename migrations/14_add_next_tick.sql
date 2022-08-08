@@ -1,0 +1,1 @@
+ALTER TABLE "bunkers" ADD COLUMN "next_tick" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;

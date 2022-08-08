@@ -17,6 +17,9 @@ export function Messages({gameService}: {
                 if (update) {
                     update.unread = false;
                     messages.notify();
+                    if (!messages.data.value?.find(x => x.unread)) {
+                        gameService.messageNotification.value = false;
+                    }
                 }
             });
         }

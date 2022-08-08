@@ -20,6 +20,7 @@ mod game;
 mod game_loop;
 mod generate;
 mod lobby;
+mod reactor;
 mod settings;
 mod util;
 

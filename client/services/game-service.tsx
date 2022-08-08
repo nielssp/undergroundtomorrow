@@ -2,12 +2,6 @@ import {bind, Property, ref, zipWith} from "cstk";
 import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, formatISO, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
 import {Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, Location, Message, Sector, World} from "../dto";
-/*
-    let duration = Utc::now().signed_duration_since(world.created);
-    let date = NaiveDate::from_yo(world.start_year, world.created.ordinal());
-    let start_time = NaiveDateTime::new(date, world.created.naive_utc().time());
-    start_time + duration * world.time_acceleration + Duration::seconds(world.time_offset as i64)
- */
 
 function getWorldtime(world: World) {
     const created = parseISO(world.created);
@@ -127,5 +121,9 @@ export class GameService {
 
     createExpedition(expeditionRequest: ExpeditionRequest) {
         return this.api.rpc<void>(`world/${this.worldId}/create_expedition`, expeditionRequest);
+    }
+
+    refuelReactor(itemType: string) {
+        return this.api.rpc<void>(`world/${this.worldId}/refuel_reactor`, {itemType});
     }
 }

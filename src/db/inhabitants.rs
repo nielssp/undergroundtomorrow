@@ -13,6 +13,8 @@ pub struct Inhabitant {
     pub name: String,
     pub date_of_birth: NaiveDate,
     pub data: Json<InhabitantData>,
+    #[sqlx(default)]
+    pub changed: bool, // Not in db, used for tracking changes when executing world ticks
 }
 
 #[derive(serde::Serialize, serde::Deserialize, PartialEq, Copy, Clone)]

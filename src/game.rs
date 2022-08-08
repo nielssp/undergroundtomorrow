@@ -9,13 +9,13 @@ use crate::{
     db::{
         bunkers::{self, Bunker},
         expeditions,
-        inhabitants::{self, Assignment, get_age},
+        inhabitants::{self, get_age, Assignment},
         items, locations, messages,
         sessions::Session,
         worlds,
     },
-    dto::{ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
-    error, expedition,
+    dto::{BunkerDto, ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
+    error, expedition, reactor,
 };
 
 pub struct Player {
@@ -56,7 +56,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(set_message_read)
         .service(has_unread_messages)
         .service(get_expeditions)
-        .service(create_expedition);
+        .service(create_expedition)
+        .service(refuel_reactor);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -77,7 +78,8 @@ async fn get_bunker(
     world_id: web::Path<i32>,
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(player.bunker))
+    let bunker: BunkerDto = player.bunker.into();
+    Ok(HttpResponse::Ok().json(bunker))
 }
 
 #[post("/world/{world_id:\\d+}/get_inhabitants")]
@@ -234,6 +236,18 @@ async fn create_expedition(
     let player = validate_player(&request, world_id.into_inner()).await?;
     let expedition_request = data.into_inner();
     expedition::create(&pool, player.world_id, &player.bunker, expedition_request).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/refuel_reactor")]
+async fn refuel_reactor(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<reactor::RefuelingRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    reactor::refuel(&pool, &mut player.bunker, &data).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 
