@@ -33,8 +33,8 @@ mod water_treatment;
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .pretty()
-        .with_max_level(tracing::Level::DEBUG)
         .init();
 
     info!("{} first names loaded", data::FIRST_NAMES.len());

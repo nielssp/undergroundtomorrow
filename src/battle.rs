@@ -1,11 +1,12 @@
 use rand::{
-    seq::{IteratorRandom, SliceRandom},
+    seq::IteratorRandom,
     Rng,
 };
+use tracing::debug;
 
 use crate::{
     data::ITEM_TYPES,
-    db::inhabitants::{self, Inhabitant, SkillType},
+    db::inhabitants::{Inhabitant, SkillType},
     error,
     util::skill_roll,
 };
@@ -17,13 +18,13 @@ pub fn encounter(
 ) -> Result<bool, error::Error> {
     let stealth_sum: i32 = team
         .iter()
-        .map(|i| inhabitants::get_inhabitant_skill_level(i, SkillType::Stealth))
+        .map(|i| i.get_skill_level(SkillType::Stealth))
         .sum();
     let stealth_avg = (stealth_sum as f64 / team.len() as f64).ceil() as i32;
-    if skill_roll(0.2, stealth_avg) {
+    if skill_roll(0.1, stealth_avg) {
         report_body.push_str(&format!("Successfully evaded a band of marauders\n",));
-        for mut member in team {
-            inhabitants::add_xp_to_skill(&mut member, SkillType::Stealth, 60);
+        for member in team {
+            member.add_xp(SkillType::Stealth, 60);
         }
     } else {
         let quantity: i32 = rand::thread_rng().gen_range(1..max_number);
@@ -33,17 +34,19 @@ pub fn encounter(
             report_body.push_str(&format!("Encountered {} marauders\n", quantity));
         }
         let enemy_hp = 50;
-        let mut enemies = vec![enemy_hp, quantity];
-        enemies.iter_mut().for_each(|e| *e = 100);
+        let mut enemies = vec![enemy_hp; quantity as usize];
         let mut range: i32 = rand::thread_rng().gen_range(5..50);
         for member in team.iter_mut() {
             member.data.hp = 50;
         }
+        debug!("enemies: {:?}", enemies);
         for _ in 0..(range * 2) {
-            for mut member in team.iter_mut() {
+            debug!("range: {}", range);
+            for member in team.iter_mut() {
                 if member.data.hp <= 0 {
                     continue;
                 }
+                debug!("{} is ready", member.name);
                 let mut weapon_range = 1;
                 let mut weapon_damage = 1;
                 let skill = match &member.data.weapon_type {
@@ -67,9 +70,10 @@ pub fn encounter(
                 };
                 let hit_chance = (weapon_range as f64 - range as f64 + 1.0) / (weapon_range as f64);
                 if hit_chance >= 0.1 {
+                    debug!("{} fires", member.name);
                     if skill_roll(
                         hit_chance,
-                        inhabitants::get_inhabitant_skill_level(member, skill),
+                        member.get_skill_level(skill),
                     ) {
                         if let Some(enemy) = enemies
                             .iter_mut()
@@ -78,8 +82,10 @@ pub fn encounter(
                         {
                             let damage = rand::thread_rng().gen_range(1..weapon_damage + 1);
                             *enemy -= damage;
-                            inhabitants::add_xp_to_skill(&mut member, skill, damage);
+                            debug!("hit: damage = {}, hp = {}", damage, *enemy);
+                            member.add_xp(skill, damage);
                             if *enemy <= 0 {
+                                debug!("enemy is dead");
                                 report_body
                                     .push_str(&format!("{} killed a marauder\n", member.name,));
                             }
@@ -94,19 +100,23 @@ pub fn encounter(
                     }
                 }
             }
-            enemies.retain(|e| *e > 0);
+            enemies.retain(|&e| e > 0);
+            debug!("enemies left: {:?}", enemies);
             if enemies.is_empty() {
+                debug!("all enemies dead");
                 if quantity > 1 {
                     report_body.push_str(&format!("All {} marauders were killed\n", quantity));
                 }
                 break;
             }
-            for _ in &enemies {
+            for (i, _) in enemies.iter().enumerate() {
                 // TODO: stats/abilities for marauders
+                debug!("enemey {} is ready", i);
                 let weapon_damage = 5;
                 let weapon_range = 15;
                 let hit_chance = (weapon_range as f64 - range as f64 + 1.0) / (weapon_range as f64);
                 if hit_chance >= 0.1 {
+                    debug!("enemey {} fires", i);
                     if skill_roll(hit_chance, 0) {
                         if let Some(member) = team
                             .iter_mut()
@@ -115,7 +125,9 @@ pub fn encounter(
                         {
                             let damage = rand::thread_rng().gen_range(1..weapon_damage + 1);
                             member.data.hp -= damage;
+                            debug!("enemey {} hits {}: damage = {}, hp = {}", i, member.name, damage, member.data.hp);
                             if member.data.hp < 0 {
+                                debug!("{} is incapacitated", member.name);
                                 member.data.bleeding = true;
                                 member.data.wounded = true;
                                 report_body
@@ -126,6 +138,7 @@ pub fn encounter(
                 }
             }
             if !team.iter().any(|m| m.data.hp > 0) {
+                debug!("all incapacitated");
                 report_body.push_str(&format!("Retreated\n"));
                 return Ok(false);
             }
