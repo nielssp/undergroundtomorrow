@@ -13,6 +13,7 @@ use crate::{
 pub fn encounter(
     team: &mut Vec<Inhabitant>,
     report_body: &mut String,
+    max_number: i32,
 ) -> Result<bool, error::Error> {
     let stealth_sum: i32 = team
         .iter()
@@ -25,7 +26,7 @@ pub fn encounter(
             inhabitants::add_xp_to_skill(&mut member, SkillType::Stealth, 60);
         }
     } else {
-        let quantity: i32 = rand::thread_rng().gen_range(1..10);
+        let quantity: i32 = rand::thread_rng().gen_range(1..max_number);
         if quantity == 1 {
             report_body.push_str(&format!("Encountered a single marauder\n"));
         } else {
@@ -115,6 +116,8 @@ pub fn encounter(
                             let damage = rand::thread_rng().gen_range(1..weapon_damage + 1);
                             member.data.hp -= damage;
                             if member.data.hp < 0 {
+                                member.data.bleeding = true;
+                                member.data.wounded = true;
                                 report_body
                                     .push_str(&format!("{} was incapacitated\n", member.name));
                             }

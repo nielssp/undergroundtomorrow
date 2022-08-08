@@ -33,16 +33,7 @@ export function People({gameService}: {
                         <button class='stack-row spacing' role='row' onClick={() => openDetails(person.value)}>
                             <div>{person.props.name}</div>
                             <div>(Age: {person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
-                            <Show when={person.props.expeditionId}>
-                                <div style='margin-left: auto;'>(on mission)</div>
-                            </Show>
-                            <Show when={person.props.expeditionId.not}>
-                                <Deref ref={person.props.assignment}>{assignment =>
-                                    <div style='margin-left: auto;'>
-                                        {assignment.map(mapAssignment)}
-                                    </div>
-                                }</Deref>
-                            </Show>
+                            <div style='margin-left: auto;'>{person.map(getStatus)}</div>
                         </button>
                         }</For>
                 </div>
@@ -228,4 +219,24 @@ function mapAssignment(assignment: Assignment): string {
         return assignmentMap[assignment];
     }
     return assignment;
+}
+
+function getStatus(inhabitant: Inhabitant) {
+    if (inhabitant.bleeding) {
+        return '(bleeding)';
+    } else if (inhabitant.infection) {
+        return '(infection)';
+    } else if (inhabitant.sick) {
+        return '(sick)';
+    } else if (inhabitant.wounded) {
+        return '(wounded)';
+    } else if (inhabitant.recovering) {
+        return '(recovering)';
+    } else if (inhabitant.expeditionId) {
+        return '(on mission)';
+    } else if (inhabitant.assignment) {
+        return mapAssignment(inhabitant.assignment);
+    } else {
+        return '';
+    }
 }

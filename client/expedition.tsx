@@ -21,7 +21,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     close: (choice: boolean) => void,
 }, context: JSX.Context) {
     const people = dataSource(() => gameService.getInhabitants().then(people => people.filter(p => {
-        if (p.expeditionId) {
+        if (!p.ready) {
             return false;
         }
         return gameService.getAge(p.dateOfBirth) >= 16;

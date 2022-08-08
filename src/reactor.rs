@@ -25,7 +25,7 @@ pub async fn handle_tick(
 ) -> Result<i32, error::Error> {
     let workers: Vec<_> = inhabitants
         .iter_mut()
-        .filter(|i| i.expedition_id.is_none() && i.data.assignment == Some(Assignment::Reactor))
+        .filter(|i| i.is_ready() && i.data.assignment == Some(Assignment::Reactor))
         .collect();
     let status = &mut bunker.data.reactor;
     if status.fuel == 1 {
@@ -49,13 +49,13 @@ pub async fn handle_tick(
         if !status.malfunction && status.maintenance >= 100 {
             break;
         }
-        let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
+        let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Reactor);
         if skill_roll(0.1, level) {
             status.malfunction = false;
             let improvement =
                 (rand::thread_rng().gen_range(1..3) + level).min(100 - status.maintenance);
             status.maintenance += improvement;
-            inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
+            inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Reactor, improvement * 10);
             inhabitant.changed = true;
         }
     }

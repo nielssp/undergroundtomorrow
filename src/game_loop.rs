@@ -7,9 +7,10 @@ use crate::{
     db::{
         bunkers,
         inhabitants::{self, Assignment},
+        messages,
         worlds::{self, WorldTime},
     },
-    error, expedition, reactor, water_treatment,
+    error, expedition, health, infirmary, reactor, water_treatment,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -41,9 +42,37 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
         let air_quality =
             air_recycling::handle_tick(pool, &mut bunker, &mut inhabitants, power_level).await?;
 
+        infirmary::handle_tick(&mut bunker, &mut inhabitants)?;
+
+        health::handle_tick(&mut bunker, &mut inhabitants, water_quality, air_quality)?;
+
         for inhabitant in inhabitants {
             if inhabitant.changed {
-                inhabitants::update_inhabitant_data(pool, &inhabitant).await?;
+                if inhabitant.data.health <= 0 {
+                    messages::create_system_message(
+                        pool,
+                        &messages::NewSystemMessage {
+                            receiver_bunker_id: bunker.id,
+                            sender_name: format!("Infirmary"),
+                            subject: format!("{} has died", inhabitant.name),
+                            body: if inhabitant.data.bleeding {
+                                format!("{} has died of severe blood loss.", inhabitant.name)
+                            } else if inhabitant.data.infection {
+                                format!("{} has died of an infection.", inhabitant.name)
+                            } else if inhabitant.data.wounded {
+                                format!("{} has died of untreated wounds.", inhabitant.name)
+                            } else if inhabitant.data.sick {
+                                format!("{} has died of a disease.", inhabitant.name)
+                            } else  {
+                                format!("{} has died of an unknown cause.", inhabitant.name)
+                            },
+                        },
+                    )
+                    .await?;
+                    inhabitants::delete_inhabitant(pool, inhabitant.id).await?;
+                } else {
+                    inhabitants::update_inhabitant_data(pool, &inhabitant).await?;
+                }
             }
         }
 

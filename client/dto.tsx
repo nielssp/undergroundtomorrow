@@ -120,6 +120,12 @@ export interface Inhabitant {
     team?: string;
     weaponType?: string;
     ammo: number;
+    bleeding: boolean;
+    wounded: boolean;
+    sick: boolean;
+    infection: boolean;
+    recovering: boolean;
+    ready: boolean;
 }
 
 export interface ItemType {

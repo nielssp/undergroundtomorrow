@@ -21,28 +21,39 @@ pub struct InhabitantDto {
     pub expedition_id: Option<i32>,
     pub name: String,
     pub date_of_birth: NaiveDate,
-    pub health: i32,
     pub skills: Vec<Skill>,
     pub assignment: Option<Assignment>,
     pub team: Option<String>,
     pub weapon_type: Option<String>,
     pub ammo: i32,
+    pub bleeding: bool,
+    pub wounded: bool,
+    pub sick: bool,
+    pub infection: bool,
+    pub recovering: bool,
+    pub ready: bool,
 }
 
 impl From<Inhabitant> for InhabitantDto {
     fn from(source: Inhabitant) -> InhabitantDto {
+        let ready = source.is_ready();
         let data = source.data.0;
         InhabitantDto {
             id: source.id,
             expedition_id: source.expedition_id,
             name: source.name,
             date_of_birth: source.date_of_birth,
-            health: data.health,
             skills: data.skills,
             assignment: data.assignment,
             team: data.team,
             weapon_type: data.weapon_type,
             ammo: data.ammo,
+            bleeding: data.bleeding,
+            wounded: data.wounded,
+            sick: data.sick,
+            infection: data.infection,
+            recovering: data.recovering,
+            ready,
         }
     }
 }

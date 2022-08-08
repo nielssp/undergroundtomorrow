@@ -20,7 +20,11 @@ pub fn generate_person(
     NewInhabitant {
         name,
         date_of_birth: time_of_birth.date(),
-        data: InhabitantData::default(),
+        data: InhabitantData {
+            health: 100,
+            energy: 100,
+            ..InhabitantData::default()
+        },
     }
 }
 

@@ -19,9 +19,7 @@ pub async fn handle_tick(
 ) -> Result<i32, error::Error> {
     let workers: Vec<_> = inhabitants
         .iter_mut()
-        .filter(|i| {
-            i.expedition_id.is_none() && i.data.assignment == Some(Assignment::AirRecycling)
-        })
+        .filter(|i| i.is_ready() && i.data.assignment == Some(Assignment::AirRecycling))
         .collect();
     let status = &mut bunker.data.air_recycling;
     status.maintenance = (status.maintenance - 1).max(0);

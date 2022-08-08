@@ -20,6 +20,9 @@ mod expedition;
 mod game;
 mod game_loop;
 mod generate;
+mod health;
+mod horticulture;
+mod infirmary;
 mod lobby;
 mod reactor;
 mod settings;
@@ -77,7 +80,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .app_data(Data::new(settings.clone()))
             .app_data(Data::new(pool.clone()))
-            .service(health)
+            .service(health_check)
             .configure(auth::config)
             .configure(lobby::config)
             .configure(game::config)
@@ -88,7 +91,7 @@ async fn main() -> std::io::Result<()> {
 }
 
 #[get("/health")]
-async fn health(pool: Data<PgPool>) -> actix_web::Result<HttpResponse> {
+async fn health_check(pool: Data<PgPool>) -> actix_web::Result<HttpResponse> {
     check_db_health(&pool).await?;
     Ok(HttpResponse::NoContent().finish())
 }

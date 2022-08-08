@@ -171,8 +171,41 @@ pub async fn handle_finished_expeditions(
         let mut retreat = false;
         if encounter_chances > 0 {
             if roll_dice(0.2, encounter_chances) {
-                if !battle::encounter(&mut team, &mut report_body)? {
+                if !battle::encounter(&mut team, &mut report_body, encounter_chances)? {
                     retreat = true;
+                }
+                let mut first_aid_applied: Vec<(i32, i32)> = vec![];
+                for wounded in &team {
+                    if !wounded.data.wounded && !wounded.data.bleeding {
+                        continue;
+                    }
+                    for member in &team {
+                        if member.id == wounded.id {
+                            continue;
+                        }
+                        let first_aid = member.get_skill_level(SkillType::FirstAid);
+                        let medicine = member.get_skill_level(SkillType::Medicine);
+                        if skill_roll(0.2, first_aid + medicine) {
+                            first_aid_applied.push((wounded.id, member.id));
+                            report_body.push_str(&format!(
+                                "{} successfully applied first aid to {}\n",
+                                member.name, wounded.name
+                            ));
+                        }
+                    }
+                }
+                for member in &mut team {
+                    for (recipient_id, other_id) in &first_aid_applied {
+                        if *recipient_id == member.id {
+                            member.data.bleeding = false;
+                        } else if *other_id == member.id {
+                            member.add_xp(SkillType::FirstAid, 50);
+                        }
+                    }
+                    if member.data.bleeding && !retreat {
+                        report_body.push_str(&format!("Returned with wounded\n"));
+                        retreat = true;
+                    }
                 }
             }
         }
@@ -187,8 +220,7 @@ pub async fn handle_finished_expeditions(
                     .get(&location.data.location_type)
                     .ok_or_else(|| error::internal_error("Unknown location type"))?;
                 for mut member in &mut team {
-                    let scavenging_level =
-                        inhabitants::get_inhabitant_skill_level(&member, SkillType::Scavenging);
+                    let scavenging_level = member.get_skill_level(SkillType::Scavenging);
                     for (item_type_id, entry) in &location_type.loot {
                         if skill_roll(entry.chance, scavenging_level) {
                             let item_type = ITEM_TYPES
@@ -205,8 +237,7 @@ pub async fn handle_finished_expeditions(
                             }
                             items::add_item(pool, expedition.bunker_id, item_type_id, quantity)
                                 .await?;
-                            if inhabitants::add_xp_to_skill(&mut member, SkillType::Scavenging, 60)
-                            {
+                            if member.add_xp(SkillType::Scavenging, 60) {
                                 report_body.push_str(&format!(
                                     "{} got better at scavening\n",
                                     member.name

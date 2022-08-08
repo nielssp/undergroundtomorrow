@@ -79,6 +79,16 @@ pub struct InhabitantData {
     pub hp: i32, // TODO: wounded state
     #[serde(default)]
     pub energy: i32, // TODO: sleep state etc
+    #[serde(default)]
+    pub bleeding: bool,
+    #[serde(default)]
+    pub wounded: bool,
+    #[serde(default)]
+    pub sick: bool,
+    #[serde(default)]
+    pub infection: bool,
+    #[serde(default)]
+    pub recovering: bool,
 }
 
 pub struct NewInhabitant {
@@ -192,39 +202,67 @@ pub async fn update_inhabitant_data(
     Ok(())
 }
 
-pub fn get_inhabitant_skill_level(inhabitant: &Inhabitant, skill_type: SkillType) -> i32 {
-    get_skill_level(
-        inhabitant
-            .data
-            .skills
-            .iter()
-            .find(|s| s.skill_type == skill_type)
-            .map(|s| s.xp)
-            .unwrap_or_else(|| 0),
-    )
+pub async fn delete_inhabitant(pool: &PgPool, inhabitant_id: i32) -> Result<(), error::Error> {
+    sqlx::query("DELETE FROM inhabitants WHERE id = $1")
+        .bind(inhabitant_id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
-pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i32) -> bool {
-    let existing = inhabitant
-        .data
-        .skills
-        .iter_mut()
-        .find(|s| s.skill_type == skill_type);
-    if let Some(mut skill) = existing {
-        skill.xp += xp;
-        let previous_level = skill.level;
-        skill.level = get_skill_level(skill.xp);
-        return skill.level > previous_level;
-    } else {
-        let new = Skill {
-            skill_type,
-            xp,
-            level: get_skill_level(xp),
-        };
-        let level_up = new.level > 0;
-        inhabitant.data.skills.push(new);
-        return level_up;
+impl Inhabitant {
+    pub fn is_ready(&self) -> bool {
+        self.expedition_id.is_none()
+            && !self.data.wounded
+            && !self.data.bleeding
+            && !self.data.sick
+            && !self.data.infection
+            && !self.data.recovering
     }
+
+    pub fn get_skill_level(&self, skill_type: SkillType) -> i32 {
+        get_skill_level(
+            self.data
+                .skills
+                .iter()
+                .find(|s| s.skill_type == skill_type)
+                .map(|s| s.xp)
+                .unwrap_or_else(|| 0),
+        )
+    }
+
+    pub fn add_xp(&mut self, skill_type: SkillType, xp: i32) -> bool {
+        let existing = self
+            .data
+            .skills
+            .iter_mut()
+            .find(|s| s.skill_type == skill_type);
+        if let Some(mut skill) = existing {
+            skill.xp += xp;
+            let previous_level = skill.level;
+            skill.level = get_skill_level(skill.xp);
+            return skill.level > previous_level;
+        } else {
+            let new = Skill {
+                skill_type,
+                xp,
+                level: get_skill_level(xp),
+            };
+            let level_up = new.level > 0;
+            self.data.skills.push(new);
+            return level_up;
+        }
+    }
+}
+
+#[deprecated]
+pub fn get_inhabitant_skill_level(inhabitant: &Inhabitant, skill_type: SkillType) -> i32 {
+    inhabitant.get_skill_level(skill_type)
+}
+
+#[deprecated]
+pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i32) -> bool {
+    inhabitant.add_xp(skill_type, xp)
 }
 
 pub fn get_skill_level(xp: i32) -> i32 {
