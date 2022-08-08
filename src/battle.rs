@@ -1,7 +1,4 @@
-use rand::{
-    seq::IteratorRandom,
-    Rng,
-};
+use rand::{seq::IteratorRandom, Rng};
 use tracing::debug;
 
 use crate::{
@@ -16,6 +13,9 @@ pub fn encounter(
     report_body: &mut String,
     max_number: i32,
 ) -> Result<bool, error::Error> {
+    if max_number < 1 {
+        return Ok(true);
+    }
     let stealth_sum: i32 = team
         .iter()
         .map(|i| i.get_skill_level(SkillType::Stealth))
@@ -27,7 +27,11 @@ pub fn encounter(
             member.add_xp(SkillType::Stealth, 60);
         }
     } else {
-        let quantity: i32 = rand::thread_rng().gen_range(1..max_number);
+        let quantity: i32 = if max_number == 1 {
+            1
+        } else {
+            rand::thread_rng().gen_range(1..max_number)
+        };
         if quantity == 1 {
             report_body.push_str(&format!("Encountered a single marauder\n"));
         } else {
@@ -71,10 +75,7 @@ pub fn encounter(
                 let hit_chance = (weapon_range as f64 - range as f64 + 1.0) / (weapon_range as f64);
                 if hit_chance >= 0.1 {
                     debug!("{} fires", member.name);
-                    if skill_roll(
-                        hit_chance,
-                        member.get_skill_level(skill),
-                    ) {
+                    if skill_roll(hit_chance, member.get_skill_level(skill)) {
                         if let Some(enemy) = enemies
                             .iter_mut()
                             .filter(|e| **e > 0)
@@ -125,11 +126,15 @@ pub fn encounter(
                         {
                             let damage = rand::thread_rng().gen_range(1..weapon_damage + 1);
                             member.data.hp -= damage;
-                            debug!("enemey {} hits {}: damage = {}, hp = {}", i, member.name, damage, member.data.hp);
+                            debug!(
+                                "enemey {} hits {}: damage = {}, hp = {}",
+                                i, member.name, damage, member.data.hp
+                            );
                             if member.data.hp < 0 {
                                 debug!("{} is incapacitated", member.name);
                                 member.data.bleeding = true;
                                 member.data.wounded = true;
+                                member.data.health -= rand::thread_rng().gen_range(1..50);
                                 report_body
                                     .push_str(&format!("{} was incapacitated\n", member.name));
                             }

@@ -102,7 +102,28 @@ async fn join_world(
             number: bunker_number,
             x,
             y,
-            data: bunkers::BunkerData::default(),
+            data: bunkers::BunkerData {
+                reactor: bunkers::ReactorStatus {
+                    maintenance: 100,
+                    fuel: 160,
+                    malfunction: false,
+                },
+                water_treatment: bunkers::WaterTreatmentStatus {
+                    maintenance: 100,
+                    malfunction: false,
+                },
+                infirmary: bunkers::InfirmaryStatus { level: 0 },
+                workshop: bunkers::WorkshopStatus { level: 0 },
+                horticulture: bunkers::HorticultureStatus {
+                    level: 0,
+                    condition: 100,
+                    crops: vec![],
+                },
+                air_recycling: bunkers::AirRecyclingStatus {
+                    maintenance: 100,
+                    malfunction: false,
+                },
+            },
         },
     )
     .await?;

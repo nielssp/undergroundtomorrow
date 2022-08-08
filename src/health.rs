@@ -11,7 +11,7 @@ pub fn handle_tick(
     air_quality: i32,
 ) -> Result<(), error::Error> {
     for inhabitant in inhabitants {
-        if inhabitant.data.surface_exposure > 0 {
+        if inhabitant.data.surface_exposure > 0 && inhabitant.expedition_id.is_none() {
             inhabitant.data.surface_exposure -= 1;
             inhabitant.changed = true;
         }
@@ -24,7 +24,9 @@ pub fn handle_tick(
                 if roll_dice(0.05, 100 - inhabitant.data.health) {
                     inhabitant.data.infection = true;
                     inhabitant.changed = true;
-                } else if inhabitant.data.health >= 25 && roll_dice(0.05, inhabitant.data.health / 25) {
+                } else if inhabitant.data.health >= 25
+                    && roll_dice(0.01, inhabitant.data.health / 25)
+                {
                     inhabitant.data.wounded = false;
                     inhabitant.changed = true;
                 }
@@ -35,7 +37,11 @@ pub fn handle_tick(
             inhabitant.changed = true;
         }
         if inhabitant.data.sick {
-            if inhabitant.data.health >= 25 && roll_dice(0.05, inhabitant.data.health / 25) {
+            if inhabitant.data.health >= 25
+                && water_quality >= 100
+                && air_quality >= 100
+                && roll_dice(0.01, inhabitant.data.health / 25)
+            {
                 inhabitant.data.sick = false;
             } else {
                 inhabitant.data.health -= 1;

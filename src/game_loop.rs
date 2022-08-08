@@ -63,7 +63,7 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
                                 format!("{} has died of untreated wounds.", inhabitant.name)
                             } else if inhabitant.data.sick {
                                 format!("{} has died of a disease.", inhabitant.name)
-                            } else  {
+                            } else {
                                 format!("{} has died of an unknown cause.", inhabitant.name)
                             },
                         },

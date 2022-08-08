@@ -25,7 +25,7 @@ pub fn handle_tick(
         }
         let mut max_actions = 4;
         for inhabitant in inhabitants.iter() {
-            if !inhabitant.needs_attention() {
+            if !inhabitant.needs_attention() || inhabitant.expedition_id.is_some() {
                 continue;
             }
             let first_aid_level = doctor.get_skill_level(SkillType::FirstAid);
