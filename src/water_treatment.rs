@@ -23,58 +23,41 @@ pub async fn handle_tick(
             i.expedition_id.is_none() && i.data.assignment == Some(Assignment::WaterTreatment)
         })
         .collect();
-    bunker.data.water_treatment.maintenance = (bunker.data.water_treatment.maintenance - 1).max(0);
-    if bunker.data.water_treatment.malfunction {
-        for mut inhabitant in workers {
-            if !bunker.data.water_treatment.malfunction
-                && bunker.data.water_treatment.maintenance >= 100
-            {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
-            if skill_roll(0.1, level) {
-                bunker.data.water_treatment.malfunction = false;
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.water_treatment.maintenance);
-                bunker.data.water_treatment.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
-                inhabitant.changed = true;
-            }
+    let status = &mut bunker.data.water_treatment;
+    status.maintenance = (status.maintenance - 1).max(0);
+    let existing_malfunction = status.malfunction;
+    if !status.malfunction && roll_dice(0.01, 100 - status.maintenance * power_level / 100) {
+        status.malfunction = true;
+    }
+    for mut inhabitant in workers {
+        if !status.malfunction && status.maintenance >= 100 {
+            break;
         }
-        if !bunker.data.water_treatment.malfunction {
-            messages::create_system_message(
-                pool,
-                &messages::NewSystemMessage {
-                    receiver_bunker_id: bunker.id,
-                    sender_name: format!("Water treatment team"),
-                    subject: format!("Water treatment report"),
-                    body: format!(
-                        "The water treatment malfunction has been fixed. Water quality is back to normal."
-                    ),
-                },
-            )
+        let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
+        if skill_roll(0.1, level) {
+            status.malfunction = false;
+            let improvement =
+                (rand::thread_rng().gen_range(1..3) + level).min(100 - status.maintenance);
+            status.maintenance += improvement;
+            inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
+            inhabitant.changed = true;
+        }
+    }
+    if existing_malfunction && !status.malfunction {
+        messages::create_system_message(
+            pool,
+            &messages::NewSystemMessage {
+                receiver_bunker_id: bunker.id,
+                sender_name: format!("Water treatment team"),
+                subject: format!("Water treatment report"),
+                body: format!(
+                    "The water treatment malfunction has been fixed. Water quality is back to normal."
+                ),
+            },
+        )
             .await?;
-        }
-    } else {
-        for mut inhabitant in workers {
-            if bunker.data.water_treatment.maintenance >= 100 {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
-            if skill_roll(0.1, level) {
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.water_treatment.maintenance);
-                bunker.data.water_treatment.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
-                inhabitant.changed = true;
-            }
-        }
-        if roll_dice(
-            0.01,
-            101 - bunker.data.water_treatment.maintenance * power_level / 100,
-        ) {
-            bunker.data.water_treatment.malfunction = true;
-            messages::create_system_message(
+    } else if !existing_malfunction && status.malfunction {
+        messages::create_system_message(
                 pool,
                 &messages::NewSystemMessage {
                     receiver_bunker_id: bunker.id,
@@ -85,11 +68,10 @@ pub async fn handle_tick(
                     ),
                 },
             )
-            .await?;
-        }
+                .await?;
     }
     let mut water_quality = 100;
-    if bunker.data.water_treatment.malfunction {
+    if status.malfunction {
         water_quality /= 2;
     }
     Ok(water_quality)

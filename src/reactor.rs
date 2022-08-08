@@ -23,11 +23,12 @@ pub async fn handle_tick(
     bunker: &mut Bunker,
     inhabitants: &mut Vec<Inhabitant>,
 ) -> Result<i32, error::Error> {
-    let reactor_workers: Vec<_> = inhabitants
+    let workers: Vec<_> = inhabitants
         .iter_mut()
         .filter(|i| i.expedition_id.is_none() && i.data.assignment == Some(Assignment::Reactor))
         .collect();
-    if bunker.data.reactor.fuel == 1 {
+    let status = &mut bunker.data.reactor;
+    if status.fuel == 1 {
         messages::create_system_message(
             pool,
             &messages::NewSystemMessage {
@@ -38,72 +39,58 @@ pub async fn handle_tick(
             },
         ).await?;
     }
-    bunker.data.reactor.fuel = (bunker.data.reactor.fuel - 1).max(0);
-    bunker.data.reactor.maintenance = (bunker.data.reactor.maintenance - 1).max(0);
-    if bunker.data.reactor.malfunction {
-        for mut inhabitant in reactor_workers {
-            if !bunker.data.reactor.malfunction && bunker.data.reactor.maintenance >= 100 {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Reactor);
-            if skill_roll(0.1, level) {
-                bunker.data.reactor.malfunction = false;
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.reactor.maintenance);
-                bunker.data.reactor.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Reactor, improvement * 10);
-                inhabitant.changed = true;
-            }
+    status.fuel = (status.fuel - 1).max(0);
+    status.maintenance = (status.maintenance - 1).max(0);
+    let existing_malfunction = status.malfunction;
+    if !status.malfunction && roll_dice(0.01, 100 - status.maintenance) {
+        status.malfunction = true;
+    }
+    for mut inhabitant in workers {
+        if !status.malfunction && status.maintenance >= 100 {
+            break;
         }
-        if !bunker.data.reactor.malfunction {
-            messages::create_system_message(
-                pool,
-                &messages::NewSystemMessage {
-                    receiver_bunker_id: bunker.id,
-                    sender_name: format!("Reactor team"),
-                    subject: format!("Reactor report"),
-                    body: format!(
-                        "The reactor malfunction has been fixed. Power output is back to normal."
-                    ),
-                },
-            )
-            .await?;
+        let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
+        if skill_roll(0.1, level) {
+            status.malfunction = false;
+            let improvement =
+                (rand::thread_rng().gen_range(1..3) + level).min(100 - status.maintenance);
+            status.maintenance += improvement;
+            inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
+            inhabitant.changed = true;
         }
-    } else {
-        for mut inhabitant in reactor_workers {
-            if bunker.data.reactor.maintenance >= 100 {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Reactor);
-            if skill_roll(0.1, level) {
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.reactor.maintenance);
-                bunker.data.reactor.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Reactor, improvement * 10);
-                inhabitant.changed = true;
-            }
-        }
-        if roll_dice(0.01, 101 - bunker.data.reactor.maintenance) {
-            bunker.data.reactor.malfunction = true;
-            messages::create_system_message(
-                pool,
-                &messages::NewSystemMessage {
-                    receiver_bunker_id: bunker.id,
-                    sender_name: format!("Reactor warning system"),
-                    subject: format!("Reactor malfunction"),
-                    body: format!(
-                        "A malfunction has been detected in the reactor. Power output is reduced."
-                    ),
-                },
-            )
-            .await?;
-        }
+    }
+    if existing_malfunction && !status.malfunction {
+        messages::create_system_message(
+            pool,
+            &messages::NewSystemMessage {
+                receiver_bunker_id: bunker.id,
+                sender_name: format!("Reactor team"),
+                subject: format!("Reactor report"),
+                body: format!(
+                    "The reactor malfunction has been fixed. Power output is back to normal."
+                ),
+            },
+        )
+        .await?;
+    } else if !existing_malfunction && status.malfunction {
+        messages::create_system_message(
+            pool,
+            &messages::NewSystemMessage {
+                receiver_bunker_id: bunker.id,
+                sender_name: format!("Reactor warning system"),
+                subject: format!("Reactor malfunction"),
+                body: format!(
+                    "A malfunction has been detected in the reactor. Power output is reduced."
+                ),
+            },
+        )
+        .await?;
     }
     let mut power_level = 100;
-    if bunker.data.reactor.fuel < 1 {
+    if status.fuel < 1 {
         power_level /= 2;
     }
-    if bunker.data.reactor.malfunction {
+    if status.malfunction {
         power_level /= 2;
     }
     Ok(power_level)

@@ -23,58 +23,41 @@ pub async fn handle_tick(
             i.expedition_id.is_none() && i.data.assignment == Some(Assignment::AirRecycling)
         })
         .collect();
-    bunker.data.air_recycling.maintenance = (bunker.data.air_recycling.maintenance - 1).max(0);
-    if bunker.data.air_recycling.malfunction {
-        for mut inhabitant in workers {
-            if !bunker.data.air_recycling.malfunction
-                && bunker.data.air_recycling.maintenance >= 100
-            {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
-            if skill_roll(0.1, level) {
-                bunker.data.air_recycling.malfunction = false;
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.air_recycling.maintenance);
-                bunker.data.air_recycling.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
-                inhabitant.changed = true;
-            }
+    let status = &mut bunker.data.air_recycling;
+    status.maintenance = (status.maintenance - 1).max(0);
+    let existing_malfunction = status.malfunction;
+    if !status.malfunction && roll_dice(0.01, 100 - status.maintenance * power_level / 100) {
+        status.malfunction = true;
+    }
+    for mut inhabitant in workers {
+        if !status.malfunction && status.maintenance >= 100 {
+            break;
         }
-        if !bunker.data.air_recycling.malfunction {
-            messages::create_system_message(
-                pool,
-                &messages::NewSystemMessage {
-                    receiver_bunker_id: bunker.id,
-                    sender_name: format!("Air recycling team"),
-                    subject: format!("Air recyling report"),
-                    body: format!(
-                        "The air recycling malfunction has been fixed. Air quality is back to normal."
-                    ),
-                },
-            )
-            .await?;
+        let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
+        if skill_roll(0.1, level) {
+            status.malfunction = false;
+            let improvement =
+                (rand::thread_rng().gen_range(1..3) + level).min(100 - status.maintenance);
+            status.maintenance += improvement;
+            inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
+            inhabitant.changed = true;
         }
-    } else {
-        for mut inhabitant in workers {
-            if bunker.data.air_recycling.maintenance >= 100 {
-                break;
-            }
-            let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
-            if skill_roll(0.1, level) {
-                let improvement = (rand::thread_rng().gen_range(1..3) + level)
-                    .min(100 - bunker.data.air_recycling.maintenance);
-                bunker.data.air_recycling.maintenance += improvement;
-                inhabitants::add_xp_to_skill(&mut inhabitant, SkillType::Repair, improvement * 10);
-                inhabitant.changed = true;
-            }
-        }
-        if roll_dice(
-            0.01,
-            101 - bunker.data.air_recycling.maintenance * power_level / 100,
-        ) {
-            bunker.data.air_recycling.malfunction = true;
-            messages::create_system_message(
+    }
+    if existing_malfunction && !status.malfunction {
+        messages::create_system_message(
+            pool,
+            &messages::NewSystemMessage {
+                receiver_bunker_id: bunker.id,
+                sender_name: format!("Air recycling team"),
+                subject: format!("Air recyling report"),
+                body: format!(
+                    "The air recycling malfunction has been fixed. Air quality is back to normal."
+                ),
+            },
+        )
+        .await?;
+    } else if !existing_malfunction && status.malfunction {
+        messages::create_system_message(
                 pool,
                 &messages::NewSystemMessage {
                     receiver_bunker_id: bunker.id,
@@ -85,8 +68,7 @@ pub async fn handle_tick(
                     ),
                 },
             )
-            .await?;
-        }
+                .await?;
     }
     let mut air_quality = 100;
     if bunker.data.air_recycling.malfunction {

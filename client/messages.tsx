@@ -2,6 +2,7 @@ import {bind, createElement, Deref, For, Fragment, Show, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
 import { openDialog } from "./dialog";
 import { Message } from "./dto";
+import { handleError } from "./error";
 import {GameService} from "./services/game-service";
 import {dataSource, DerefData, LoadingIndicator} from "./util";
 
@@ -26,8 +27,20 @@ export function Messages({gameService}: {
         openDialog(ReadMessage, {message});
     }
 
+    async function allRead() {
+        try {
+            await gameService.setAllMessagesRead();
+            messages.data.value?.forEach(m => m.unread = false);
+            messages.notify();
+            gameService.messageNotification.value = false;
+        } catch (error) {
+            handleError(error);
+        }
+    }
+
     return <>
         <div class='stack-row spacing margin-bottom justify-end'>
+            <button onClick={allRead}>All Read</button>
             <button>New</button>
         </div>
         <DerefData data={messages}>{messages =>

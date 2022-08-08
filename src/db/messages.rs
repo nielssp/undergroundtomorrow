@@ -75,6 +75,14 @@ pub async fn set_message_read(
     Ok(())
 }
 
+pub async fn set_all_messages_read(pool: &PgPool, bunker_id: i32) -> Result<(), error::Error> {
+    sqlx::query("UPDATE messages SET unread = false WHERE receiver_bunker_id = $1")
+        .bind(bunker_id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}
+
 pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<bool, error::Error> {
     Ok(sqlx::query(
         "SELECT 1 FROM messages WHERE receiver_bunker_id = $1 AND unread = true LIMIT 1",

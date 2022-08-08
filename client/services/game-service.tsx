@@ -111,6 +111,10 @@ export class GameService {
         return this.api.rpc<void>(`world/${this.worldId}/set_message_read`, messageId);
     }
 
+    setAllMessagesRead() {
+        return this.api.rpc<void>(`world/${this.worldId}/set_all_messages_read`);
+    }
+
     hasUnreadMessages() {
         return this.api.rpc<boolean>(`world/${this.worldId}/has_unread_messages`);
     }

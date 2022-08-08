@@ -54,6 +54,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(get_sectors)
         .service(get_messages)
         .service(set_message_read)
+        .service(set_all_message_read)
         .service(has_unread_messages)
         .service(get_expeditions)
         .service(create_expedition)
@@ -198,6 +199,17 @@ async fn set_message_read(
 ) -> actix_web::Result<HttpResponse> {
     let player = validate_player(&request, world_id.into_inner()).await?;
     messages::set_message_read(&pool, player.bunker.id, data.into_inner()).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/set_all_messages_read")]
+async fn set_all_message_read(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    messages::set_all_messages_read(&pool, player.bunker.id).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 
