@@ -147,5 +147,6 @@ pub async fn refuel(
         .execute(&mut tx)
         .await?;
     tx.commit().await?;
+    items::remove_empty_items(pool, bunker.id).await?;
     Ok(())
 }

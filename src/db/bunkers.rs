@@ -20,6 +20,10 @@ pub struct Bunker {
 #[serde(rename_all = "camelCase")]
 pub struct BunkerData {
     #[serde(default)]
+    pub scrap_metal: i32,
+    #[serde(default)]
+    pub scrap_electronics: i32,
+    #[serde(default)]
     pub reactor: ReactorStatus,
     #[serde(default)]
     pub water_treatment: WaterTreatmentStatus,
@@ -56,7 +60,8 @@ pub struct WaterTreatmentStatus {
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct InfirmaryStatus {
-    pub level: i32,
+    #[serde(default)]
+    pub medicine: i32, // TODO: antiseptics, antibiotics, painkillers, etc.?
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -68,15 +73,19 @@ pub struct WorkshopStatus {
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct HorticultureStatus {
-    pub level: i32,
-    pub condition: i32,
     pub crops: Vec<Crop>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Crop {
-    pub plant_type: String,
+    pub seed_type: String,
+    pub name: String,
+    pub quantity: i32,
+    pub stage: i32,
+    pub max: i32,
+    #[serde(default)]
+    pub stunted: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]

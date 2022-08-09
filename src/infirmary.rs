@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
+use sqlx::PgPool;
+
 use crate::{
     db::{
-        bunkers::Bunker,
-        inhabitants::{Assignment, Inhabitant, SkillType},
+        bunkers::{Bunker, self},
+        inhabitants::{Assignment, Inhabitant, SkillType}, items,
     },
     error,
     util::skill_roll,
@@ -12,6 +16,12 @@ enum Action {
     TreatWound,
     StopInfection,
     TreatDisease,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateInventoryRequest {
+    medicine: i32,
 }
 
 pub fn handle_tick(
@@ -39,19 +49,37 @@ pub fn handle_tick(
             }
             if inhabitant.data.wounded {
                 max_actions -= 1;
-                if skill_roll(0.1, first_aid_level + medicine_level) {
+                let chance = if bunker.data.infirmary.medicine > 0 {
+                    bunker.data.infirmary.medicine -= 1;
+                    0.1
+                } else {
+                    0.01
+                };
+                if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::TreatWound));
                 }
             }
             if inhabitant.data.infection {
                 max_actions -= 1;
-                if skill_roll(0.01, first_aid_level + medicine_level) {
+                let chance = if bunker.data.infirmary.medicine > 0 {
+                    bunker.data.infirmary.medicine -= 1;
+                    0.05
+                } else {
+                    0.001
+                };
+                if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::StopInfection));
                 }
             }
             if inhabitant.data.sick {
                 max_actions -= 1;
-                if skill_roll(0.1, first_aid_level + medicine_level) {
+                let chance = if bunker.data.infirmary.medicine > 0 {
+                    bunker.data.infirmary.medicine -= 1;
+                    0.05
+                } else {
+                    0.001
+                };
+                if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::TreatDisease));
                 }
             }
@@ -84,4 +112,38 @@ impl Inhabitant {
     fn needs_attention(&self) -> bool {
         self.data.bleeding || self.data.wounded || self.data.infection || self.data.sick
     }
+}
+
+pub async fn update_inventory(
+    pool: &PgPool,
+    bunker: &mut Bunker,
+    request: &UpdateInventoryRequest,
+) -> Result<(), error::Error> {
+    let mut tx = pool.begin().await?;
+    let existing = bunker.data.infirmary.medicine;
+    if existing < request.medicine {
+        let diff = request.medicine - existing;
+        let affected = items::remove_items_query(bunker.id, "medicine", diff)
+            .execute(&mut tx)
+            .await?
+            .rows_affected();
+        if affected < 1 {
+            Err(error::client_error("MISSING_ITEM"))?;
+        }
+    } else if existing > request.medicine {
+        let diff = existing - request.medicine;
+        items::add_item_query(bunker.id, "medicine", diff)
+            .execute(&mut tx)
+            .await?;
+    } else {
+        return Ok(());
+    }
+    // TODO: SELECT .. FOR UPDATE to lock row
+    bunker.data.infirmary.medicine = request.medicine;
+    bunkers::update_bunker_data_query(bunker)
+        .execute(&mut tx)
+        .await?;
+    tx.commit().await?;
+    items::remove_empty_items(pool, bunker.id).await?;
+    Ok(())
 }

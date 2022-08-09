@@ -46,6 +46,14 @@ pub struct ItemType {
     pub ammo_type: Option<String>,
     #[serde(default)]
     pub reactivity: i32,
+    #[serde(default)]
+    pub seed: bool,
+    #[serde(default)]
+    pub growth_time: i32,
+    #[serde(default)]
+    pub produce: Option<String>,
+    #[serde(default)]
+    pub food: bool,
 }
 
 lazy_static! {
@@ -127,6 +135,14 @@ fn load_item_types(dir: &str) -> std::io::Result<HashMap<String, ItemType>> {
                 panic!(
                     "Unknown ammo type '{}' in item type '{}'",
                     ammo_type, item_type.id
+                );
+            }
+        }
+        if let Some(produce) = &item_type.produce {
+            if !map.contains_key(produce) {
+                panic!(
+                    "Unknown produce '{}' in item type '{}'",
+                    produce, item_type.id
                 );
             }
         }

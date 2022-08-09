@@ -1,0 +1,5 @@
+name = "Scallion Seed"
+name_plural = "Scallion Seeds"
+seed = true
+growth_time = 21
+produce = "scallion"

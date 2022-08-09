@@ -1,0 +1,5 @@
+name = "Lettuce Seed"
+name_plural = "Lettuce Seeds"
+seed = true
+growth_time = 30
+produce = "lettuce"

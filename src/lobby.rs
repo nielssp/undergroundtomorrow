@@ -103,6 +103,8 @@ async fn join_world(
             x,
             y,
             data: bunkers::BunkerData {
+                scrap_metal: 10,
+                scrap_electronics: 10,
                 reactor: bunkers::ReactorStatus {
                     maintenance: 100,
                     fuel: 160,
@@ -112,11 +114,11 @@ async fn join_world(
                     maintenance: 100,
                     malfunction: false,
                 },
-                infirmary: bunkers::InfirmaryStatus { level: 0 },
+                infirmary: bunkers::InfirmaryStatus {
+                    medicine: 10,
+                },
                 workshop: bunkers::WorkshopStatus { level: 0 },
                 horticulture: bunkers::HorticultureStatus {
-                    level: 0,
-                    condition: 100,
                     crops: vec![],
                 },
                 air_recycling: bunkers::AirRecyclingStatus {

@@ -130,4 +130,16 @@ export class GameService {
     refuelReactor(itemType: string) {
         return this.api.rpc<void>(`world/${this.worldId}/refuel_reactor`, {itemType});
     }
+
+    updateInfirmaryInventory(medicine: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/update_infirmary_inventory`, {medicine});
+    }
+
+    addCrop(seedType: string, amount: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/add_crop`, {seedType, amount});
+    }
+
+    removeCrop(index: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/remove_crop`, {index});
+    }
 }

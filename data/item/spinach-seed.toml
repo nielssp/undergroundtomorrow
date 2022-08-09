@@ -1,0 +1,5 @@
+name = "Spinach Seed"
+name_plural = "Spinach Seeds"
+seed = true
+growth_time = 30
+produce = "spinach"

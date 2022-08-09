@@ -28,6 +28,7 @@ mod reactor;
 mod settings;
 mod util;
 mod water_treatment;
+mod workshop;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

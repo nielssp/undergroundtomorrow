@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use chrono::{Duration, Utc};
 use rand::Rng;
 use sqlx::PgPool;
@@ -8,9 +10,9 @@ use crate::{
         bunkers,
         inhabitants::{self, Assignment},
         messages,
-        worlds::{self, WorldTime},
+        worlds::{self, WorldTime}, items,
     },
-    error, expedition, health, infirmary, reactor, water_treatment,
+    error, expedition, health, infirmary, reactor, water_treatment, horticulture, workshop,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -42,6 +44,8 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
         let air_quality =
             air_recycling::handle_tick(pool, &mut bunker, &mut inhabitants, power_level).await?;
 
+        horticulture::handle_tick(pool, &mut bunker, &mut inhabitants, power_level, water_quality).await?;
+        workshop::handle_tick(&mut bunker, &mut inhabitants)?;
         infirmary::handle_tick(&mut bunker, &mut inhabitants)?;
 
         health::handle_tick(&mut bunker, &mut inhabitants, water_quality, air_quality)?;
@@ -76,7 +80,7 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
             }
         }
 
-        let seconds = rand::thread_rng().gen_range(3600..5400) / world.time_acceleration;
+        let seconds = rand::thread_rng().gen_range(2400..4800) / world.time_acceleration;
         bunker.next_tick = Utc::now() + Duration::seconds(seconds as i64);
         bunkers::update_bunker_data_and_tick(pool, &bunker).await?;
     }

@@ -59,7 +59,7 @@ export class DataSource<T> {
     private readonly promise = bind(this.source());
     readonly data: Property<T|undefined> = this.promise.await(error => this._error.value = error);
     private readonly _error = bind<any>(undefined);
-    readonly loading: Property<boolean> = zipWith([this.data, this.error], (d, e) => !d && !e);
+    readonly loading: Property<boolean> = zipWith([this.data, this.error], (d, e) => typeof d === 'undefined' && !e);
     constructor(
         private source: () => Promise<T>,
     ) {

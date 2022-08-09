@@ -54,7 +54,7 @@ export interface WaterTreatmentStatus {
 }
 
 export interface InfirmaryStatus {
-    level: number;
+    medicine: number;
 }
 
 export interface WorkshopStatus {
@@ -62,12 +62,15 @@ export interface WorkshopStatus {
 }
 
 export interface Crop {
-    plantType: string;
+    seedType: string;
+    name: string;
+    quantity: number;
+    stage: number;
+    max: number;
+    stunted: boolean;
 }
 
 export interface HorticultureStatus {
-    level: number;
-    condition: number;
     crops: Crop[];
 }
 
@@ -137,6 +140,9 @@ export interface ItemType {
     range: number;
     ammoType?: string;
     reactivity: number;
+    seed: boolean;
+    growthTime: number;
+    produce?: string;
 }
 
 export interface Item {

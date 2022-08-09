@@ -1,0 +1,5 @@
+name = "Carrot Seed"
+name_plural = "Carrot Seeds"
+seed = true
+growth_time = 50
+produce = "carrot"

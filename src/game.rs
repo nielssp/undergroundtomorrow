@@ -15,7 +15,7 @@ use crate::{
         worlds,
     },
     dto::{BunkerDto, ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
-    error, expedition, reactor,
+    error, expedition, reactor, infirmary, horticulture,
 };
 
 pub struct Player {
@@ -58,7 +58,10 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(has_unread_messages)
         .service(get_expeditions)
         .service(create_expedition)
-        .service(refuel_reactor);
+        .service(refuel_reactor)
+        .service(update_infirmary_inventory)
+        .service(add_crop)
+        .service(remove_crop);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -260,6 +263,42 @@ async fn refuel_reactor(
 ) -> actix_web::Result<HttpResponse> {
     let mut player = validate_player(&request, world_id.into_inner()).await?;
     reactor::refuel(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/update_infirmary_inventory")]
+async fn update_infirmary_inventory(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<infirmary::UpdateInventoryRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    infirmary::update_inventory(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/add_crop")]
+async fn add_crop(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<horticulture::NewCropRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    horticulture::add_crop(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/remove_crop")]
+async fn remove_crop(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<horticulture::CropRemovalRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    horticulture::remove_crop(&pool, &mut player.bunker, &data).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 

@@ -1,0 +1,5 @@
+name = "Sunflower Seed"
+name_plural = "Sunflower Seeds"
+seed = true
+growth_time = 12
+produce = "sunflower-shoot"
