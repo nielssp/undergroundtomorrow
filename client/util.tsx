@@ -1,4 +1,4 @@
-import {Property, Show, createElement, bind, zipWith, Deref, Fragment} from "cstk";
+import {Property, Show, createElement, bind, zipWith, Deref, Fragment, ValueProperty} from "cstk";
 import { differenceInSeconds, parseISO } from "date-fns";
 import { Item } from "./dto";
 import { ErrorIndicator } from "./error";
@@ -101,3 +101,16 @@ export function getItemName(item: Item) {
     }
     return item.itemType.namePlural;
 }
+
+export function QuantityButtons({value, max}: {
+    value: ValueProperty<number>,
+    max: Property<number>,
+}) {
+    return <div class='stack-row spacing justify-space-between'>
+        <button disabled={value.map(a => a <= 0)} onClick={() => value.value = Math.max(0, value.value - 10)}>-10</button>
+        <button disabled={value.map(a => a <= 0)} onClick={() => value.value--}>-1</button>
+        <button disabled={zipWith([value, max], (v, m) => v >= m)} onClick={() => value.value++}>+1</button>
+        <button disabled={zipWith([value, max], (v, m) => v >= m)} onClick={() => value.value = Math.min(max.value, value.value + 10)}>+10</button>
+    </div>;
+}
+

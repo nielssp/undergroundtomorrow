@@ -62,5 +62,12 @@ function ShowItem({item}: {
                 <div>{item.itemType.reactivity}</div>
             </div>
         </Show>
+        <Show when={bind(item.itemType.seed)}>
+            <div>Seed</div>
+            <div class='stack-row spacing justify-space-between'>
+                <strong>Growth Time</strong>
+                <div>{item.itemType.growthTime} days</div>
+            </div>
+        </Show>
     </div>;
 }
