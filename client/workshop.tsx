@@ -101,7 +101,7 @@ interface Ingredient {
     max: number;
 }
 
-function AddProject({gameService, close}: {
+export function AddProject({gameService, close}: {
     gameService: GameService,
     close: (save: boolean) => void,
 }) {

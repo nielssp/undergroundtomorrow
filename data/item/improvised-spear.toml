@@ -1,0 +1,12 @@
+name = "Improvised Spear"
+name_plural = "Improvised Spears"
+weapon = true
+melee_weapon = true
+damage = 4
+range = 2
+
+[recipe]
+min_level = 0
+time = 1
+ingredients = { wood = 1, knife = 1 }
+

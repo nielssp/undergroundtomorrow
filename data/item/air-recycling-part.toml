@@ -1,0 +1,8 @@
+name = "Air Recycling Part"
+name_plural = "Air Recycling Parts"
+
+[recipe]
+min_level = 0
+time = 3
+ingredients = { scrap-metal = 1, scrap-electronics = 1 }
+

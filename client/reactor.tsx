@@ -42,7 +42,8 @@ function SelectFuel({gameService, close}: {
     close: (itemType: string) => void,
 }) {
     const items = dataSource(() => gameService.getItems().then(items => items.filter(item => item.itemType.reactivity > 0)));
-    return <div class='stack-column padding'>
+    return <div class='stack-column padding spacing'>
+        <div>Select replacement fuel rod</div>
         <DerefData data={items}>{items =>
             <>
                 <div role='grid' class='stack-column'>

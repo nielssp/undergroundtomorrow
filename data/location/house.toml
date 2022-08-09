@@ -6,10 +6,20 @@ min = 1
 max = 1
 chance = 0.025
 
-[loot.steel]
+[loot.scrap-metal]
 min = 1
 max = 2
-chance = 0.05
+chance = 0.01
+
+[loot.scrap-electronics]
+min = 1
+max = 2
+chance = 0.01
+
+[loot.wood]
+min = 1
+max = 2
+chance = 0.01
 
 [loot.cloth]
 min = 2

@@ -4,7 +4,7 @@ import { DialogRef, openDialog } from './dialog';
 import {Inhabitant, Item, ItemType, Location} from './dto';
 import { handleError } from './error';
 import {GameService} from './services/game-service';
-import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration, getItemName } from './util';
+import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration, getItemName, QuantityButtons } from './util';
 
 interface Equiped {
     inhabitantId: number;
@@ -351,12 +351,7 @@ function SelectWeapon({weapon, ammo, weapons, ammoTypes, close}: {
                     <div>Amount:</div>
                     <div>{ammoAmount} / {ammoType.props.quantity}</div>
                 </div>
-                <div class='stack-row spacing justify-space-between'>
-                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value = Math.max(0, ammoAmount.value - 10)}>-10</button>
-                    <button disabled={ammoAmount.map(a => a <= 0)} onClick={() => ammoAmount.value--}>-1</button>
-                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value++}>+1</button>
-                    <button disabled={zipWith([ammoAmount, ammoType], (a, t) => a >= t.quantity)} onClick={() => ammoAmount.value = Math.min(ammoType.value.quantity, ammoAmount.value + 10)}>+10</button>
-                </div>
+                <QuantityButtons value={ammoAmount} max={ammoType.props.quantity}/>
             </>
         }</Deref>
         <div class='stack-row spacing justify-end'>

@@ -46,6 +46,8 @@ pub struct ReactorStatus {
     pub fuel: i32,
     #[serde(default)]
     pub malfunction: bool,
+    #[serde(default)]
+    pub parts: i32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -55,6 +57,19 @@ pub struct WaterTreatmentStatus {
     pub maintenance: i32,
     #[serde(default)]
     pub malfunction: bool,
+    #[serde(default)]
+    pub parts: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct AirRecyclingStatus {
+    #[serde(default)]
+    pub maintenance: i32,
+    #[serde(default)]
+    pub malfunction: bool,
+    #[serde(default)]
+    pub parts: i32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -97,15 +112,6 @@ pub struct Crop {
     pub max: i32,
     #[serde(default)]
     pub stunted: bool,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub struct AirRecyclingStatus {
-    #[serde(default)]
-    pub maintenance: i32,
-    #[serde(default)]
-    pub malfunction: bool,
 }
 
 pub struct NewBunker {

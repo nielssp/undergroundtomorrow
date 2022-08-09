@@ -109,10 +109,12 @@ async fn join_world(
                     maintenance: 100,
                     fuel: 160,
                     malfunction: false,
+                    parts: 20,
                 },
                 water_treatment: bunkers::WaterTreatmentStatus {
                     maintenance: 100,
                     malfunction: false,
+                    parts: 20,
                 },
                 infirmary: bunkers::InfirmaryStatus { medicine: 10 },
                 workshop: bunkers::WorkshopStatus { projects: vec![] },
@@ -120,6 +122,7 @@ async fn join_world(
                 air_recycling: bunkers::AirRecyclingStatus {
                     maintenance: 100,
                     malfunction: false,
+                    parts: 20,
                 },
             },
         },

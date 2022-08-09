@@ -1,10 +1,15 @@
 name = "Nuclear Power Plant"
 quantity = 2
 
-[loot.steel]
-min = 5
-max = 10
-chance = 0.5
+[loot.scrap-metal]
+min = 1
+max = 6
+chance = 0.4
+
+[loot.scrap-electronics]
+min = 1
+max = 4
+chance = 0.2
 
 [loot.nuclear-material]
 min = 1
@@ -14,22 +19,22 @@ chance = 0.01
 [loot.fuel-rod]
 min = 1
 max = 1
-chance = 0.001
+chance = 0.0001
 
 [loot.fuel-rod-90]
 min = 1
 max = 1
-chance = 0.001
+chance = 0.0005
 
 [loot.fuel-rod-80]
 min = 1
 max = 1
-chance = 0.001
+chance = 0.0005
 
 [loot.fuel-rod-70]
 min = 1
 max = 1
-chance = 0.001
+chance = 0.0005
 
 [loot.fuel-rod-60]
 min = 1

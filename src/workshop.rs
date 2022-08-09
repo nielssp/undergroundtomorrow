@@ -58,10 +58,10 @@ pub async fn handle_tick(
                 continue;
             }
             if skill_roll(0.5, crafting_level - recipe.min_level) {
-                project.progress += project.max;
+                project.progress += 1;
                 worker.add_xp(SkillType::Crafting, 30);
                 common_xp += 10;
-                let produced = project.max / project.quantity;
+                let produced = project.progress / (project.max / project.quantity);
                 if produced > project.produced {
                     items::add_item(pool, bunker.id, &item_type.id, produced - project.produced)
                         .await?;
@@ -90,6 +90,7 @@ pub async fn handle_tick(
                     }
                 }
             }
+            break;
         }
     }
     projects.retain(|project| project.progress < project.max);

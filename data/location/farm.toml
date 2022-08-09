@@ -1,6 +1,11 @@
 name = "Farm"
 quantity = 100
 
+[loot.scrap-metal]
+min = 1
+max = 6
+chance = 0.2
+
 [loot.medicine]
 min = 1
 max = 1

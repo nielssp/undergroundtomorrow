@@ -4,6 +4,7 @@ import { openDialog } from "./dialog";
 import { Item } from "./dto";
 import {GameService} from "./services/game-service";
 import {dataSource, DerefData, getItemName, LoadingIndicator} from "./util";
+import { AddProject } from "./workshop";
 
 export function Items({gameService}: {
     gameService: GameService,
@@ -14,7 +15,16 @@ export function Items({gameService}: {
         openDialog(ShowItem, {item});
     }
 
+    async function craft() {
+        if (await openDialog(AddProject, {gameService})) {
+            items.refresh();
+        }
+    }
+
     return <>
+        <div class='stack-row justify-end spacing margin-bottom'>
+            <button onClick={craft}>Craft</button>
+        </div>
         <DerefData data={items}>{items =>
             <>
                 <div role='grid' class='stack-column'>
