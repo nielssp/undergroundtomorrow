@@ -57,8 +57,16 @@ export interface InfirmaryStatus {
     medicine: number;
 }
 
+export interface WorkshopProject {
+    itemType: string;
+    quantity: number;
+    progress: number;
+    max: number;
+    produced: number;
+}
+
 export interface WorkshopStatus {
-    level: number;
+    projects: WorkshopProject[];
 }
 
 export interface Crop {

@@ -142,4 +142,12 @@ export class GameService {
     removeCrop(index: number) {
         return this.api.rpc<void>(`world/${this.worldId}/remove_crop`, {index});
     }
+
+    addProject(itemType: string, quantity: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/add_project`, {itemType, quantity});
+    }
+
+    removeProject(index: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/remove_project`, {index});
+    }
 }

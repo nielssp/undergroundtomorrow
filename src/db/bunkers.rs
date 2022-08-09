@@ -66,8 +66,19 @@ pub struct InfirmaryStatus {
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
 #[serde(rename_all = "camelCase")]
+pub struct WorkshopProject {
+    pub item_type: String,
+    pub quantity: i32,
+    pub progress: i32,
+    pub max: i32,
+    pub produced: i32,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct WorkshopStatus {
-    pub level: i32,
+    #[serde(default)]
+    pub projects: Vec<WorkshopProject>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]

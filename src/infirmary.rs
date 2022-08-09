@@ -4,8 +4,9 @@ use sqlx::PgPool;
 
 use crate::{
     db::{
-        bunkers::{Bunker, self},
-        inhabitants::{Assignment, Inhabitant, SkillType}, items,
+        bunkers::{self, Bunker},
+        inhabitants::{Assignment, Inhabitant, SkillType},
+        items,
     },
     error,
     util::skill_roll,

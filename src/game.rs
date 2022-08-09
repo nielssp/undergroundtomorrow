@@ -15,7 +15,7 @@ use crate::{
         worlds,
     },
     dto::{BunkerDto, ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
-    error, expedition, reactor, infirmary, horticulture,
+    error, expedition, horticulture, infirmary, reactor, workshop,
 };
 
 pub struct Player {
@@ -61,7 +61,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(refuel_reactor)
         .service(update_infirmary_inventory)
         .service(add_crop)
-        .service(remove_crop);
+        .service(remove_crop)
+        .service(add_project)
+        .service(remove_project);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -299,6 +301,30 @@ async fn remove_crop(
 ) -> actix_web::Result<HttpResponse> {
     let mut player = validate_player(&request, world_id.into_inner()).await?;
     horticulture::remove_crop(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/add_project")]
+async fn add_project(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<workshop::NewProjectRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    workshop::add_project(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/remove_project")]
+async fn remove_project(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<workshop::ProjectRemovalRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    workshop::remove_project(&pool, &mut player.bunker, &data).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 

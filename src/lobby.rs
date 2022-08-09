@@ -114,13 +114,9 @@ async fn join_world(
                     maintenance: 100,
                     malfunction: false,
                 },
-                infirmary: bunkers::InfirmaryStatus {
-                    medicine: 10,
-                },
-                workshop: bunkers::WorkshopStatus { level: 0 },
-                horticulture: bunkers::HorticultureStatus {
-                    crops: vec![],
-                },
+                infirmary: bunkers::InfirmaryStatus { medicine: 10 },
+                workshop: bunkers::WorkshopStatus { projects: vec![] },
+                horticulture: bunkers::HorticultureStatus { crops: vec![] },
                 air_recycling: bunkers::AirRecyclingStatus {
                     maintenance: 100,
                     malfunction: false,

@@ -27,6 +27,14 @@ pub struct LocationType {
     pub loot: HashMap<String, LootEntry>,
 }
 
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
+pub struct CraftingRecipe {
+    pub min_level: i32,
+    pub time: i32, // hours
+    pub ingredients: HashMap<String, i32>,
+}
+
 #[derive(Clone, serde::Serialize, serde::Deserialize, Default)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct ItemType {
@@ -49,11 +57,13 @@ pub struct ItemType {
     #[serde(default)]
     pub seed: bool,
     #[serde(default)]
-    pub growth_time: i32,
+    pub growth_time: i32, // days
     #[serde(default)]
     pub produce: Option<String>,
     #[serde(default)]
     pub food: bool,
+    #[serde(default)]
+    pub recipe: Option<CraftingRecipe>,
 }
 
 lazy_static! {

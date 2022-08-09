@@ -1,7 +1,16 @@
 use sqlx::PgPool;
 use tracing::warn;
 
-use crate::{db::{bunkers::{Bunker, self, Crop}, inhabitants::{Inhabitant, Assignment, SkillType}, items}, error, data::ITEM_TYPES, util::{roll_dice, skill_roll}};
+use crate::{
+    data::ITEM_TYPES,
+    db::{
+        bunkers::{self, Bunker, Crop},
+        inhabitants::{Assignment, Inhabitant, SkillType},
+        items,
+    },
+    error,
+    util::{roll_dice, skill_roll},
+};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +37,9 @@ pub async fn handle_tick(
         .filter(|i| i.is_ready() && i.data.assignment == Some(Assignment::Horticulture))
         .collect();
     for crop in &mut bunker.data.horticulture.crops {
-        let crop_type = ITEM_TYPES.get(&crop.seed_type).ok_or_else(|| error::internal_error("Unknown crop type"))?;
+        let crop_type = ITEM_TYPES
+            .get(&crop.seed_type)
+            .ok_or_else(|| error::internal_error("Unknown crop type"))?;
         if roll_dice(1.0 / 24.0, 1) {
             if crop.stunted {
                 crop.stage -= 1;
@@ -62,10 +73,13 @@ pub async fn handle_tick(
                     items::add_item(pool, bunker.id, produce, 1).await?;
                 }
             }
-
         }
     }
-    bunker.data.horticulture.crops.retain(|crop| crop.stage >= 0);
+    bunker
+        .data
+        .horticulture
+        .crops
+        .retain(|crop| crop.stage >= 0);
     Ok(())
 }
 
@@ -73,7 +87,7 @@ pub async fn remove_crop(
     pool: &PgPool,
     bunker: &mut Bunker,
     request: &CropRemovalRequest,
-) -> Result<(), error:: Error> {
+) -> Result<(), error::Error> {
     if request.index >= bunker.data.horticulture.crops.len() {
         Err(error::client_error("OUT_OF_RANGE"))?;
     }
@@ -95,7 +109,9 @@ pub async fn add_crop(
     if request.amount < 1 {
         Err(error::client_error("INVALID_AMOUNT"))?;
     }
-    let seed_type = ITEM_TYPES.get(&request.seed_type).filter(|s| s.seed)
+    let seed_type = ITEM_TYPES
+        .get(&request.seed_type)
+        .filter(|s| s.seed)
         .ok_or_else(|| error::client_error("INVALID_SEED_TYPE"))?;
     let mut tx = pool.begin().await?;
     let affected = items::remove_items_query(bunker.id, &seed_type.id, request.amount)

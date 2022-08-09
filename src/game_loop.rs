@@ -9,10 +9,10 @@ use crate::{
     db::{
         bunkers,
         inhabitants::{self, Assignment},
-        messages,
-        worlds::{self, WorldTime}, items,
+        items, messages,
+        worlds::{self, WorldTime},
     },
-    error, expedition, health, infirmary, reactor, water_treatment, horticulture, workshop,
+    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -44,7 +44,14 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
         let air_quality =
             air_recycling::handle_tick(pool, &mut bunker, &mut inhabitants, power_level).await?;
 
-        horticulture::handle_tick(pool, &mut bunker, &mut inhabitants, power_level, water_quality).await?;
+        horticulture::handle_tick(
+            pool,
+            &mut bunker,
+            &mut inhabitants,
+            power_level,
+            water_quality,
+        )
+        .await?;
         workshop::handle_tick(&mut bunker, &mut inhabitants)?;
         infirmary::handle_tick(&mut bunker, &mut inhabitants)?;
 
