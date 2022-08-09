@@ -35,6 +35,7 @@ pub enum SkillType {
     MeleeWeapons,
     Guns,
     Unarmed,
+    Crafting,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -89,6 +90,10 @@ pub struct InhabitantData {
     pub infection: bool,
     #[serde(default)]
     pub recovering: bool,
+    #[serde(default)]
+    pub hunger: i32,
+    #[serde(default)]
+    pub starving: bool,
 }
 
 pub struct NewInhabitant {
@@ -213,11 +218,11 @@ pub async fn delete_inhabitant(pool: &PgPool, inhabitant_id: i32) -> Result<(), 
 impl Inhabitant {
     pub fn is_ready(&self) -> bool {
         self.expedition_id.is_none()
-            && !self.data.wounded
             && !self.data.bleeding
-            && !self.data.sick
             && !self.data.infection
-            && !self.data.recovering
+            && !self.data.wounded
+            && (!self.data.sick || self.data.health > 75)
+            && (!self.data.recovering || self.data.health > 75)
     }
 
     pub fn get_skill_level(&self, skill_type: SkillType) -> i32 {
@@ -241,6 +246,7 @@ impl Inhabitant {
             skill.xp += xp;
             let previous_level = skill.level;
             skill.level = get_skill_level(skill.xp);
+            self.changed = true;
             return skill.level > previous_level;
         } else {
             let new = Skill {
@@ -250,6 +256,7 @@ impl Inhabitant {
             };
             let level_up = new.level > 0;
             self.data.skills.push(new);
+            self.changed = true;
             return level_up;
         }
     }

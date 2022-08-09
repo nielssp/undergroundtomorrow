@@ -74,12 +74,7 @@ pub fn handle_tick(
             }
             if inhabitant.data.sick {
                 max_actions -= 1;
-                let chance = if bunker.data.infirmary.medicine > 0 {
-                    bunker.data.infirmary.medicine -= 1;
-                    0.05
-                } else {
-                    0.001
-                };
+                let chance = 0.01;
                 if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::TreatDisease));
                 }

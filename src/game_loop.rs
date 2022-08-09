@@ -52,7 +52,7 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
             water_quality,
         )
         .await?;
-        workshop::handle_tick(&mut bunker, &mut inhabitants)?;
+        workshop::handle_tick(pool, &mut bunker, &mut inhabitants).await?;
         infirmary::handle_tick(&mut bunker, &mut inhabitants)?;
 
         health::handle_tick(&mut bunker, &mut inhabitants, water_quality, air_quality)?;

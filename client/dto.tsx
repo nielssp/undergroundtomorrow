@@ -139,6 +139,12 @@ export interface Inhabitant {
     ready: boolean;
 }
 
+export interface CraftingRecipe {
+    minLevel: number;
+    time: number;
+    ingredients: Record<string, number>,
+}
+
 export interface ItemType {
     id: string;
     name: string;
@@ -151,7 +157,10 @@ export interface ItemType {
     seed: boolean;
     growthTime: number;
     produce?: string;
+    recipe?: CraftingRecipe;
 }
+
+export type RecipeItemType = ItemType & {recipe: CraftingRecipe};
 
 export interface Item {
     id: number;

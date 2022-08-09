@@ -1,7 +1,7 @@
 import {bind, Property, ref, zipWith} from "cstk";
 import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, formatISO, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
-import {Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, Location, Message, Sector, World} from "../dto";
+import {Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
 
 function getWorldtime(world: World) {
     const created = parseISO(world.created);
@@ -13,6 +13,7 @@ function getWorldtime(world: World) {
 export class GameService {
     private clockInterval: number|undefined;
     private messageCheckInterval: number|undefined;
+    private itemTypesPromise: Promise<Map<string, ItemType>>|undefined;
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
     readonly worldTime = bind(new Date());
@@ -60,6 +61,35 @@ export class GameService {
         throw new Error('World ID missing'); 
     }
 
+    get itemTypes() {
+        if (!this.itemTypesPromise) {
+            this.itemTypesPromise = this.getItemTypes().then(itemTypes => {
+                const map = new Map<string, ItemType>();
+                itemTypes.forEach(itemType => map.set(itemType.id, itemType));
+                return map;
+            });
+            this.itemTypesPromise.catch(() => this.itemTypesPromise = undefined);
+        }
+        return this.itemTypesPromise;
+    }
+
+    get recipes(): Promise<RecipeItemType[]> {
+        return this.itemTypes.then(itemTypes => [...itemTypes.values()]
+            .filter((i: ItemType): i is RecipeItemType => !!i.recipe));
+    }
+
+    async getItemType(id: string): Promise<ItemType|undefined> {
+        return (await this.itemTypes).get(id);
+    }
+
+    async getItemTypeName(id: string, quantity: number = 1): Promise<string> {
+        const itemType = (await this.itemTypes).get(id);
+        if (itemType) {
+            return quantity === 1 ? itemType.name : itemType.namePlural;
+        }
+        return id;
+    }
+
     async selectWorld(worldId: number) {
         this.world.value = await this.getWorld(worldId);
         try {
@@ -72,6 +102,10 @@ export class GameService {
 
     getWorld(worldId: number) {
         return this.api.rpc<World>(`world/${worldId}/get_world`);
+    }
+
+    getItemTypes() {
+        return this.api.rpc<ItemType[]>(`world/${this.worldId}/get_item_types`);
     }
 
     getBunker() {
@@ -149,5 +183,9 @@ export class GameService {
 
     removeProject(index: number) {
         return this.api.rpc<void>(`world/${this.worldId}/remove_project`, {index});
+    }
+
+    prioritizeProject(index: number) {
+        return this.api.rpc<void>(`world/${this.worldId}/prioritize_project`, {index});
     }
 }

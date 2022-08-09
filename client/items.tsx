@@ -22,9 +22,6 @@ export function Items({gameService}: {
                         <button role='row' onClick={() => show(item.value)}>
                             <div role='gridcell' class='stack-row spacing'>
                                 <div>{item.map(getItemName)}</div>
-                                <Show when={item.props.quantity.map(q => q !== 1)}>
-                                    <div>({item.props.quantity})</div>
-                                </Show>
                             </div>
                         </button>
                         }</For>

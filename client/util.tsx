@@ -1,6 +1,6 @@
 import {Property, Show, createElement, bind, zipWith, Deref, Fragment, ValueProperty} from "cstk";
 import { differenceInSeconds, parseISO } from "date-fns";
-import { Item } from "./dto";
+import { Item, ItemType } from "./dto";
 import { ErrorIndicator } from "./error";
 
 export function LoadingIndicator({loading}: {
@@ -96,10 +96,14 @@ export function DerefData<T>({data, children}: {
 }
 
 export function getItemName(item: Item) {
-    if (item.quantity === 1) {
-        return item.itemType.name;
+    return getItemTypeNameAndQuantity(item.itemType, item.quantity);
+}
+
+export function getItemTypeNameAndQuantity(itemType: ItemType, quantity: number) {
+    if (quantity === 1) {
+        return itemType.name;
     }
-    return item.itemType.namePlural;
+    return `${itemType.namePlural} (${quantity})`;
 }
 
 export function QuantityButtons({value, max}: {

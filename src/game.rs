@@ -6,6 +6,7 @@ use tracing::info;
 
 use crate::{
     auth::validate_session,
+    data::ITEM_TYPES,
     db::{
         bunkers::{self, Bunker},
         expeditions,
@@ -63,7 +64,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(add_crop)
         .service(remove_crop)
         .service(add_project)
-        .service(remove_project);
+        .service(remove_project)
+        .service(prioritize_project)
+        .service(get_item_types);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -326,6 +329,23 @@ async fn remove_project(
     let mut player = validate_player(&request, world_id.into_inner()).await?;
     workshop::remove_project(&pool, &mut player.bunker, &data).await?;
     Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/prioritize_project")]
+async fn prioritize_project(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+    data: web::Json<workshop::ProjectPrioritizationRequest>,
+) -> actix_web::Result<HttpResponse> {
+    let mut player = validate_player(&request, world_id.into_inner()).await?;
+    workshop::prioritize_project(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/get_item_types")]
+async fn get_item_types() -> actix_web::Result<HttpResponse> {
+    Ok(HttpResponse::Ok().json(ITEM_TYPES.values().collect_vec()))
 }
 
 pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web::Result<Player> {

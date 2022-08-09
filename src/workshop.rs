@@ -4,10 +4,11 @@ use crate::{
     data::ITEM_TYPES,
     db::{
         bunkers::{self, Bunker, WorkshopProject},
-        inhabitants::Inhabitant,
-        items,
+        inhabitants::{Assignment, Inhabitant, SkillType},
+        items, messages,
     },
     error,
+    util::skill_roll,
 };
 
 #[derive(serde::Deserialize)]
@@ -23,10 +24,80 @@ pub struct ProjectRemovalRequest {
     index: usize,
 }
 
-pub fn handle_tick(
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectPrioritizationRequest {
+    index: usize,
+}
+
+pub async fn handle_tick(
+    pool: &PgPool,
     bunker: &mut Bunker,
     inhabitants: &mut Vec<Inhabitant>,
 ) -> Result<(), error::Error> {
+    let mut workers: Vec<_> = inhabitants
+        .iter_mut()
+        .filter(|i| i.is_ready() && i.data.assignment == Some(Assignment::Workshop))
+        .collect();
+    let projects = &mut bunker.data.workshop.projects;
+    let mut common_xp = 0;
+    for worker in &mut workers {
+        let crafting_level = worker.get_skill_level(SkillType::Crafting);
+        for project in projects.iter_mut() {
+            if project.progress >= project.max {
+                continue;
+            }
+            let item_type = ITEM_TYPES
+                .get(&project.item_type)
+                .ok_or_else(|| error::internal_error("Crafting recipe not found"))?;
+            let recipe = item_type
+                .recipe
+                .as_ref()
+                .ok_or_else(|| error::internal_error("Invalid crafting recipe"))?;
+            if recipe.min_level > crafting_level {
+                continue;
+            }
+            if skill_roll(0.5, crafting_level - recipe.min_level) {
+                project.progress += project.max;
+                worker.add_xp(SkillType::Crafting, 30);
+                common_xp += 10;
+                let produced = project.max / project.quantity;
+                if produced > project.produced {
+                    items::add_item(pool, bunker.id, &item_type.id, produced - project.produced)
+                        .await?;
+                    project.produced = produced;
+                    if project.progress >= project.max {
+                        messages::create_system_message(
+                            pool,
+                            &messages::NewSystemMessage {
+                                receiver_bunker_id: bunker.id,
+                                sender_name: format!("Workshop team"),
+                                subject: format!("Project finished: {}", item_type.name),
+                                body: if project.produced == 1 {
+                                    format!(
+                                        "A {} has been constructed in the workshop.",
+                                        item_type.name
+                                    )
+                                } else {
+                                    format!(
+                                        "{} {} have been constructed in the workshop.",
+                                        project.produced, item_type.name_plural
+                                    )
+                                },
+                            },
+                        )
+                        .await?;
+                    }
+                }
+            }
+        }
+    }
+    projects.retain(|project| project.progress < project.max);
+    if common_xp > 0 {
+        for worker in &mut workers {
+            worker.add_xp(SkillType::Crafting, common_xp);
+        }
+    }
     Ok(())
 }
 
@@ -57,6 +128,21 @@ pub async fn remove_project(
         .execute(&mut tx)
         .await?;
     tx.commit().await?;
+    Ok(())
+}
+
+pub async fn prioritize_project(
+    pool: &PgPool,
+    bunker: &mut Bunker,
+    request: &ProjectPrioritizationRequest,
+) -> Result<(), error::Error> {
+    if request.index < 1 || request.index >= bunker.data.workshop.projects.len() {
+        Err(error::client_error("OUT_OF_RANGE"))?;
+    }
+    bunker.data.workshop.projects.swap(0, request.index);
+    bunkers::update_bunker_data_query(bunker)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 
