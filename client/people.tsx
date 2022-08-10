@@ -99,6 +99,10 @@ function Details({gameService, teams, ...props}: {
             <div style='font-weight: bold'>Date of birth:</div>
             <div>{format(parseISO(person.value.dateOfBirth), 'MM/dd/yy')}</div>
         </div>
+        <div class='stack-row spacing justify-space-between'>
+            <div style='font-weight: bold'>Health:</div>
+            <div>{person.props.health}%</div>
+        </div>
         <Deref ref={person.props.assignment}>{assignment => 
             <div class='stack-row spacing justify-space-between'>
                 <div style='font-weight: bold'>Assignment:</div>

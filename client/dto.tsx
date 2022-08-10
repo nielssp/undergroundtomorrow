@@ -147,6 +147,7 @@ export interface Inhabitant {
     recovering: boolean;
     ready: boolean;
     starving: boolean;
+    health: number;
 }
 
 export interface CraftingRecipe {
