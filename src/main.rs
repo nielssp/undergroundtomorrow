@@ -29,6 +29,7 @@ mod settings;
 mod util;
 mod water_treatment;
 mod workshop;
+mod cafeteria;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

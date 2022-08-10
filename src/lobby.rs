@@ -125,8 +125,6 @@ async fn join_world(
             x,
             y,
             data: bunkers::BunkerData {
-                scrap_metal: 10,
-                scrap_electronics: 10,
                 reactor: bunkers::ReactorStatus {
                     maintenance: 100,
                     fuel: 300,
@@ -145,6 +143,9 @@ async fn join_world(
                     maintenance: 100,
                     malfunction: false,
                     parts: 20,
+                },
+                cafeteria: bunkers::CafeteriaStatus {
+                    food: food_required * 2,
                 },
             },
         },

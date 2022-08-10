@@ -48,6 +48,7 @@ pub fn generate_person(
         data: InhabitantData {
             health: 100,
             energy: 100,
+            hunger: rng.gen_range(0..=12),
             skills,
             ..InhabitantData::default()
         },

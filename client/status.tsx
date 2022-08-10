@@ -1,4 +1,5 @@
 import {createElement, Fragment, Property, Show} from "cstk";
+import { Cafeteria } from "./cafeteria";
 import { AirRecyclingStatus, User, WaterTreatmentStatus } from "./dto";
 import { Horticulture } from "./horticulture";
 import { Infirmary } from "./infirmary";
@@ -31,6 +32,7 @@ export function Status({gameService, user, authService}: {
                 <Horticulture gameService={gameService} status={bunker.props.horticulture} onReload={() => bunkerData.refresh()}/>
                 <Infirmary gameService={gameService} status={bunker.props.infirmary} onReload={() => bunkerData.refresh()}/>
                 <Workshop gameService={gameService} status={bunker.props.workshop} onReload={() => bunkerData.refresh()}/>
+                <Cafeteria gameService={gameService} status={bunker.props.cafeteria} onReload={() => bunkerData.refresh()}/>
             </>
             }</DerefData>
     </div>

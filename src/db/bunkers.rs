@@ -20,10 +20,6 @@ pub struct Bunker {
 #[serde(rename_all = "camelCase")]
 pub struct BunkerData {
     #[serde(default)]
-    pub scrap_metal: i32,
-    #[serde(default)]
-    pub scrap_electronics: i32,
-    #[serde(default)]
     pub reactor: ReactorStatus,
     #[serde(default)]
     pub water_treatment: WaterTreatmentStatus,
@@ -35,6 +31,8 @@ pub struct BunkerData {
     pub horticulture: HorticultureStatus,
     #[serde(default)]
     pub air_recycling: AirRecyclingStatus,
+    #[serde(default)]
+    pub cafeteria: CafeteriaStatus,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -100,6 +98,12 @@ pub struct WorkshopStatus {
 #[serde(rename_all = "camelCase")]
 pub struct HorticultureStatus {
     pub crops: Vec<Crop>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct CafeteriaStatus {
+    pub food: i32,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]

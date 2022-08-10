@@ -5,7 +5,7 @@ use crate::{
     db::{
         bunkers::{
             AirRecyclingStatus, Bunker, HorticultureStatus, InfirmaryStatus, ReactorStatus,
-            WaterTreatmentStatus, WorkshopStatus,
+            WaterTreatmentStatus, WorkshopStatus, CafeteriaStatus,
         },
         expeditions::Expedition,
         inhabitants::{Assignment, Inhabitant, Skill},
@@ -135,14 +135,13 @@ pub struct BunkerDto {
     pub number: i32,
     pub x: i32,
     pub y: i32,
-    pub scrap_metal: i32,
-    pub scrap_electronics: i32,
     pub reactor: ReactorStatus,
     pub water_treatment: WaterTreatmentStatus,
     pub infirmary: InfirmaryStatus,
     pub workshop: WorkshopStatus,
     pub horticulture: HorticultureStatus,
     pub air_recycling: AirRecyclingStatus,
+    pub cafeteria: CafeteriaStatus,
 }
 
 impl From<Bunker> for BunkerDto {
@@ -153,14 +152,13 @@ impl From<Bunker> for BunkerDto {
             number: source.number,
             x: source.x,
             y: source.y,
-            scrap_metal: data.scrap_metal,
-            scrap_electronics: data.scrap_electronics,
             reactor: data.reactor,
             water_treatment: data.water_treatment,
             infirmary: data.infirmary,
             workshop: data.workshop,
             horticulture: data.horticulture,
             air_recycling: data.air_recycling,
+            cafeteria: data.cafeteria,
         }
     }
 }

@@ -87,6 +87,10 @@ export interface AirRecyclingStatus {
     malfunction: boolean;
 }
 
+export interface CafeteriaStatus {
+    food: number;
+}
+
 export interface Bunker {
     id: number;
     number: number;
@@ -98,6 +102,7 @@ export interface Bunker {
     workshop: WorkshopStatus;
     horticulture: HorticultureStatus;
     airRecycling: AirRecyclingStatus;
+    cafeteria: CafeteriaStatus;
 }
 
 export interface Skill {

@@ -13,6 +13,16 @@ pub fn handle_tick(
     air_quality: i32,
 ) -> Result<(), error::Error> {
     for inhabitant in inhabitants {
+        inhabitant.data.hunger += 1;
+        if inhabitant.data.hunger >= 12 {
+            if bunker.data.cafeteria.food > 0 {
+                bunker.data.cafeteria.food -= 1;
+                inhabitant.data.hunger -= 12;
+                inhabitant.data.starving = false;
+            } else if inhabitant.data.hunger >= 36 {
+                inhabitant.data.starving = true;
+            }
+        }
         if inhabitant.data.surface_exposure > 0 && inhabitant.expedition_id.is_none() {
             inhabitant.data.surface_exposure -= 1;
             inhabitant.changed = true;
@@ -38,6 +48,10 @@ pub fn handle_tick(
             inhabitant.data.health -= 6;
             inhabitant.changed = true;
         }
+        if inhabitant.data.starving {
+            inhabitant.data.health -= 1;
+            inhabitant.changed = true;
+        }
         if inhabitant.data.sick {
             if inhabitant.data.health >= 25
                 && water_quality >= 100
@@ -48,7 +62,7 @@ pub fn handle_tick(
                 debug!("{} recovered from disease", inhabitant.name);
                 inhabitant.data.sick = false;
             } else {
-                inhabitant.data.health -= 1;
+                inhabitant.data.health -= 2;
             }
             inhabitant.changed = true;
         } else if roll_dice(
@@ -64,6 +78,7 @@ pub fn handle_tick(
             && !inhabitant.data.infection
             && !inhabitant.data.wounded
             && !inhabitant.data.sick
+            && !inhabitant.data.starving
         {
             if inhabitant.data.health < 100 {
                 inhabitant.data.health += 1;
