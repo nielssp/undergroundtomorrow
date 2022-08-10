@@ -142,6 +142,7 @@ export interface Inhabitant {
     infection: boolean;
     recovering: boolean;
     ready: boolean;
+    starving: boolean;
 }
 
 export interface CraftingRecipe {
@@ -163,6 +164,7 @@ export interface ItemType {
     growthTime: number;
     produce?: string;
     recipe?: CraftingRecipe;
+    food: boolean;
 }
 
 export type RecipeItemType = ItemType & {recipe: CraftingRecipe};

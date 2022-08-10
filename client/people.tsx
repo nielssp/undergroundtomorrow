@@ -234,6 +234,8 @@ function getStatus(inhabitant: Inhabitant) {
         return '(sick)';
     } else if (inhabitant.wounded) {
         return '(wounded)';
+    } else if (inhabitant.starving) {
+        return '(starving)';
     } else if (inhabitant.recovering) {
         return '(recovering)';
     } else if (inhabitant.expeditionId) {

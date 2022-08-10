@@ -237,6 +237,7 @@ impl Inhabitant {
             && !self.data.wounded
             && (!self.data.sick || self.data.health > 75)
             && (!self.data.recovering || self.data.health > 75)
+            && (!self.data.starving || self.data.health > 75)
     }
 
     pub fn get_skill_level(&self, skill_type: SkillType) -> i32 {

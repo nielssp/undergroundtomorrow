@@ -59,6 +59,7 @@ export function Map({amber, gameService}: {
         const locations = locationsBySector.get(getSectorName(sector)) || [];
         openDialog(LocationDialog, {
             sector,
+            explored: !!sectors.data.value?.find(s => s.x === sector.x && s.y === sector.y),
             locations,
             onExplore: (location?: Location) => createExpedition(sector, location),
         });
@@ -124,8 +125,9 @@ function LocationsDialog({dialog, locations, bunker, onExplore}: {
     </div>;
 }
 
-function LocationDialog({dialog, sector, locations, onExplore}: {
+function LocationDialog({dialog, explored, sector, locations, onExplore}: {
     dialog: DialogRef,
+    explored: boolean,
     sector: {x: number, y: number},
     locations: Location[],
     onExplore: (location?: Location) => void,
@@ -135,6 +137,10 @@ function LocationDialog({dialog, sector, locations, onExplore}: {
             <div>Sector {getSectorName(sector)}</div>
             <button onClick={() => {dialog.close(); onExplore();}}>Explore</button>
         </div>
+        <Show when={bind(explored)}>
+            <div>Explored</div>
+        </Show>
+        <strong>Locations</strong>
         <For each={bind(locations)}>{location =>
             <div class='stack-row spacing align-center justify-space-between'>
                 <div>{location.props.name}</div>
