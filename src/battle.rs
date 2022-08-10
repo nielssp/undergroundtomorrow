@@ -44,7 +44,7 @@ pub fn encounter(
             member.data.hp = 50;
         }
         debug!("enemies: {:?}", enemies);
-        for _ in 0..(range * 2) {
+        for _ in 0..(range * 2).min(40) {
             debug!("range: {}", range);
             for member in team.iter_mut() {
                 if member.data.hp <= 0 {

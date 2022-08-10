@@ -14,7 +14,7 @@ chance = 0.2
 [loot.nuclear-material]
 min = 1
 max = 5
-chance = 0.01
+chance = 0.05
 
 [loot.fuel-rod]
 min = 1

@@ -10,7 +10,7 @@ use crate::{
     db::{
         bunkers::{self, Crop},
         inhabitants::{self, get_xp_for_level, Assignment, Skill, SkillType},
-        locations, worlds,
+        locations, worlds, items,
     },
     error,
     generate::{self, generate_position},
@@ -217,8 +217,7 @@ async fn join_world(
         let person = generate::generate_person(world_time, 51, 100, &last_names);
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
-    // TODO: starting items
-    // TODO: initial locations?
+    items::add_item(&pool, bunker_id, "fuel-rod-10", 1).await?;
     let sector = get_sector(x, y);
     locations::add_all_bunker_locations_in_sector(&pool, world.id, bunker_id, sector).await?;
     locations::add_bunker_sector(&pool, bunker_id, sector.0, sector.1).await?;

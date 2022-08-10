@@ -32,12 +32,13 @@ pub async fn handle_tick(
                     continue;
                 }
                 let quantity = food_to_cook.min(ingredient.quantity);
-                cooked = true;
-                items::remove_item(pool, bunker.id, &item_type.id, quantity).await?;
-                bunker.data.cafeteria.food += quantity;
-                food_to_cook -= quantity;
-                if food_to_cook <= 0 {
-                    break;
+                if items::remove_item(pool, bunker.id, &item_type.id, quantity).await? {
+                    cooked = true;
+                    bunker.data.cafeteria.food += quantity;
+                    food_to_cook -= quantity;
+                    if food_to_cook <= 0 {
+                        break;
+                    }
                 }
             }
         }

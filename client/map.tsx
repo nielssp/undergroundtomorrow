@@ -119,7 +119,7 @@ function LocationsDialog({dialog, locations, bunker, onExplore}: {
             <div class='stack-row spacing'>
                 <div class='grow'>{location.props.name}</div>
                 <div>{location.props.distance.map(formatDistance)}</div>
-                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Explore</button>
+                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Search</button>
             </div>
             }</For>
     </div>;
@@ -144,7 +144,7 @@ function LocationDialog({dialog, explored, sector, locations, onExplore}: {
         <For each={bind(locations)}>{location =>
             <div class='stack-row spacing align-center justify-space-between'>
                 <div>{location.props.name}</div>
-                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Explore</button>
+                <button onClick={() => {dialog.close(); onExplore(location.value);}}>Search</button>
             </div>
             }</For>
     </div>;

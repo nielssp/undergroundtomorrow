@@ -1,4 +1,4 @@
-import {createElement, Fragment, Property, Show} from "cstk";
+import {bind, createElement, Fragment, Property, Show} from "cstk";
 import { Cafeteria } from "./cafeteria";
 import { AirRecyclingStatus, User, WaterTreatmentStatus } from "./dto";
 import { Horticulture } from "./horticulture";
@@ -6,7 +6,7 @@ import { Infirmary } from "./infirmary";
 import { Reactor } from "./reactor";
 import { AuthService } from "./services/auth-service";
 import {GameService} from "./services/game-service";
-import {dataSource, DerefData} from "./util";
+import {dataSource, DerefData, QuantityButtons} from "./util";
 import { Workshop } from "./workshop";
 
 export function Status({gameService, user, authService}: {

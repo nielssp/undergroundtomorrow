@@ -3,10 +3,10 @@ import { openAlert } from "./dialog";
 import { handleError } from "./error";
 import { AuthService } from "./services/auth-service";
 
-export function Register({authService, onClose}: {
+export function Register({authService, close}: {
     authService: AuthService,
-    onClose: () => void,
-}) {
+    close: (done: boolean) => void,
+}, context: JSX.Context) {
     const loading = bind(false);
     const usernameControl = new TextControl('');
     const passwordControl = new TextControl('');
@@ -24,9 +24,13 @@ export function Register({authService, onClose}: {
         }
         loading.value = true;
         try {
-            await authService.register({username, password});
-            await authService.authenticate({username, password});
-            onClose();
+            if (authService.user.value?.guest) {
+                await authService.finishRegistration({username, password});
+            } else {
+                await authService.register({username, password});
+                await authService.authenticate({username, password, remember: true});
+            }
+            close(true);
         } catch (error: any) {
             switch (error?.code) {
                 case 'USERNAME_TAKEN':
@@ -40,28 +44,32 @@ export function Register({authService, onClose}: {
             loading.value = false;
         }
     }
+    
+    context.onInit(() => {
+        usernameControl.focus();
+    });
 
-    return <form onSubmit={submit}>
-        <div class='margin-bottom'>
+    return <form class='padding stack-column spacing' onSubmit={submit}>
+        <div class='stack-row spacing justify-space-between'>
             <Field control={usernameControl}>
                 <label>Username:</label>
-                <input type='text' disabled={loading}/>
+                <input type='text' required disabled={loading}/>
             </Field>
         </div>
-        <div class='margin-bottom'>
+        <div class='stack-row spacing justify-space-between'>
             <Field control={passwordControl}>
                 <label>Password:</label>
-                <input type='password' disabled={loading}/>
+                <input type='password' required disabled={loading}/>
             </Field>
         </div>
-        <div class='margin-bottom'>
+        <div class='stack-row spacing justify-space-between'>
             <Field control={confirmPasswordControl}>
                 <label>Confirm Password:</label>
-                <input type='password' disabled={loading}/>
+                <input type='password' required disabled={loading}/>
             </Field>
         </div>
-        <div>
-            <button type='button' onClick={onClose} disabled={loading}>Cancel</button>
+        <div class='stack-row spacing justify-end'>
+            <button type='button' onClick={() => close(false)} disabled={loading}>Cancel</button>
             <button type='submit' disabled={loading}>Register</button>
         </div>
     </form>;

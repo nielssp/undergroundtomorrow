@@ -7,7 +7,7 @@
    viewBox="0 0 34.757111 34.757111"
    version="1.1"
    id="svg5"
-   inkscape:version="1.2 (dc2aedaf03, 2022-05-15)"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
    sodipodi:docname="logo.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -26,8 +26,8 @@
      showgrid="false"
      showguides="true"
      inkscape:zoom="12.701208"
-     inkscape:cx="56.254492"
-     inkscape:cy="52.987086"
+     inkscape:cx="30.508909"
+     inkscape:cy="61.883878"
      inkscape:window-width="3840"
      inkscape:window-height="2102"
      inkscape:window-x="0"
@@ -54,11 +54,11 @@
      transform="translate(-87.048813,-63.572643)">
     <path
        id="rect61"
-       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:2.646;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
+       style="fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:2.646;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
        d="M 87.048813 63.572643 L 87.048813 98.329695 L 121.80586 98.329695 L 121.80586 63.572643 L 87.048813 63.572643 z M 104.14803 67.361042 A 13.286248 13.286248 0 0 1 117.43404 80.647053 A 13.286248 13.286248 0 0 1 104.14803 93.933581 A 13.286248 13.286248 0 0 1 90.8615 80.647053 A 13.286248 13.286248 0 0 1 104.14803 67.361042 z " />
     <path
        sodipodi:type="star"
-       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
+       style="fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
        id="path4697"
        inkscape:flatsided="true"
        sodipodi:sides="3"
@@ -76,7 +76,7 @@
        transform="rotate(62.55692,79.999914,89.954685)" />
     <path
        sodipodi:type="star"
-       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
+       style="fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
        id="path4697-3"
        inkscape:flatsided="true"
        sodipodi:sides="3"
@@ -94,7 +94,7 @@
        transform="rotate(-57.44308,108.57479,52.394581)" />
     <path
        sodipodi:type="star"
-       style="fill:#00ff00;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
+       style="fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:2.64599;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000"
        id="path4697-3-6"
        inkscape:flatsided="true"
        sodipodi:sides="3"

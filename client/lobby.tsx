@@ -1,7 +1,8 @@
 import {bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith} from "cstk";
-import {openDialog, openPrompt} from "./dialog";
-import {NewWorld, User} from "./dto";
+import {openConfirm, openDialog, openPrompt} from "./dialog";
+import {NewWorld, User, World} from "./dto";
 import {handleError} from "./error";
+import { Register } from "./register";
 import {AuthService} from "./services/auth-service";
 import {GameService} from "./services/game-service";
 import {LobbyService} from "./services/lobby-service";
@@ -27,42 +28,53 @@ export function Lobby({user, authService, lobbyService, gameService}: {
         }
     }
 
-    async function joinWorld(worldId: number) {
+    async function enterWorld(world: World) {
         try {
-            await lobbyService.joinWorld(worldId);
-            await gameService.selectWorld(worldId);
+            if (world.joined) {
+                await gameService.selectWorld(world.id);
+            } else {
+                if (await openConfirm(`You don't have a bunker in "${world.name}", would you like to create one?`, [
+                    {
+                        text: 'No',
+                        role: false,
+                    },
+                    {
+                        text: 'Yes',
+                        role: true,
+                    },
+                ])) {
+                    await lobbyService.joinWorld(world.id);
+                    await gameService.selectWorld(world.id);
+                }
+            }
         } catch (error) {
             handleError(error)
         }
     }
 
-    async function enterWorld(worldId: number) {
-        try {
-            await gameService.selectWorld(worldId);
-        } catch (error) {
-            handleError(error)
-        }
+    async function finishRegistration() {
+        await openDialog(Register, {authService});
     }
 
-    return <div>
-        <Show when={user.props.admin}>
-            <div class='margin-bottom'>
-                <button onClick={createWorld}>Create World</button>
+    return <div class='padding spacing stack-column'>
+        <div class='stack-row spacing justify-space-between align-center'>
+            <div>Welcome, {user.props.username}</div>
+            <div class='stack-row spacing'>
+                <Show when={user.props.admin}>
+                    <button onClick={createWorld}>Create World</button>
+                </Show>
+                <button onClick={() => authService.invalidate()}>Log Out</button>
             </div>
-        </Show>
+        </div>
+        <strong>Select World:</strong>
         <DerefData data={worlds}>{worlds =>
             <>
-                <div class='stack-column spacing'>
+                <div role='grid' class='stack-column'>
                     <For each={worlds}>{world =>
-                        <div class='stack-row spacing'>
-                            <div class='grow'>{world.props.name}</div>
-                            <Show when={world.props.joined}>
-                                <button onClick={() => enterWorld(world.value.id)}>Enter</button>
-                            </Show>
-                            <Show when={world.props.joined.not}>
-                                <button onClick={() => joinWorld(world.value.id)}>Join</button>
-                            </Show>
-                        </div>
+                        <button role='row' class='stack-row spacing' onClick={() => enterWorld(world.value)}>
+                            <div role='gridcell' class='grow'>{world.props.name}</div>
+                            <div role='gridcell'>{world.props.players} players</div>
+                        </button>
                         }</For>
                 </div>
                 <Show when={worlds.map(w => !w.length)}>
@@ -70,6 +82,12 @@ export function Lobby({user, authService, lobbyService, gameService}: {
                 </Show>
             </>
             }</DerefData>
+        <Show when={user.props.guest}>
+            <div>You're currenly logged in as a guest. To complete your registration and save your progress, use the button below:</div>
+            <div>
+                <button onClick={finishRegistration}>Complete Registration</button>
+            </div>
+        </Show>
     </div>;
 }
 

@@ -2,6 +2,7 @@ import {bind, createElement, Fragment, Property, Show} from "cstk";
 import { openDialog } from "./dialog";
 import { InfirmaryStatus } from "./dto";
 import { handleError } from "./error";
+import { Restock } from "./restock";
 import {GameService} from "./services/game-service";
 import {dataSource, DerefData, QuantityButtons} from "./util";
 
@@ -12,8 +13,14 @@ export function Infirmary({gameService, status, onReload}: {
 }) {
 
     async function inventory() {
-        if (await openDialog(UpdateInfirmary, {gameService, status: status.value})) {
-            onReload();
+        const newValue = await openDialog(Restock, {gameService, current: status.value.medicine, itemType: 'medicine'})
+        if (newValue != undefined) {
+            try {
+                await gameService.updateInfirmaryInventory(newValue);
+                onReload();
+            } catch (error) {
+                handleError(error);
+            }
         }
     }
 
@@ -28,38 +35,3 @@ export function Infirmary({gameService, status, onReload}: {
         </div>
     </div>;
 }
-
-function UpdateInfirmary({gameService, status, close}: {
-    gameService: GameService,
-    status: InfirmaryStatus,
-    close: (reload: true) => void,
-}) {
-    const assigned = bind(status.medicine);
-    const medicine = dataSource(() => gameService.getItems().then(items => items.find(item => item.itemType.id === 'medicine')?.quantity || 0));
-    const total = medicine.data.orElse(0).map(x => x + status.medicine);
-
-    async function ok() {
-        try {
-            await gameService.updateInfirmaryInventory(assigned.value);
-            close(true);
-        } catch (error) {
-            handleError(error);
-        }
-    }
-
-    return <div class='stack-column spacing padding'>
-        <DerefData data={medicine}>{ () => 
-            <>
-                <div class='stack-row spacing justify-space-between'>
-                    <div>Medicine:</div>
-                    <div>{assigned} / {total}</div>
-                </div>
-                <QuantityButtons value={assigned} max={total}/>
-                <div class='stack-row spacing justify-end'>
-                    <button onClick={ok}>OK</button>
-                </div>
-            </>
-        }</DerefData>
-    </div>;
-}
-

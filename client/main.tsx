@@ -2,7 +2,7 @@ import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from
 import {format} from 'date-fns';
 import { Api } from './api';
 import { environment } from './config/environment';
-import { dialogContainer } from './dialog';
+import { dialogContainer, openDialog } from './dialog';
 import { Icon } from './icon';
 import {Items} from './items';
 import {Lobby} from './lobby';
@@ -24,8 +24,7 @@ function Root({authService, lobbyService, gameService}: {
     gameService: GameService,
 }, context: JSX.Context) {
     const loading = bind(true);
-    const register = bind(false);
-    const amber = bind(localStorage.getItem('utTheme') === 'amber');
+    const amber = bind(localStorage.getItem('utTheme') !== 'green');
     const displayRef = ref<HTMLDivElement>();
 
     const tab = bind<'status'|'people'|'items'|'map'|'radio'|'messages'>('status');
@@ -81,28 +80,33 @@ function Root({authService, lobbyService, gameService}: {
         }
     }));
 
+    async function guest() {
+        await authService.guest(true);
+    }
+
+    async function register() {
+        await openDialog(Register, {authService});
+    }
+
     return <div class='bezel'>
         <div class='display' ref={displayRef}>
             <LoadingIndicator loading={loading}/>
             <Show when={loading.not}>
                 <Show when={authService.user.not}>
-                    <div>
-                        <Icon name='logo'/>
-                    </div>
-                    <div style='font-weight: bold;'>Underground Tomorrow</div>
-                    <div>Bunker Administration Operating System</div>
-                    <div>Version 2.0</div>
-                    <br/>
-                    <Show when={register.not}>
+                    <div class='stack-column spacing padding grow' style='overflow-y: auto;'>
+                        <div>
+                            <Icon name='logo'/>
+                        </div>
+                        <div style='font-weight: bold;'>Underground Tomorrow</div>
+                        <div><a href="https://undergroundtomorrow.com">About</a></div>
+                        <div>To become the administrator of an Underground Tomorrow bunker, use one of the buttons below:</div>
+                        <div class='stack-row spacing'>
+                            <button onClick={guest}>Play As Guest</button>
+                            <button onClick={register}>Register</button>
+                        </div>
+                        <div>If you're already the administrator of a bunker, log in using your credentials below:</div>
                         <Login authService={authService}/>
-                        <br/>
-                        <button onClick={() => register.value = true}>Register</button>
-                        <br/>
-                        <button>Guest</button>
-                    </Show>
-                    <Show when={register}>
-                        <Register authService={authService} onClose={() => register.value = false}/>
-                    </Show>
+                    </div>
                 </Show>
                 <Deref ref={authService.user}>{user =>
                     <>
@@ -149,6 +153,9 @@ function Root({authService, lobbyService, gameService}: {
                         <div class='status' style='flex-grow: 1;'>Bunker {bunker.props.number}</div>
                     </>
                     }</Deref>
+                <Show when={gameService.bunker.not}>
+                    <div class='status' style='flex-grow: 1;'>Underground Tomorrow</div>
+                </Show>
                 <button onClick={() => amber.value = !amber.value}>Mode</button>
             </div>
         </div>

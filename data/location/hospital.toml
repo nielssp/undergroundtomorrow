@@ -23,5 +23,5 @@ chance = 0.2
 
 [loot.nuclear-material]
 min = 1
-max = 2
+max = 3
 chance = 0.01

@@ -2,7 +2,7 @@ name = "Water Treatment Part"
 name_plural = "Water treatment Parts"
 
 [recipe]
-min_level = 0
+min_level = 2
 time = 3
 ingredients = { scrap-metal = 1, scrap-electronics = 1 }
 

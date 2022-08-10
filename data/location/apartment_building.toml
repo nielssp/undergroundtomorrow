@@ -19,7 +19,7 @@ chance = 0.05
 [loot.wood]
 min = 1
 max = 2
-chance = 0.05
+chance = 0.1
 
 [loot.cloth]
 min = 2

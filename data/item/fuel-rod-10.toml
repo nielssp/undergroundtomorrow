@@ -3,6 +3,6 @@ name_plural = "Fuel Rods 10%"
 reactivity = 1000
 
 [recipe]
-min_level = 3
+min_level = 4
 time = 5
-ingredients = { depleted-fuel-rod = 1, nuclear-material = 5 }
+ingredients = { depleted-fuel-rod = 1, nuclear-material = 4 }

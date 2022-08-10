@@ -2,6 +2,7 @@ export interface User {
     id: number;
     username: string;
     admin: boolean;
+    guest: boolean;
 }
 
 export interface Credentials {
@@ -46,11 +47,19 @@ export interface ReactorStatus {
     maintenance: number;
     fuel: number;
     malfunction: boolean;
+    parts: number;
 }
 
 export interface WaterTreatmentStatus {
     maintenance: number;
     malfunction: boolean;
+    parts: number;
+}
+
+export interface AirRecyclingStatus {
+    maintenance: number;
+    malfunction: boolean;
+    parts: number;
 }
 
 export interface InfirmaryStatus {
@@ -80,11 +89,6 @@ export interface Crop {
 
 export interface HorticultureStatus {
     crops: Crop[];
-}
-
-export interface AirRecyclingStatus {
-    maintenance: number;
-    malfunction: boolean;
 }
 
 export interface CafeteriaStatus {

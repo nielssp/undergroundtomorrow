@@ -47,7 +47,7 @@ export function Items({gameService}: {
     const activeFilter = bind<ItemFilter>(filters[0]);
 
     function show(item: Item) {
-        openDialog(ShowItem, {item});
+        openDialog(ShowItem, {item, gameService});
     }
 
     async function filter() {
@@ -110,9 +110,14 @@ function Select<T>({selection, options, toString, close}: {
     </div>;
 }
 
-function ShowItem({item}: {
+function ShowItem({item, gameService}: {
     item: Item,
+    gameService: GameService,
 }) {
+    const ammoType = bind('');
+    if (item.itemType.ammoType) {
+        gameService.getItemTypeName(item.itemType.ammoType).then(name => ammoType.value = name);
+    }
     return <div class='stack-column spacing padding'>
         <strong>
             {item.itemType.name}
@@ -127,6 +132,12 @@ function ShowItem({item}: {
                 <strong>Damage</strong>
                 <div>{item.itemType.damage}</div>
             </div>
+            <Show when={ammoType}>
+                <div class='stack-row spacing justify-space-between'>
+                    <strong>Ammo</strong>
+                    <div>{ammoType}</div>
+                </div>
+            </Show>
         </Show>
         <Show when={bind(item.itemType.reactivity)}>
             <div>Reactor Fuel</div>

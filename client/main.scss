@@ -269,6 +269,15 @@ button {
     }
 }
 
+a {
+    text-decoration: underline;
+    color: inherit;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
 
 input,
 textarea,

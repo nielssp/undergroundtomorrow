@@ -1,22 +1,27 @@
 name = "Military Base"
 quantity = 5
 
+[loot.scrap-metal]
+min = 1
+max = 4
+chance = 0.1
+
 [loot.9mm-pistol]
 min = 1
 max = 2
-chance = 0.02
+chance = 0.01
 
 [loot.9mm-round]
-min = 10
-max = 100
+min = 4
+max = 40
 chance = 0.04
 
 [loot.assault-rifle]
 min = 1
-max = 5
+max = 1
 chance = 0.01
 
 [loot.556-round]
 min = 10
-max = 100
+max = 40
 chance = 0.03

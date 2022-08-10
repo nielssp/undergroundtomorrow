@@ -9,7 +9,7 @@ use crate::{
         items,
     },
     error,
-    util::skill_roll,
+    util::{skill_roll, roll_dice},
 };
 
 enum Action {
@@ -51,7 +51,9 @@ pub fn handle_tick(
             if inhabitant.data.wounded {
                 max_actions -= 1;
                 let chance = if bunker.data.infirmary.medicine > 0 {
-                    bunker.data.infirmary.medicine -= 1;
+                    if roll_dice(0.1, 1) {
+                        bunker.data.infirmary.medicine -= 1;
+                    }
                     0.1
                 } else {
                     0.01
@@ -63,7 +65,9 @@ pub fn handle_tick(
             if inhabitant.data.infection {
                 max_actions -= 1;
                 let chance = if bunker.data.infirmary.medicine > 0 {
-                    bunker.data.infirmary.medicine -= 1;
+                    if roll_dice(0.1, 1) {
+                        bunker.data.infirmary.medicine -= 1;
+                    }
                     0.05
                 } else {
                     0.001
@@ -74,7 +78,14 @@ pub fn handle_tick(
             }
             if inhabitant.data.sick {
                 max_actions -= 1;
-                let chance = 0.01;
+                let chance = if bunker.data.infirmary.medicine > 0 {
+                    if roll_dice(0.1, 1) {
+                        bunker.data.infirmary.medicine -= 1;
+                    }
+                    0.05
+                } else {
+                    0.001
+                };
                 if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::TreatDisease));
                 }

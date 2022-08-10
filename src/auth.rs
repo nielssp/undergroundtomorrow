@@ -1,6 +1,7 @@
 use actix_web::{cookie::Cookie, post, web, HttpRequest, HttpResponse};
 use argonautica::{Hasher, Verifier};
 use chrono::Utc;
+use rand::Rng;
 use sqlx::PgPool;
 use tracing::{error, info};
 
@@ -31,6 +32,12 @@ pub struct SessionUser {
     pub id: i64,
     pub username: String,
     pub admin: bool,
+    pub guest: bool,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct GuestRequest {
+    pub accelerated: bool,
 }
 
 impl From<User> for SessionUser {
@@ -39,6 +46,7 @@ impl From<User> for SessionUser {
             id: user.id,
             username: user.username,
             admin: user.admin,
+            guest: user.guest,
         }
     }
 }
@@ -48,7 +56,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(invalidate)
         .service(set_password)
         .service(get_user)
-        .service(register);
+        .service(register)
+        .service(guest)
+        .service(finish_registration);
 }
 
 #[post("/auth/authenticate")]
@@ -104,6 +114,9 @@ async fn invalidate(
 ) -> actix_web::Result<HttpResponse> {
     let session = validate_session(&request).await?;
     sessions::delete_session(&pool, &session.id).await?;
+    if session.user.guest {
+        users::delete_user(&pool, session.user.id).await?;
+    }
     Ok(HttpResponse::Ok().json("OK"))
 }
 
@@ -147,8 +160,63 @@ async fn register(
     settings: web::Data<Settings>,
 ) -> actix_web::Result<HttpResponse> {
     let mut user = data.into_inner();
+    if user.username.is_empty() {
+        Err(error::client_error("EMPTY_USERNAME"))?;
+    }
     user.password = hash_password(&user.password, &settings)?;
+    user.guest = false;
     Ok(HttpResponse::Ok().json(users::create_user(&pool, user).await?))
+}
+
+#[post("/auth/guest")]
+async fn guest(
+    pool: web::Data<PgPool>,
+) -> actix_web::Result<HttpResponse> {
+    let number: i32 = rand::thread_rng().gen_range(1..100000);
+    let user = users::NewUser {
+        username: format!("Guest#{}", number),
+        password: "".to_owned(),
+        guest: true,
+    };
+    let user = users::create_user(&pool, user).await?;
+    let session_id = generate_session_id();
+    let lifetime = 60 * 24;
+    sessions::create_session(
+        &pool,
+        &session_id,
+        Utc::now() + chrono::Duration::hours(lifetime),
+        user.id,
+    )
+        .await?;
+    Ok(HttpResponse::Ok()
+        .cookie(
+            Cookie::build("ut_session", session_id)
+            .path("/")
+            .max_age(actix_web::cookie::time::Duration::hours(lifetime))
+            .http_only(true)
+            .finish(),
+        )
+        .json(SessionUser::from(user)))
+}
+
+#[post("/auth/finish_registration")]
+async fn finish_registration(
+    pool: web::Data<PgPool>,
+    data: web::Json<users::NewUser>,
+    settings: web::Data<Settings>,
+    request: HttpRequest,
+) -> actix_web::Result<HttpResponse> {
+    let session = validate_session(&request).await?;
+    if !session.user.guest {
+        Err(error::client_error("NOT_A_GUEST"))?;
+    }
+    let mut user = data.into_inner();
+    if user.username.is_empty() {
+        Err(error::client_error("EMPTY_USERNAME"))?;
+    }
+    user.password = hash_password(&user.password, &settings)?;
+    users::update_user(&pool, session.user.id, &user).await?;
+    Ok(HttpResponse::NoContent().finish())
 }
 
 pub async fn validate_session(request: &HttpRequest) -> actix_web::Result<Session> {
@@ -197,6 +265,9 @@ pub fn generate_session_id() -> String {
 }
 
 pub fn hash_password(password: &str, settings: &Settings) -> Result<String, error::Error> {
+    if password.is_empty() {
+        return Err(error::client_error("EMPTY_PASSWORD"));
+    }
     Hasher::default()
         .configure_iterations(settings.argon2_iterations)
         .configure_memory_size(settings.argon2_memory_size)
@@ -214,6 +285,9 @@ pub fn verify_password(
     password: &str,
     settings: &Settings,
 ) -> Result<bool, error::Error> {
+    if hash.is_empty() || password.is_empty() {
+        return Ok(false);
+    }
     Verifier::default()
         .with_secret_key(&settings.secret_key)
         .with_hash(hash)
