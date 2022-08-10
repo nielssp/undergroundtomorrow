@@ -1,12 +1,17 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
 use futures::future::try_join_all;
 use log::warn;
+use rand::{Rng, seq::IteratorRandom};
 use sqlx::PgPool;
 
 use crate::{
     auth::{validate_admin_session, validate_session},
-    data::{self, LAST_NAMES},
-    db::{bunkers, inhabitants, locations, worlds},
+    data::{self, LAST_NAMES, ITEM_TYPES},
+    db::{
+        bunkers::{self, Crop},
+        inhabitants::{self, get_xp_for_level, Assignment, Skill, SkillType},
+        locations, worlds,
+    },
     error,
     generate::{self, generate_position},
     util::get_sector,
@@ -94,6 +99,23 @@ async fn join_world(
         .await?
         .unwrap_or(0);
     let (x, y) = generate_position();
+    let mut rng = rand::thread_rng();
+    let mut food_required = 25 * 3;
+    let mut crops = vec![];
+    while food_required > 0 {
+        let seed_type = ITEM_TYPES.values().filter(|it| it.seed).choose(&mut rng)
+            .ok_or_else(|| error::internal_error("No seeds found"))?;
+        let quantity: i32 = rng.gen_range(400..1000);
+        crops.push(Crop {
+            seed_type: seed_type.id.clone(),
+            name: seed_type.name_plural.clone(),
+            quantity,
+            stage: seed_type.growth_time,
+            max: seed_type.growth_time,
+            stunted: false,
+        });
+        food_required -= quantity / seed_type.growth_time;
+    }
     let bunker_id = bunkers::create_bunker(
         &pool,
         &bunkers::NewBunker {
@@ -107,7 +129,7 @@ async fn join_world(
                 scrap_electronics: 10,
                 reactor: bunkers::ReactorStatus {
                     maintenance: 100,
-                    fuel: 160,
+                    fuel: 300,
                     malfunction: false,
                     parts: 20,
                 },
@@ -116,9 +138,9 @@ async fn join_world(
                     malfunction: false,
                     parts: 20,
                 },
-                infirmary: bunkers::InfirmaryStatus { medicine: 10 },
+                infirmary: bunkers::InfirmaryStatus { medicine: 25 },
                 workshop: bunkers::WorkshopStatus { projects: vec![] },
-                horticulture: bunkers::HorticultureStatus { crops: vec![] },
+                horticulture: bunkers::HorticultureStatus { crops },
                 air_recycling: bunkers::AirRecyclingStatus {
                     maintenance: 100,
                     malfunction: false,
@@ -137,8 +159,57 @@ async fn join_world(
         let person = generate::generate_person(world_time, 0, 18, &last_names);
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
+    let mut assignments = vec![
+        Assignment::Reactor,
+        Assignment::Reactor,
+        Assignment::Infirmary,
+        Assignment::Infirmary,
+        Assignment::Horticulture,
+        Assignment::Horticulture,
+        Assignment::Workshop,
+        Assignment::Workshop,
+        Assignment::WaterTreatment,
+        Assignment::WaterTreatment,
+        Assignment::AirRecycling,
+        Assignment::AirRecycling,
+        Assignment::Cafeteria,
+        Assignment::Cafeteria,
+    ]
+    .into_iter();
     for _ in 0..15 {
-        let person = generate::generate_person(world_time, 19, 50, &last_names);
+        let mut person = generate::generate_person(world_time, 19, 50, &last_names);
+        if let Some(assignment) = assignments.next() {
+            person.data.assignment = Some(assignment);
+            let skill_type = match assignment {
+                Assignment::Reactor => SkillType::Reactor,
+                Assignment::Infirmary => SkillType::Medicine,
+                Assignment::Horticulture => SkillType::Botany,
+                Assignment::Workshop => SkillType::Crafting,
+                Assignment::WaterTreatment => SkillType::Repair,
+                Assignment::AirRecycling => SkillType::Repair,
+                Assignment::Cafeteria => SkillType::Cooking,
+            };
+            let min_level =
+                (((world_time.date() - person.date_of_birth).num_days() / 365) / 10) as i32;
+            let max_level = min_level + 4;
+            let level = rng.gen_range(min_level..=max_level);
+            let xp = rng.gen_range(get_xp_for_level(level)..get_xp_for_level(level + 1));
+            if let Some(skill) = person
+                .data
+                .skills
+                .iter_mut()
+                .find(|skill| skill.skill_type == skill_type)
+            {
+                skill.level = level;
+                skill.xp = xp;
+            } else {
+                person.data.skills.push(Skill {
+                    skill_type,
+                    level,
+                    xp,
+                });
+            }
+        }
         inhabitants::create_inhabitant(&pool, bunker_id, &person).await?;
     }
     for _ in 0..5 {
@@ -150,5 +221,5 @@ async fn join_world(
     let sector = get_sector(x, y);
     locations::add_all_bunker_locations_in_sector(&pool, world.id, bunker_id, sector).await?;
     locations::add_bunker_sector(&pool, bunker_id, sector.0, sector.1).await?;
-    Ok(HttpResponse::Ok().json("OK"))
+    Ok(HttpResponse::NoContent().finish())
 }

@@ -21,7 +21,6 @@ pub struct Inhabitant {
 #[serde(rename_all = "camelCase")]
 pub enum SkillType {
     Combat,
-    Science,
     Reactor,
     Botany,
     Medicine,
@@ -31,12 +30,28 @@ pub enum SkillType {
     Repair,
     Cooking,
     Stealth,
-    Movement,
     MeleeWeapons,
     Guns,
     Unarmed,
     Crafting,
 }
+
+pub const SKILL_TYPES: &[SkillType] = &[
+    SkillType::Combat,
+    SkillType::Reactor,
+    SkillType::Botany,
+    SkillType::Medicine,
+    SkillType::FirstAid,
+    SkillType::Scavenging,
+    SkillType::Exploration,
+    SkillType::Repair,
+    SkillType::Cooking,
+    SkillType::Stealth,
+    SkillType::MeleeWeapons,
+    SkillType::Guns,
+    SkillType::Unarmed,
+    SkillType::Crafting,
+];
 
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -55,7 +70,6 @@ pub enum Assignment {
     Workshop,
     WaterTreatment,
     AirRecycling,
-    Maintenance,
     Cafeteria,
 }
 
@@ -274,6 +288,10 @@ pub fn add_xp_to_skill(inhabitant: &mut Inhabitant, skill_type: SkillType, xp: i
 
 pub fn get_skill_level(xp: i32) -> i32 {
     ((xp as f64) / 50.0 + 1.0).log2() as i32
+}
+
+pub fn get_xp_for_level(level: i32) -> i32 {
+    (((2.0 as f64).powi(level) - 1.0) * 50.0) as i32
 }
 
 pub fn get_age(now: NaiveDateTime, dob: NaiveDate) -> i32 {

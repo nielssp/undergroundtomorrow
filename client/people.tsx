@@ -211,6 +211,8 @@ function mapSkillType(skillType: string): string {
             return 'Repair';
         case 'crafting':
             return 'Crafting';
+        case 'cooking':
+            return 'Cooking';
         default:
             return skillType;
     }

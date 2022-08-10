@@ -67,7 +67,7 @@ pub async fn handle_tick(
             }
         }
         if crop.stage >= crop_type.growth_time * 8 / 10 {
-            let chance = crop.quantity as f64 / crop_type.growth_time as f64;
+            let chance = crop.quantity as f64 / crop_type.growth_time as f64 / 24.0;
             if roll_dice(chance, 1) {
                 if let Some(produce) = &crop_type.produce {
                     items::add_item(pool, bunker.id, produce, 1).await?;
