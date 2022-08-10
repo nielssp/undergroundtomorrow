@@ -39,6 +39,7 @@ base64 = "0.13"
 # Game data
 toml = "0.5"
 lazy_static = "1.4"
+image = "0.24"
 
 # Util
 itertools = "0.10"

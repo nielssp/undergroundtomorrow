@@ -5,14 +5,14 @@ use rand::Rng;
 use sqlx::PgPool;
 
 use crate::{
-    air_recycling,
+    air_recycling, cafeteria,
     db::{
         bunkers,
         inhabitants::{self, Assignment},
         items, messages,
         worlds::{self, WorldTime},
     },
-    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop, cafeteria,
+    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop,
 };
 
 pub fn start_loop(pool: PgPool) {
@@ -79,7 +79,7 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
                         },
                     },
                 )
-                    .await?;
+                .await?;
                 inhabitants::delete_inhabitant(pool, inhabitant.id).await?;
             } else {
                 inhabitants::update_inhabitant_data(pool, &inhabitant).await?;

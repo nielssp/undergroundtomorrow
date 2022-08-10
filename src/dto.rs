@@ -4,8 +4,8 @@ use crate::{
     data::{get_item_type, ItemType},
     db::{
         bunkers::{
-            AirRecyclingStatus, Bunker, HorticultureStatus, InfirmaryStatus, ReactorStatus,
-            WaterTreatmentStatus, WorkshopStatus, CafeteriaStatus,
+            AirRecyclingStatus, Bunker, CafeteriaStatus, HorticultureStatus, InfirmaryStatus,
+            ReactorStatus, WaterTreatmentStatus, WorkshopStatus,
         },
         expeditions::Expedition,
         inhabitants::{Assignment, Inhabitant, Skill},

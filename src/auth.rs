@@ -169,9 +169,7 @@ async fn register(
 }
 
 #[post("/auth/guest")]
-async fn guest(
-    pool: web::Data<PgPool>,
-) -> actix_web::Result<HttpResponse> {
+async fn guest(pool: web::Data<PgPool>) -> actix_web::Result<HttpResponse> {
     let number: i32 = rand::thread_rng().gen_range(1..100000);
     let user = users::NewUser {
         username: format!("Guest#{}", number),
@@ -187,14 +185,14 @@ async fn guest(
         Utc::now() + chrono::Duration::hours(lifetime),
         user.id,
     )
-        .await?;
+    .await?;
     Ok(HttpResponse::Ok()
         .cookie(
             Cookie::build("ut_session", session_id)
-            .path("/")
-            .max_age(actix_web::cookie::time::Duration::hours(lifetime))
-            .http_only(true)
-            .finish(),
+                .path("/")
+                .max_age(actix_web::cookie::time::Duration::hours(lifetime))
+                .http_only(true)
+                .finish(),
         )
         .json(SessionUser::from(user)))
 }

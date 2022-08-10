@@ -1,16 +1,16 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
 use futures::future::try_join_all;
 use log::warn;
-use rand::{Rng, seq::IteratorRandom};
+use rand::{seq::IteratorRandom, Rng};
 use sqlx::PgPool;
 
 use crate::{
     auth::{validate_admin_session, validate_session},
-    data::{self, LAST_NAMES, ITEM_TYPES},
+    data::{self, ITEM_TYPES, LAST_NAMES},
     db::{
         bunkers::{self, Crop},
         inhabitants::{self, get_xp_for_level, Assignment, Skill, SkillType},
-        locations, worlds, items,
+        items, locations, worlds,
     },
     error,
     generate::{self, generate_position},
@@ -103,7 +103,10 @@ async fn join_world(
     let mut food_required = 25 * 3;
     let mut crops = vec![];
     while food_required > 0 {
-        let seed_type = ITEM_TYPES.values().filter(|it| it.seed).choose(&mut rng)
+        let seed_type = ITEM_TYPES
+            .values()
+            .filter(|it| it.seed)
+            .choose(&mut rng)
             .ok_or_else(|| error::internal_error("No seeds found"))?;
         let quantity: i32 = rng.gen_range(400..1000);
         crops.push(Crop {

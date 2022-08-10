@@ -12,6 +12,7 @@ use crate::settings::Settings;
 mod air_recycling;
 mod auth;
 mod battle;
+mod cafeteria;
 mod data;
 mod db;
 mod dto;
@@ -29,7 +30,6 @@ mod settings;
 mod util;
 mod water_treatment;
 mod workshop;
-mod cafeteria;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -43,6 +43,7 @@ async fn main() -> std::io::Result<()> {
     info!("{} last names loaded", data::LAST_NAMES.len());
     info!("{} location types loaded", data::LOCATION_TYPES.len());
     info!("{} item types loaded", data::ITEM_TYPES.len());
+    info!("{}x{} world map loaded", data::WORLD_MAP.width(), data::WORLD_MAP.height());
 
     info!("Starting Underground Tomorrow server...");
 

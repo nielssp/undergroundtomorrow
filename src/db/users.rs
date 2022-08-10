@@ -69,24 +69,26 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: i64) -> Result<Option<User>,
 }
 
 pub async fn create_user(pool: &PgPool, new_user: NewUser) -> Result<User, error::Error> {
-    let id = sqlx::query("INSERT INTO users (username, password, guest) VALUES ($1, $2, $3) RETURNING id")
-        .bind(&new_user.username)
-        .bind(&new_user.password)
-        .bind(new_user.guest)
-        .fetch_one(pool)
-        .await
-        .map_err(|err| match err.as_database_error() {
-            Some(database_error) => {
-                if database_error.constraint() == Some("users_username_key") {
-                    info!("Username taken: {}", new_user.username);
-                    error::Error::UsernameTaken
-                } else {
-                    error::Error::SqlxError(err)
-                }
+    let id = sqlx::query(
+        "INSERT INTO users (username, password, guest) VALUES ($1, $2, $3) RETURNING id",
+    )
+    .bind(&new_user.username)
+    .bind(&new_user.password)
+    .bind(new_user.guest)
+    .fetch_one(pool)
+    .await
+    .map_err(|err| match err.as_database_error() {
+        Some(database_error) => {
+            if database_error.constraint() == Some("users_username_key") {
+                info!("Username taken: {}", new_user.username);
+                error::Error::UsernameTaken
+            } else {
+                error::Error::SqlxError(err)
             }
-            _ => error::Error::SqlxError(err),
-        })?
-        .try_get(0)?;
+        }
+        _ => error::Error::SqlxError(err),
+    })?
+    .try_get(0)?;
     Ok(User {
         id,
         username: new_user.username,
@@ -133,10 +135,7 @@ pub async fn update_user(
     Ok(())
 }
 
-pub async fn delete_user(
-    pool: &PgPool,
-    user_id: i64,
-) -> Result<(), error::Error> {
+pub async fn delete_user(pool: &PgPool, user_id: i64) -> Result<(), error::Error> {
     sqlx::query("DELETE FROM users WHERE id = $1")
         .bind(user_id)
         .execute(pool)

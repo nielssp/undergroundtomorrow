@@ -9,7 +9,7 @@ use crate::{
         items,
     },
     error,
-    util::{skill_roll, roll_dice},
+    util::{roll_dice, skill_roll},
 };
 
 enum Action {

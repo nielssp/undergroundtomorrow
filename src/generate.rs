@@ -1,8 +1,9 @@
 use chrono::{Duration, NaiveDate, NaiveDateTime};
+use image::GenericImageView;
 use rand::{seq::IteratorRandom, Rng};
 
 use crate::{
-    data::{FIRST_NAMES, LAST_NAMES},
+    data::{FIRST_NAMES, LAST_NAMES, WORLD_MAP},
     db::inhabitants::{get_xp_for_level, InhabitantData, NewInhabitant, Skill, SKILL_TYPES},
 };
 
@@ -56,7 +57,14 @@ pub fn generate_person(
 }
 
 pub fn generate_position() -> (i32, i32) {
-    let x = (rand::random::<f64>() * 2600.0) as i32;
-    let y = (rand::random::<f64>() * 2600.0) as i32;
-    (x, y)
+    loop {
+        let x = (rand::random::<f64>() * 2600.0) as i32;
+        let y = (rand::random::<f64>() * 2600.0) as i32;
+        let map_x = x * WORLD_MAP.width() as i32 / 2600;
+        let map_y = y * WORLD_MAP.height() as i32 / 2600;
+        let pixel = WORLD_MAP.get_pixel(map_x as u32, map_y as u32);
+        if pixel.0[0] != 0 || pixel.0[1] != 0 || pixel.0[2] != 0 {
+            return (x, y);
+        }
+    }
 }

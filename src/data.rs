@@ -75,6 +75,10 @@ lazy_static! {
         load_item_types("data/item").expect("Failed reading item types");
     pub static ref LOCATION_TYPES: HashMap<String, LocationType> =
         load_location_types("data/location").expect("Failed reading location types");
+    pub static ref WORLD_MAP: image::DynamicImage = image::io::Reader::open("data/map.png")
+        .expect("Failed opening world map")
+        .decode()
+        .expect("Failed decoding world map");
 }
 
 fn load_names(path: &str) -> std::io::Result<Vec<String>> {
