@@ -117,6 +117,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
             ammo: member.ammo,
             weapons: weapons.value,
             ammoTypes: ammoTypes.value,
+            gameService,
         });
         if (selection) {
             member.weaponType = selection.weapon;
@@ -276,30 +277,34 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
 }
 
 
-function SelectWeapon({weapon, ammo, weapons, ammoTypes, close}: {
+function SelectWeapon({weapon, ammo, weapons, ammoTypes, gameService, close}: {
     weapon: ItemType|undefined,
     ammo: number,
     weapons: Map<string, Item>,
     ammoTypes: Map<string, Item>,
+    gameService: GameService,
     close: (selection: {weapon: ItemType|undefined, ammo: number}) => void,
 }) {
     const selection = ref<string>();
-    const ammoRequired = ref<Item>();
+    const ammoTypeName = bind('');
+    const ammoItem = ref<Item>();
     const ammoAmount = bind(ammo);
 
-    function select(weapon: ItemType) {
+    async function select(weapon: ItemType) {
         selection.value = weapon.id;
         if (weapon.ammoType) {
             const ammoType = ammoTypes.get(weapon.ammoType);
             if (ammoType) {
-                ammoRequired.value = ammoType;
+                ammoItem.value = ammoType;
                 ammoAmount.value = Math.min(ammoAmount.value, ammoType.quantity);
             } else {
-                ammoRequired.value = undefined;
+                ammoItem.value = undefined;
                 ammoAmount.value = 0;
             }
+            ammoTypeName.value = await gameService.getItemTypeName(weapon.ammoType, 2);
         } else {
-            ammoRequired.value = undefined;
+            ammoTypeName.value = '';
+            ammoItem.value = undefined;
             ammoAmount.value = 0;
         }
     }
@@ -341,19 +346,30 @@ function SelectWeapon({weapon, ammo, weapons, ammoTypes, close}: {
                 </Show>
             }</For>
         </div>
-        <Deref ref={ammoRequired}>{ammoType => 
-            <>
+        <Show when={ammoTypeName}>
+            <Show when={ammoItem.not}>
                 <div class='stack-row spacing justify-space-between'>
                     <div>Ammo:</div>
-                    <div>{ammoType.props.itemType.props.namePlural}</div>
+                    <div>{ammoTypeName}</div>
                 </div>
-                <div class='stack-row spacing justify-space-between'>
-                    <div>Amount:</div>
-                    <div>{ammoAmount} / {ammoType.props.quantity}</div>
+                <div class='stack-row spacing justify-end'>
+                    MISSING
                 </div>
-                <QuantityButtons value={ammoAmount} max={ammoType.props.quantity}/>
-            </>
-        }</Deref>
+            </Show>
+            <Deref ref={ammoItem}>{ammoType => 
+                <>
+                    <div class='stack-row spacing justify-space-between'>
+                        <div>Ammo:</div>
+                        <div>{ammoType.props.itemType.props.namePlural}</div>
+                    </div>
+                    <div class='stack-row spacing justify-space-between'>
+                        <div>Amount:</div>
+                        <div>{ammoAmount} / {ammoType.props.quantity}</div>
+                    </div>
+                    <QuantityButtons value={ammoAmount} max={ammoType.props.quantity}/>
+                </>
+            }</Deref>
+    </Show>
         <div class='stack-row spacing justify-end'>
             <button onClick={ok}>OK</button>
         </div>
