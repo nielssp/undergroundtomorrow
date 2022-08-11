@@ -18,6 +18,7 @@ export class GameService {
     private itemTypesPromise: Promise<Map<string, ItemType>>|undefined;
     private receiver: Receiver|undefined;
     private eventObserver = (event: string) => this.handleEvent(event);
+    private mostRecentMessage: string|null = null;
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
     readonly worldTime = bind(new Date());
@@ -41,9 +42,21 @@ export class GameService {
                 this.clockInterval = window.setInterval(() => {
                     this.worldTime.value = getWorldtime(world);
                 }, 1000);
-                this.messageNotification.value = await this.hasUnreadMessages();
+                const unread = await this.hasUnreadMessages();
+                if (unread && unread !== this.mostRecentMessage) {
+                    this.messageNotification.value = true;
+                } else if (!unread) {
+                    this.messageNotification.value = false;
+                }
+                this.mostRecentMessage = unread;
                 this.messageCheckInterval = window.setInterval(async () => {
-                    this.messageNotification.value = await this.hasUnreadMessages();
+                    const unread = await this.hasUnreadMessages();
+                    if (unread && unread !== this.mostRecentMessage) {
+                        this.messageNotification.value = true;
+                    } else if (!unread) {
+                        this.messageNotification.value = false;
+                    }
+                    this.mostRecentMessage = unread;
                 }, 30000);
             }
         });
@@ -190,7 +203,7 @@ export class GameService {
     }
 
     hasUnreadMessages() {
-        return this.api.rpc<boolean>(`world/${this.worldId}/has_unread_messages`);
+        return this.api.rpc<string|null>(`world/${this.worldId}/has_unread_messages`);
     }
 
     getExpeditions() {

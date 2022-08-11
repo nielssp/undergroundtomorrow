@@ -11,6 +11,8 @@ export function Messages({gameService}: {
 }, context: JSX.Context) {
     const messages = dataSource(() => gameService.getMessages());
 
+    gameService.messageNotification.value = false;
+
     function openMessage(message: Message) {
         if (message.unread) {
             gameService.setMessageRead(message.id).then(() => {
@@ -40,6 +42,13 @@ export function Messages({gameService}: {
 
     context.onDestroy(gameService.bunker.observe(() => messages.refresh()));
     context.onDestroy(gameService.expeditionDone.observe(() => messages.refresh()));
+
+    context.onDestroy(gameService.messageNotification.observe(unread => {
+        if (unread) {
+            messages.refresh();
+            gameService.messageNotification.value = false;
+        }
+    }));
 
     return <>
         <div class='stack-row spacing margin-bottom justify-end'>

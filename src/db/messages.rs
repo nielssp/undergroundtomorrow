@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 
 use crate::error;
 
@@ -83,12 +83,13 @@ pub async fn set_all_messages_read(pool: &PgPool, bunker_id: i32) -> Result<(), 
     Ok(())
 }
 
-pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<bool, error::Error> {
+pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<Option<DateTime<Utc>>, error::Error> {
     Ok(sqlx::query(
-        "SELECT 1 FROM messages WHERE receiver_bunker_id = $1 AND unread = true LIMIT 1",
+        "SELECT created FROM messages WHERE receiver_bunker_id = $1 AND unread = true ORDER BY created DESC LIMIT 1",
     )
     .bind(bunker_id)
+    .try_map(|row| row.try_get("created"))
     .fetch_optional(pool)
     .await?
-    .is_some())
+    )
 }
