@@ -375,6 +375,9 @@ async fn broadcast(
     data: web::Json<String>,
     broadcaster: web::Data<Addr<broadcaster::Broadcaster>>,
 ) -> actix_web::Result<HttpResponse> {
+    if data.len() > 200 {
+        Err(error::client_error("TOO_LONG"))?;
+    }
     let player = validate_player(&request, world_id.into_inner()).await?;
     broadcaster.do_send(broadcaster::WorldMessage {
         world_id: player.world_id,

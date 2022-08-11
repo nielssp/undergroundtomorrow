@@ -41,24 +41,24 @@ export function Radio({gameService}: {
     context.onDestroy(gameService.transcript.onInsert.observe(() => scrollToBottom()));
 
     return <>
+        <LoadingIndicator loading={gameService.radioConnected.not}/>
         <div ref={logElem} class='grow' style='overflow: auto;'>
-            <LoadingIndicator loading={gameService.radioConnected.not}/>
             <For each={gameService.transcript}>{broadcast =>
                 <div class='stack-row spacing'>
                     <strong>
                         [{broadcast.props.name}@bunker{broadcast.props.bunker}]
                     </strong>
-                    <div>
+                    <div style='word-wrap: anywhere;'>
                         {broadcast.props.message}
                     </div>
                 </div>
             }</For>
         </div>
-        <form class='stack-row spacing margin-bottom' onSubmit={submit}>
+        <form class='stack-row spacing margin-top' onSubmit={submit}>
             <Field control={message}>
-                <input type='text' class='grow'/>
+                <input type='text' class='grow' maxLength={200}/>
             </Field>
-            <button type='submit'>Broadcast</button>
+            <button type='submit' disabled={message.not.or(gameService.radioConnected.not)}>Broadcast</button>
         </form>
     </>;
 }
