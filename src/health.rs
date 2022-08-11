@@ -15,7 +15,7 @@ pub fn handle_tick(
     for inhabitant in inhabitants {
         inhabitant.data.hunger += 1;
         if inhabitant.data.hunger >= 12 {
-            if bunker.data.cafeteria.food > 0 {
+            if inhabitant.expedition_id.is_none() && bunker.data.cafeteria.food > 0 {
                 bunker.data.cafeteria.food -= 1;
                 inhabitant.data.hunger -= 12;
                 inhabitant.data.starving = false;
