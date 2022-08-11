@@ -14,6 +14,7 @@ pub struct Bunker {
     pub y: i32,
     pub next_tick: DateTime<Utc>,
     pub data: Json<BunkerData>,
+    pub broadcast_id: String,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default)]
@@ -125,6 +126,7 @@ pub struct NewBunker {
     pub x: i32,
     pub y: i32,
     pub data: BunkerData,
+    pub broadcast_id: String,
 }
 
 pub async fn get_bunker_by_world_and_user(
@@ -136,6 +138,18 @@ pub async fn get_bunker_by_world_and_user(
         sqlx::query_as("SELECT * FROM bunkers WHERE world_id = $1 AND user_id = $2")
             .bind(world_id)
             .bind(user_id)
+            .fetch_optional(pool)
+            .await?,
+    )
+}
+
+pub async fn get_bunker_by_broadcast_id(
+    pool: &PgPool,
+    broadcast_id: &str,
+) -> Result<Option<Bunker>, error::Error> {
+    Ok(
+        sqlx::query_as("SELECT * FROM bunkers WHERE broadcast_id = $1")
+            .bind(broadcast_id)
             .fetch_optional(pool)
             .await?,
     )
@@ -156,8 +170,8 @@ pub async fn get_max_bunker_number(
 
 pub async fn create_bunker(pool: &PgPool, bunker: &NewBunker) -> Result<i32, error::Error> {
     Ok(sqlx::query(
-        "INSERT INTO bunkers (user_id, world_id, number, x, y, data) \
-        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        "INSERT INTO bunkers (user_id, world_id, number, x, y, data, broadcast_id) \
+        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
     )
     .bind(bunker.user_id)
     .bind(bunker.world_id)
@@ -165,6 +179,7 @@ pub async fn create_bunker(pool: &PgPool, bunker: &NewBunker) -> Result<i32, err
     .bind(bunker.x)
     .bind(bunker.y)
     .bind(Json(&bunker.data))
+    .bind(&bunker.broadcast_id)
     .fetch_one(pool)
     .await?
     .try_get(0)?)

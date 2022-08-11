@@ -1,7 +1,9 @@
-import {bind, Property, ref, zipWith} from "cstk";
+import {bind, Emitter, Property, ref, zipWith} from "cstk";
 import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
+import { environment } from "../config/environment";
 import {Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
+import { Receiver } from "../receiver";
 
 function getWorldtime(world: World) {
     const created = parseISO(world.created);
@@ -14,10 +16,13 @@ export class GameService {
     private clockInterval: number|undefined;
     private messageCheckInterval: number|undefined;
     private itemTypesPromise: Promise<Map<string, ItemType>>|undefined;
+    private receiver: Receiver|undefined;
+    private eventObserver = (event: string) => this.handleEvent(event);
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
     readonly worldTime = bind(new Date());
     readonly messageNotification = bind(false);
+    readonly expeditionDone = new Emitter<void>();
 
     constructor(
         private api: Api,
@@ -101,13 +106,38 @@ export class GameService {
     }
 
     async selectWorld(worldId: number) {
+        if (this.receiver) {
+            this.receiver.disconnect();
+            this.receiver.onEvent.unobserve(this.eventObserver);
+            this.receiver = undefined;
+        }
         this.world.value = await this.getWorld(worldId);
         try {
             this.bunker.value = await this.getBunker();
+            this.receiver = new Receiver(`${environment.websocketUrl}?broadcast_id=${this.bunker.value.broadcastId}`);
+            this.receiver.onEvent.observe(this.eventObserver);
         } catch (error) {
             this.world.value = undefined;
             throw error;
         }
+    }
+
+    private handleEvent(event: string) {
+        switch (event) {
+            case 'TICK':
+                this.refreshBunker();
+                break;
+            case 'EXPEDITION':
+                this.expeditionDone.emit();
+                break;
+            case 'MESSAGE':
+                this.messageNotification.value = true;
+                break;
+        }
+    }
+
+    async refreshBunker() {
+        this.bunker.value = await this.getBunker();
     }
 
     getWorld(worldId: number) {

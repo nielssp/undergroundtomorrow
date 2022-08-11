@@ -1,3 +1,4 @@
+use actix::Actor;
 use actix_web::{get, web::Data, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use sqlx::PgPool;
@@ -30,6 +31,7 @@ mod settings;
 mod util;
 mod water_treatment;
 mod workshop;
+mod broadcaster;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -64,7 +66,9 @@ async fn main() -> std::io::Result<()> {
 
     auth::start_cleanup_job(pool.clone());
 
-    game_loop::start_loop(pool.clone());
+    let broadcaster = broadcaster::Broadcaster::new().start();
+
+    game_loop::start_loop(pool.clone(), broadcaster.clone());
 
     let address = settings.listen.clone();
 
@@ -83,6 +87,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .app_data(Data::new(settings.clone()))
             .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(broadcaster.clone()))
             .service(health_check)
             .configure(auth::config)
             .configure(lobby::config)

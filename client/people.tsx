@@ -53,6 +53,9 @@ export function People({gameService}: {
         }
     }));
 
+    context.onDestroy(gameService.bunker.observe(() => people.refresh()));
+    context.onDestroy(gameService.expeditionDone.observe(() => people.refresh()));
+
     return <>
         <DerefData data={people}>{people =>
             <>

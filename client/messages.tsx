@@ -38,10 +38,12 @@ export function Messages({gameService}: {
         }
     }
 
+    context.onDestroy(gameService.bunker.observe(() => messages.refresh()));
+    context.onDestroy(gameService.expeditionDone.observe(() => messages.refresh()));
+
     return <>
         <div class='stack-row spacing margin-bottom justify-end'>
             <button onClick={allRead}>All Read</button>
-            <button>New</button>
         </div>
         <DerefData data={messages}>{messages =>
             <>

@@ -5,7 +5,7 @@ use rand::{seq::IteratorRandom, Rng};
 use sqlx::PgPool;
 
 use crate::{
-    auth::{validate_admin_session, validate_session},
+    auth::{validate_admin_session, validate_session, generate_session_id},
     data::{self, ITEM_TYPES, LAST_NAMES},
     db::{
         bunkers::{self, Crop},
@@ -127,6 +127,7 @@ async fn join_world(
             number: bunker_number,
             x,
             y,
+            broadcast_id: generate_session_id(),
             data: bunkers::BunkerData {
                 reactor: bunkers::ReactorStatus {
                     maintenance: 100,

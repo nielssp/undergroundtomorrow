@@ -1,4 +1,6 @@
-use actix_web::{post, web, HttpRequest, HttpResponse};
+use actix::Addr;
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use actix_web_actors::ws;
 use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use sqlx::PgPool;
@@ -16,7 +18,7 @@ use crate::{
         worlds,
     },
     dto::{BunkerDto, ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
-    error, expedition, horticulture, infirmary, reactor, workshop,
+    error, expedition, horticulture, infirmary, reactor, workshop, broadcaster,
 };
 
 pub struct Player {
@@ -28,6 +30,11 @@ pub struct Player {
 #[derive(serde::Deserialize)]
 struct MessageQuery {
     older_than: Option<DateTime<Utc>>,
+}
+
+#[derive(serde::Deserialize)]
+struct EventQuery {
+    broadcast_id: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -67,7 +74,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(remove_project)
         .service(prioritize_project)
         .service(get_item_types)
-        .service(leave);
+        .service(leave)
+        .route("/events", web::get().to(get_events));
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -362,6 +370,22 @@ async fn leave(
 #[post("/world/{world_id:\\d+}/get_item_types")]
 async fn get_item_types() -> actix_web::Result<HttpResponse> {
     Ok(HttpResponse::Ok().json(ITEM_TYPES.values().collect_vec()))
+}
+
+async fn get_events(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    query: web::Query<EventQuery>,
+    broadcaster: web::Data<Addr<broadcaster::Broadcaster>>,
+    stream: web::Payload,
+) -> actix_web::Result<HttpResponse> {
+    let bunker = bunkers::get_bunker_by_broadcast_id(&pool, &query.broadcast_id).await?
+        .ok_or_else(|| error::client_error("INVALID_BROADCAST_ID"))?;
+    ws::start(
+        broadcaster::BroadcastReceiver::new(broadcaster.get_ref().clone(), bunker.world_id, bunker.id),
+        &request,
+        stream,
+    )
 }
 
 pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web::Result<Player> {

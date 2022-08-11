@@ -67,6 +67,9 @@ export function Items({gameService}: {
         }
     }
 
+    context.onDestroy(gameService.bunker.observe(() => items.refresh()));
+    context.onDestroy(gameService.expeditionDone.observe(() => items.refresh()));
+
     return <>
         <div class='stack-row justify-end spacing margin-bottom'>
             <button onClick={filter}>Filter</button>

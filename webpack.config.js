@@ -49,6 +49,11 @@ module.exports = (env, argv) => {
           pathRewrite: {'^/api': ''},
           changeOrigin: true,
         },
+        '/events': {
+          target: 'ws://127.0.0.1:4014/events',
+          pathRewrite: {'^/events': ''},
+          changeOrigin: true,
+        },
       }
     },
     resolve: {

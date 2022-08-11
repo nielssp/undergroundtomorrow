@@ -100,6 +100,7 @@ export interface Bunker {
     number: number;
     x: number;
     y: number;
+    broadcastId: string;
     reactor: ReactorStatus;
     waterTreatment: WaterTreatmentStatus;
     infirmary: InfirmaryStatus;

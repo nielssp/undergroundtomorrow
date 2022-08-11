@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use actix::Addr;
 use chrono::{Duration, Utc};
 use itertools::Itertools;
 use rand::Rng;
@@ -16,7 +17,7 @@ use crate::{
         worlds::{self, WorldTime},
     },
     error,
-    util::{self, get_sector_name, roll_dice, skill_roll},
+    util::{self, get_sector_name, roll_dice, skill_roll}, broadcaster::{Broadcaster, BunkerMessage},
 };
 
 #[derive(serde::Deserialize)]
@@ -161,6 +162,7 @@ pub async fn create(
 pub async fn handle_finished_expeditions(
     pool: &PgPool,
     world: &WorldTime,
+    broadcaster: &Addr<Broadcaster>,
 ) -> Result<(), error::Error> {
     let expeditions = expeditions::get_finished_expeditions(pool, world.id).await?;
     for expedition in expeditions {
@@ -327,6 +329,7 @@ pub async fn handle_finished_expeditions(
                 }
             }
         }
+        broadcaster.do_send(BunkerMessage { bunker_id: expedition.bunker_id, message: "EXPEDITION".to_owned() });
         messages::create_system_message(
             pool,
             &messages::NewSystemMessage {

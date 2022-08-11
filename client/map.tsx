@@ -65,6 +65,12 @@ export function Map({amber, gameService}: {
         });
     }
 
+    context.onDestroy(gameService.expeditionDone.observe(() => {
+        expeditions.refresh();
+        locations.refresh();
+        sectors.refresh();
+    }));
+
     return <>
     <div class='stack-row spacing margin-bottom justify-end'>
         <button onClick={openExpeditions}>Missions</button>

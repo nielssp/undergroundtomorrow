@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use actix::Addr;
 use chrono::{Duration, Utc};
 use rand::Rng;
 use sqlx::PgPool;
@@ -12,28 +13,28 @@ use crate::{
         items, messages,
         worlds::{self, WorldTime},
     },
-    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop,
+    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop, broadcaster::{Broadcaster, BunkerMessage},
 };
 
-pub fn start_loop(pool: PgPool) {
+pub fn start_loop(pool: PgPool, broadcaster: Addr<Broadcaster>) {
     actix_rt::spawn(async move {
         let mut interval = actix_rt::time::interval(std::time::Duration::from_secs(10));
         loop {
             interval.tick().await;
-            tick(&pool).await.unwrap(); // TODO: error handling
+            tick(&pool, &broadcaster).await.unwrap(); // TODO: error handling
         }
     });
 }
 
-pub async fn tick(pool: &PgPool) -> Result<(), error::Error> {
+pub async fn tick(pool: &PgPool, broadcaster: &Addr<Broadcaster>) -> Result<(), error::Error> {
     let worlds = worlds::get_world_times(pool).await?;
     for world in &worlds {
-        world_tick(pool, world).await?;
+        world_tick(pool, world, broadcaster).await?;
     }
     Ok(())
 }
 
-pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::Error> {
+pub async fn world_tick(pool: &PgPool, world: &WorldTime, broadcaster: &Addr<Broadcaster>) -> Result<(), error::Error> {
     let bunkers = bunkers::get_bunkers_by_next_tick(pool, world.id).await?;
     for mut bunker in bunkers {
         let mut inhabitants = inhabitants::get_inhabitants(pool, bunker.id).await?;
@@ -89,7 +90,9 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime) -> Result<(), error::E
         let seconds = rand::thread_rng().gen_range(2400..4800) / world.time_acceleration;
         bunker.next_tick = Utc::now() + Duration::seconds(seconds as i64);
         bunkers::update_bunker_data_and_tick(pool, &bunker).await?;
+        
+        broadcaster.do_send(BunkerMessage { bunker_id: bunker.id, message: "TICK".to_owned() });
     }
-    expedition::handle_finished_expeditions(pool, world).await?;
+    expedition::handle_finished_expeditions(pool, world, broadcaster).await?;
     Ok(())
 }
