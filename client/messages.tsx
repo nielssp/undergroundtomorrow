@@ -49,7 +49,7 @@ export function Messages({gameService}: {
                     <For each={messages}>{message =>
                         <button role='row' class='stack-row spacing' onClick={() => openMessage(message.value)} style={{fontWeight: message.props.unread.map(unread => unread ? 'bold' : 'normal')}}>
                             <div role='gridcell' class='grow'>{message.props.subject}</div>
-                            <div role='gridcell'>{message.props.created.map(d => format(parseISO(d), 'MM/dd/yyyy hh:mm a'))}</div>
+                            <div role='gridcell'>{message.props.created.map(d => gameService.formatDateTime(d))}</div>
                         </button>
                         }</For>
                 </div>

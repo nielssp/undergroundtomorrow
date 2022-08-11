@@ -185,7 +185,7 @@ pub async fn handle_finished_expeditions(
                         }
                         let first_aid = member.get_skill_level(SkillType::FirstAid);
                         let medicine = member.get_skill_level(SkillType::Medicine);
-                        if skill_roll(0.2, first_aid + medicine) {
+                        if skill_roll(0.1, first_aid + medicine) {
                             first_aid_applied.push((wounded.id, member.id));
                             report_body.push_str(&format!(
                                 "{} successfully applied first aid to {}\n",

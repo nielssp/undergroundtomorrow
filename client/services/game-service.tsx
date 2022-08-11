@@ -1,5 +1,5 @@
 import {bind, Property, ref, zipWith} from "cstk";
-import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, formatISO, parseISO, setYear} from "date-fns";
+import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
 import {Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
 
@@ -52,6 +52,16 @@ export class GameService {
     bindAge(dob: string): Property<number> {
         const date = parseISO(dob);
         return this.worldTime.map(wt => differenceInYears(wt, date));
+    }
+
+    formatDateTime(iso: string): string {
+        const seconds = differenceInSeconds(parseISO(iso), new Date()) * (this.world.value?.timeAcceleration || 1);
+        const inGameTime = addSeconds(this.worldTime.value, seconds);
+        if (isSameDay(inGameTime, this.worldTime.value)) {
+            return format(inGameTime, 'hh:mm a');
+        } else {
+            return format(inGameTime, 'MM/dd/yyyy');
+        }
     }
 
     private get worldId() {

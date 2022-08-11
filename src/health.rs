@@ -23,9 +23,12 @@ pub fn handle_tick(
                 inhabitant.data.starving = true;
             }
         }
-        if inhabitant.data.surface_exposure > 0 && inhabitant.expedition_id.is_none() {
-            inhabitant.data.surface_exposure -= 1;
-            inhabitant.changed = true;
+        if inhabitant.expedition_id.is_none() {
+            if air_quality < 100 || water_quality < 100 {
+                inhabitant.data.surface_exposure += 1;
+            } else if inhabitant.data.surface_exposure > 0 {
+                inhabitant.data.surface_exposure -= 1;
+            }
         }
         if inhabitant.data.bleeding {
             inhabitant.data.health -= 10;
@@ -54,8 +57,6 @@ pub fn handle_tick(
         }
         if inhabitant.data.sick {
             if inhabitant.data.health >= 25
-                && water_quality >= 100
-                && air_quality >= 100
                 && inhabitant.data.surface_exposure < 1
                 && roll_dice(0.01, inhabitant.data.health / 25)
             {
@@ -67,7 +68,7 @@ pub fn handle_tick(
             inhabitant.changed = true;
         } else if roll_dice(
             0.01,
-            inhabitant.data.surface_exposure + 20 - water_quality * air_quality / 500,
+            inhabitant.data.surface_exposure,
         ) {
             debug!("{} got sick", inhabitant.name);
             inhabitant.data.sick = true;
