@@ -65,7 +65,7 @@ export class GameService {
     }
 
     get radioConnected() {
-        return this.receiver.map(r => r?.active || false);
+        return this.receiver.flatMap(r => r?.connected || bind(false));
     }
 
     getAge(dob: string): number {
