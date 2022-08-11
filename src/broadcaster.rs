@@ -7,10 +7,17 @@ use time::Instant;
 use tracing::info;
 
 
-#[derive(actix::Message, Clone)]
+#[derive(actix::Message, Clone, serde::Serialize)]
 #[rtype(result = "()")]
-pub struct Message {
-    message: String,
+pub enum Message {
+    Tick,
+    Message,
+    Expedition,
+    Broadcast {
+        bunker: i32,
+        name: String,
+        message: String,
+    },
 }
 
 #[derive(actix::Message)]
@@ -33,14 +40,14 @@ pub struct Disconnect {
 #[rtype(result = "()")]
 pub struct BunkerMessage {
     pub bunker_id: i32,
-    pub message: String,
+    pub message: Message,
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct WorldMessage {
     pub world_id: i32,
-    pub message: String,
+    pub message: Message,
 }
 
 pub struct Broadcaster {
@@ -124,7 +131,7 @@ impl Handler<BunkerMessage> for Broadcaster {
     type Result = ();
 
     fn handle(&mut self, msg: BunkerMessage, _: &mut Context<Self>) {
-        self.send_to_bunker(msg.bunker_id, &Message { message: msg.message });
+        self.send_to_bunker(msg.bunker_id, &msg.message);
     }
 }
 
@@ -132,7 +139,7 @@ impl Handler<WorldMessage> for Broadcaster {
     type Result = ();
 
     fn handle(&mut self, msg: WorldMessage, _: &mut Context<Self>) {
-        self.send_to_world(msg.world_id, &Message { message: msg.message });
+        self.send_to_world(msg.world_id, &msg.message);
     }
 }
 
@@ -212,7 +219,10 @@ impl Handler<Message> for BroadcastReceiver {
     type Result = ();
 
     fn handle(&mut self, msg: Message, ctx: &mut Self::Context) {
-        ctx.text(msg.message);
+        match serde_json::to_string(&msg) {
+            Ok(json) => ctx.text(json),
+            Err(err) => tracing::error!("Could not serialize message: {}", err),
+        }
     }
 }
 

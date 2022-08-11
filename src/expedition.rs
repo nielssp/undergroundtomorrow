@@ -17,7 +17,7 @@ use crate::{
         worlds::{self, WorldTime},
     },
     error,
-    util::{self, get_sector_name, roll_dice, skill_roll}, broadcaster::{Broadcaster, BunkerMessage},
+    util::{self, get_sector_name, roll_dice, skill_roll}, broadcaster::{Broadcaster, BunkerMessage, Message},
 };
 
 #[derive(serde::Deserialize)]
@@ -329,7 +329,7 @@ pub async fn handle_finished_expeditions(
                 }
             }
         }
-        broadcaster.do_send(BunkerMessage { bunker_id: expedition.bunker_id, message: "EXPEDITION".to_owned() });
+        broadcaster.do_send(BunkerMessage { bunker_id: expedition.bunker_id, message: Message::Expedition });
         messages::create_system_message(
             pool,
             &messages::NewSystemMessage {

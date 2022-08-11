@@ -229,3 +229,13 @@ export interface ExpeditionRequest {
     locationId?: number;
     team: TeamMember[];
 }
+
+export interface Broadcast {
+    bunker: number;
+    name: string;
+    message: string;
+}
+
+export type BroadcastEvent = 'Tick' | 'Expedition' | 'Message' | {
+    Broadcast: Broadcast,
+};

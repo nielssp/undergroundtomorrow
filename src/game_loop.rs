@@ -13,7 +13,7 @@ use crate::{
         items, messages,
         worlds::{self, WorldTime},
     },
-    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop, broadcaster::{Broadcaster, BunkerMessage},
+    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop, broadcaster::{Broadcaster, BunkerMessage, Message},
 };
 
 pub fn start_loop(pool: PgPool, broadcaster: Addr<Broadcaster>) {
@@ -91,7 +91,7 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime, broadcaster: &Addr<Bro
         bunker.next_tick = Utc::now() + Duration::seconds(seconds as i64);
         bunkers::update_bunker_data_and_tick(pool, &bunker).await?;
         
-        broadcaster.do_send(BunkerMessage { bunker_id: bunker.id, message: "TICK".to_owned() });
+        broadcaster.do_send(BunkerMessage { bunker_id: bunker.id, message: Message::Tick });
     }
     expedition::handle_finished_expeditions(pool, world, broadcaster).await?;
     Ok(())

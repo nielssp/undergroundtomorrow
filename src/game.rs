@@ -75,7 +75,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(prioritize_project)
         .service(get_item_types)
         .service(leave)
-        .route("/events", web::get().to(get_events));
+        .service(broadcast)
+        .service(get_events);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -367,11 +368,31 @@ async fn leave(
     Ok(HttpResponse::NoContent().finish())
 }
 
+#[post("/world/{world_id:\\d+}/broadcast")]
+async fn broadcast(
+    request: HttpRequest,
+    world_id: web::Path<i32>,
+    data: web::Json<String>,
+    broadcaster: web::Data<Addr<broadcaster::Broadcaster>>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    broadcaster.do_send(broadcaster::WorldMessage {
+        world_id: player.world_id,
+        message: broadcaster::Message::Broadcast {
+            bunker: player.bunker.number,
+            name: player.session.user.username,
+            message: data.into_inner(),
+        },
+    });
+    Ok(HttpResponse::NoContent().finish())
+}
+
 #[post("/world/{world_id:\\d+}/get_item_types")]
 async fn get_item_types() -> actix_web::Result<HttpResponse> {
     Ok(HttpResponse::Ok().json(ITEM_TYPES.values().collect_vec()))
 }
 
+#[get("/events")]
 async fn get_events(
     request: HttpRequest,
     pool: web::Data<PgPool>,

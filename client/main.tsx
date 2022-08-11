@@ -11,6 +11,7 @@ import './main.scss';
 import { Map } from './map';
 import {Messages} from './messages';
 import {People} from './people';
+import { Radio } from './radio';
 import { Register } from './register';
 import { AuthService } from './services/auth-service';
 import {GameService} from './services/game-service';
@@ -121,7 +122,7 @@ function Root({authService, lobbyService, gameService}: {
                                 <li><button onClick={() => tab.value = 'people'} aria-selected={ariaBool(tab.eq('people'))}>People</button></li>
                                 <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
                                 <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
-                                <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))}>Radio</button></li>
+                                <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))} class={{attention: gameService.radioNotification}}>Radio</button></li>
                                 <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class={{attention: gameService.messageNotification}}><Icon name='message'/></button></li>
                             </menu>
                             <div class='stack-column grow' style='overflow-y: auto;'>
@@ -136,6 +137,9 @@ function Root({authService, lobbyService, gameService}: {
                                 </Show>
                                 <Show when={tab.eq('map')}>
                                     <Map amber={amber} gameService={gameService}/>
+                                </Show>
+                                <Show when={tab.eq('radio')}>
+                                    <Radio gameService={gameService}/>
                                 </Show>
                                 <Show when={tab.eq('messages')}>
                                     <Messages gameService={gameService}/>

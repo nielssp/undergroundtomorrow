@@ -1,4 +1,5 @@
-import { Emitter } from "cstk";
+import { bind, Emitter } from "cstk";
+import { BroadcastEvent } from "./dto";
 
 export class Receiver {
     private socket?: WebSocket;
@@ -7,7 +8,8 @@ export class Receiver {
     private reject?: (reason?: any) => void;
     active = true;
 
-    readonly onEvent = new Emitter<string>();
+    readonly onEvent = new Emitter<BroadcastEvent>();
+    readonly connected = bind(false);
 
     reconnectTimeout?: number;
 
@@ -22,13 +24,6 @@ export class Receiver {
             window.clearTimeout(this.reconnectTimeout);
             this.reconnectTimeout = undefined;
         }
-    }
-
-    get connected(): boolean {
-        if (this.socket) {
-            return this.socket.readyState === WebSocket.OPEN;
-        }
-        return false;
     }
 
     connect() {
@@ -63,6 +58,7 @@ export class Receiver {
         console.log('WebSocket closed');
         this.socket = undefined;
         this.promise = undefined;
+        this.connected.value = false;
         if (this.active) {
             if (!this.reconnectTimeout) {
                 console.log('Disconnected, attempting to reconnect...');
@@ -77,6 +73,7 @@ export class Receiver {
 
     private async handleOpen(): Promise<void> {
         console.log('WebSocket opened');
+        this.connected.value = true;
         if (this.resolve) {
             this.resolve();
         }
@@ -84,13 +81,14 @@ export class Receiver {
 
     private handleError(event: Event): void {
         console.error('WebSocket error', event);
+        this.connected.value = false;
         if (this.reject) {
             this.reject(event);
         }
     }
 
     private handleMessage(event: MessageEvent): void {
-        this.onEvent.emit(event.data);
+        this.onEvent.emit(JSON.parse(event.data));
     }
 
 

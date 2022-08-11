@@ -1,8 +1,8 @@
-import {bind, Emitter, Property, ref, zipWith} from "cstk";
+import {bind, bindList, Emitter, Property, ref, zipWith} from "cstk";
 import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear} from "date-fns";
 import {Api} from "../api";
 import { environment } from "../config/environment";
-import {Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
+import {Broadcast, BroadcastEvent, Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
 import { Receiver } from "../receiver";
 
 function getWorldtime(world: World) {
@@ -16,14 +16,16 @@ export class GameService {
     private clockInterval: number|undefined;
     private messageCheckInterval: number|undefined;
     private itemTypesPromise: Promise<Map<string, ItemType>>|undefined;
-    private receiver: Receiver|undefined;
-    private eventObserver = (event: string) => this.handleEvent(event);
+    private receiver = ref<Receiver>();
+    private eventObserver = (event: BroadcastEvent) => this.handleEvent(event);
     private mostRecentMessage: string|null = null;
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
     readonly worldTime = bind(new Date());
     readonly messageNotification = bind(false);
+    readonly radioNotification = bind(false);
     readonly expeditionDone = new Emitter<void>();
+    readonly transcript = bindList<Broadcast>();
 
     constructor(
         private api: Api,
@@ -60,6 +62,10 @@ export class GameService {
                 }, 30000);
             }
         });
+    }
+
+    get radioConnected() {
+        return this.receiver.map(r => r?.active || false);
     }
 
     getAge(dob: string): number {
@@ -119,32 +125,39 @@ export class GameService {
     }
 
     async selectWorld(worldId: number) {
-        if (this.receiver) {
-            this.receiver.disconnect();
-            this.receiver.onEvent.unobserve(this.eventObserver);
-            this.receiver = undefined;
+        if (this.receiver.value) {
+            this.receiver.value.disconnect();
+            this.receiver.value.onEvent.unobserve(this.eventObserver);
+            this.receiver.value = undefined;
         }
         this.world.value = await this.getWorld(worldId);
         try {
             this.bunker.value = await this.getBunker();
-            this.receiver = new Receiver(`${environment.websocketUrl}?broadcast_id=${this.bunker.value.broadcastId}`);
-            this.receiver.onEvent.observe(this.eventObserver);
+            this.receiver.value = new Receiver(`${environment.websocketUrl}?broadcast_id=${this.bunker.value.broadcastId}`);
+            this.receiver.value.onEvent.observe(this.eventObserver);
         } catch (error) {
             this.world.value = undefined;
             throw error;
         }
     }
 
-    private handleEvent(event: string) {
+    private handleEvent(event: BroadcastEvent) {
         switch (event) {
-            case 'TICK':
+            case 'Tick':
                 this.refreshBunker();
                 break;
-            case 'EXPEDITION':
+            case 'Expedition':
                 this.expeditionDone.emit();
                 break;
-            case 'MESSAGE':
+            case 'Message':
                 this.messageNotification.value = true;
+                break;
+            default:
+                if (event.Broadcast) {
+                    this.transcript.push(event.Broadcast);
+                    this.radioNotification.value = true;
+                    setTimeout(() => this.radioNotification.value = false, 1000);
+                }
                 break;
         }
     }
@@ -240,6 +253,10 @@ export class GameService {
 
     prioritizeProject(index: number) {
         return this.api.rpc<void>(`world/${this.worldId}/prioritize_project`, {index});
+    }
+
+    broadcast(message: string) {
+        return this.api.rpc<void>(`world/${this.worldId}/broadcast`, message);
     }
 
     async restart() {
