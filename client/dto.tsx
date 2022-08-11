@@ -11,6 +11,11 @@ export interface Credentials {
     remember?: boolean;
 }
 
+export interface UpdatePassword {
+    existingPassword: string;
+    newPassword: string;
+}
+
 export interface World {
     id: number;
     name: string;

@@ -1,7 +1,7 @@
 import { ref } from "cstk";
 import { Api } from "../api";
 import { openConfirm, openDialog } from "../dialog";
-import { Credentials, User } from "../dto";
+import { Credentials, UpdatePassword, User } from "../dto";
 import { Register } from "../register";
 
 export class AuthService {
@@ -64,6 +64,10 @@ export class AuthService {
         const user = await this.api.rpc<User>('auth/guest', {accelerated});
         this.user.value = user;
         return user;
+    }
+
+    async changePassword(update: UpdatePassword) {
+        await this.api.rpc<void>('auth/set_password', update);
     }
 
     async finishRegistration(newUser: Credentials) {

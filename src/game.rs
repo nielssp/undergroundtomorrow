@@ -421,7 +421,7 @@ pub async fn validate_player(request: &HttpRequest, world_id: i32) -> actix_web:
         .await?
         .ok_or_else(|| {
             info!(session.user.id, world_id, "player not found in world");
-            error::client_error("NATION_NOT_FOUND")
+            error::client_error("BUNKER_NOT_FOUND")
         })?;
     Ok(Player {
         world_id,

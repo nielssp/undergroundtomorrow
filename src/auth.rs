@@ -22,6 +22,7 @@ pub struct Credentials {
 }
 
 #[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdatePassword {
     pub existing_password: String,
     pub new_password: String,

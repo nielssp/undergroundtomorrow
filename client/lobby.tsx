@@ -1,4 +1,5 @@
 import {bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith} from "cstk";
+import { ChangePassword } from "./change-password";
 import {openConfirm, openDialog, openPrompt} from "./dialog";
 import {NewWorld, User, World} from "./dto";
 import {handleError} from "./error";
@@ -56,7 +57,11 @@ export function Lobby({user, authService, lobbyService, gameService}: {
         await openDialog(Register, {authService});
     }
 
-    return <div class='padding spacing stack-column'>
+    async function changePassword() {
+        await openDialog(ChangePassword, {authService});
+    }
+
+    return <div class='padding spacing stack-column grow'>
         <div class='stack-row spacing justify-space-between align-center'>
             <div>Welcome, {user.props.username}</div>
             <div class='stack-row spacing'>
@@ -69,7 +74,7 @@ export function Lobby({user, authService, lobbyService, gameService}: {
         <strong>Select World:</strong>
         <DerefData data={worlds}>{worlds =>
             <>
-                <div role='grid' class='stack-column'>
+                <div role='grid' class='stack-column grow'>
                     <For each={worlds}>{world =>
                         <button role='row' class='stack-row spacing' onClick={() => enterWorld(world.value)}>
                             <div role='gridcell' class='grow'>{world.props.name}</div>
@@ -86,6 +91,11 @@ export function Lobby({user, authService, lobbyService, gameService}: {
             <div>You're currenly logged in as a guest. To complete your registration and save your progress, use the button below:</div>
             <div>
                 <button onClick={finishRegistration}>Complete Registration</button>
+            </div>
+        </Show>
+        <Show when={user.props.guest.not}>
+            <div class='stack-row margin-top'>
+                <button onClick={changePassword}>Change Password</button>
             </div>
         </Show>
     </div>;
