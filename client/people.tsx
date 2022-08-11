@@ -1,4 +1,4 @@
-import {ariaBool, bind, createElement, Deref, Field, For, Fragment, Show, TextControl, ValueProperty, zipWith} from "cstk";
+import {ariaBool, bind, createElement, Deref, Field, For, Fragment, Property, Show, TextControl, ValueProperty, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
 import { openConfirm, openDialog } from "./dialog";
 import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
@@ -13,8 +13,8 @@ export function People({gameService}: {
     const teams = bind<string[]>([]);
     let alreadyAsked = false;
 
-    async function openDetails(person: Inhabitant) {
-        await openDialog(Details, {person, gameService, teams});
+    async function openDetails(person: Property<Inhabitant>) {
+        await openDialog(Details, {person, gameService, teams, onReload: () => people.notify()});
         people.notify();
     }
 
@@ -61,7 +61,7 @@ export function People({gameService}: {
             <>
                 <div class='stack-column' role='grid'>
                     <For each={people}>{person =>
-                        <button class='stack-row spacing' role='row' onClick={() => openDetails(person.value)}>
+                        <button class='stack-row spacing' role='row' onClick={() => openDetails(person)}>
                             <div>{person.props.name}</div>
                             <div>({person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
                             <div style='margin-left: auto;'>{person.map(getStatus)}</div>
@@ -76,14 +76,14 @@ export function People({gameService}: {
     </>;
 }
 
-function Details({gameService, teams, ...props}: {
-    person: Inhabitant,
+function Details({gameService, teams, person, onReload}: {
+    person: Property<Inhabitant>,
     gameService: GameService,
     teams: ValueProperty<string[]>,
+    onReload: () => void,
 }) {
-    const person = bind(props.person);
 
-    const age = gameService.bindAge(props.person.dateOfBirth);
+    const age = gameService.bindAge(person.value.dateOfBirth);
 
     async function setAssignment() {
         const choice = await openDialog(SetAssignment, {person: person.value});
@@ -92,7 +92,7 @@ function Details({gameService, teams, ...props}: {
             try {
                 await gameService.setAssignment(person.value.id, assignment);
                 person.value.assignment = assignment;
-                person.value = person.value;
+                onReload();
             } catch (error) {
                 handleError(error);
             }
@@ -106,7 +106,7 @@ function Details({gameService, teams, ...props}: {
             try {
                 await gameService.setTeam(person.value.id, team);
                 person.value.team = team;
-                person.value = person.value;
+                onReload();
                 if (team && !teams.value.includes(team)) {
                     teams.value.push(team);
                     teams.value = teams.value;
