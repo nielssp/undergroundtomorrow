@@ -21,7 +21,7 @@ pub fn encounter(
         .map(|i| i.get_skill_level(SkillType::Stealth))
         .sum();
     let stealth_avg = (stealth_sum as f64 / team.len() as f64).ceil() as i32;
-    if skill_roll(0.1, stealth_avg) {
+    if skill_roll(0.05, stealth_avg) {
         report_body.push_str(&format!("Successfully evaded a band of marauders\n",));
         for member in team {
             member.add_xp(SkillType::Stealth, 60);

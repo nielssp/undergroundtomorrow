@@ -160,6 +160,19 @@ pub async fn get_inhabitants(
     )
 }
 
+pub async fn get_inhabitant_count(
+    pool: &PgPool,
+    bunker_id: i32,
+) -> Result<i64, error::Error> {
+    Ok(
+        sqlx::query("SELECT COUNT(*) FROM inhabitants WHERE bunker_id = $1")
+            .bind(bunker_id)
+            .fetch_one(pool)
+            .await?
+            .try_get(0)?
+    )
+}
+
 pub async fn get_by_expedition(
     pool: &PgPool,
     expedition_id: i32,

@@ -1,6 +1,6 @@
 import {ariaBool, bind, createElement, Deref, Field, For, Fragment, Show, TextControl, ValueProperty, zipWith} from "cstk";
 import {differenceInYears, format, parseISO} from "date-fns";
-import { openDialog } from "./dialog";
+import { openConfirm, openDialog } from "./dialog";
 import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
 import { ErrorIndicator, handleError } from "./error";
 import {GameService} from "./services/game-service";
@@ -11,14 +11,42 @@ export function People({gameService}: {
 }, context: JSX.Context) {
     const people = dataSource(() => gameService.getInhabitants());
     const teams = bind<string[]>([]);
+    let alreadyAsked = false;
 
     async function openDetails(person: Inhabitant) {
         await openDialog(Details, {person, gameService, teams});
         people.notify();
     }
 
+    async function restart() {
+        if (alreadyAsked) {
+            return;
+        }
+        alreadyAsked = true;
+        if (await openConfirm(`Everybody's dead, Dave. Would you like to try again?`, [
+            {
+                text: 'No',
+                role: false,
+            },
+            {
+                text: 'Restart',
+                role: true,
+            },
+        ])) {
+            try {
+                await gameService.restart();
+                people.refresh();
+            } catch (error) {
+                handleError(error);
+            }
+        }
+    }
+
     context.onDestroy(people.data.getAndObserve(people => {
         if (people) {
+            if (!people.length) {
+                restart();
+            }
             const unique = new Set<string>();
             people.forEach(p => p.team && unique.add(p.team));
             teams.value = [...unique].sort((a, b) => a.localeCompare(b));
@@ -32,7 +60,7 @@ export function People({gameService}: {
                     <For each={people}>{person =>
                         <button class='stack-row spacing' role='row' onClick={() => openDetails(person.value)}>
                             <div>{person.props.name}</div>
-                            <div>(Age: {person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
+                            <div>({person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
                             <div style='margin-left: auto;'>{person.map(getStatus)}</div>
                         </button>
                         }</For>

@@ -1,5 +1,5 @@
 use actix_web::{post, web, HttpRequest, HttpResponse};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use sqlx::PgPool;
 use tracing::info;
@@ -66,7 +66,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(add_project)
         .service(remove_project)
         .service(prioritize_project)
-        .service(get_item_types);
+        .service(get_item_types)
+        .service(leave);
 }
 
 #[post("/world/{world_id:\\d+}/get_world")]
@@ -340,6 +341,21 @@ async fn prioritize_project(
 ) -> actix_web::Result<HttpResponse> {
     let mut player = validate_player(&request, world_id.into_inner()).await?;
     workshop::prioritize_project(&pool, &mut player.bunker, &data).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/world/{world_id:\\d+}/leave")]
+async fn leave(
+    request: HttpRequest,
+    pool: web::Data<PgPool>,
+    world_id: web::Path<i32>,
+) -> actix_web::Result<HttpResponse> {
+    let player = validate_player(&request, world_id.into_inner()).await?;
+    let inhabitants = inhabitants::get_inhabitant_count(&pool, player.bunker.id).await?;
+    if inhabitants > 0 {
+        Err(error::client_error("BUNKER_NOT_EMPTY"))?;
+    }
+    bunkers::delete_bunker(&pool, player.bunker.id).await?;
     Ok(HttpResponse::NoContent().finish())
 }
 

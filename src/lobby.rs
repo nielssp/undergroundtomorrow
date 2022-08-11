@@ -14,7 +14,7 @@ use crate::{
     },
     error,
     generate::{self, generate_position},
-    util::get_sector,
+    util::get_sector, game::validate_player,
 };
 
 #[derive(serde::Deserialize)]
@@ -148,7 +148,7 @@ async fn join_world(
                     parts: 20,
                 },
                 cafeteria: bunkers::CafeteriaStatus {
-                    food: food_required * 2,
+                    food: 25 * 6,
                 },
             },
         },

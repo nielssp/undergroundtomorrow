@@ -167,7 +167,7 @@ pub async fn handle_finished_expeditions(
         let sector_name = get_sector_name((expedition.zone_x, expedition.zone_y));
         let mut report_body = "".to_string();
         let mut team = inhabitants::get_by_expedition(pool, expedition.id).await?;
-        let encounter_chances = expedition.data.distance / 2000;
+        let encounter_chances = expedition.data.distance / 2000 * 2;
         let mut retreat = false;
         if encounter_chances > 0 {
             if roll_dice(0.2, encounter_chances) {

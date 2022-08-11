@@ -198,4 +198,11 @@ export class GameService {
     prioritizeProject(index: number) {
         return this.api.rpc<void>(`world/${this.worldId}/prioritize_project`, {index});
     }
+
+    async restart() {
+        const worldId = this.worldId;
+        await this.api.rpc<void>(`world/${worldId}/leave`);
+        await this.api.rpc<void>('lobby/join_world', {worldId});
+        await this.selectWorld(worldId);
+    }
 }
