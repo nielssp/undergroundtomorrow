@@ -133,7 +133,7 @@ export class GameService {
         this.world.value = await this.getWorld(worldId);
         try {
             this.bunker.value = await this.getBunker();
-            this.receiver.value = new Receiver(`${environment.websocketUrl}?broadcast_id=${this.bunker.value.broadcastId}`);
+            this.receiver.value = new Receiver(`${environment.websocketUrl}?broadcast_id=${encodeURIComponent(this.bunker.value.broadcastId)}`);
             this.receiver.value.onEvent.observe(this.eventObserver);
         } catch (error) {
             this.world.value = undefined;
