@@ -64,6 +64,7 @@ export function Items({gameService}: {
     async function craft() {
         if (await openDialog(AddProject, {gameService})) {
             items.refresh();
+            gameService.refreshBunker();
         }
     }
 
