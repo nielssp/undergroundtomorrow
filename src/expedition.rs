@@ -241,7 +241,7 @@ pub async fn handle_finished_expeditions(
                                 .await?;
                             if member.add_xp(SkillType::Scavenging, 60) {
                                 report_body.push_str(&format!(
-                                    "{} got better at scavening\n",
+                                    "{} got better at scavenging\n",
                                     member.name
                                 ));
                             }
