@@ -93,6 +93,7 @@ async fn authenticate(
             user.id,
         )
         .await?;
+        info!("user {} authenticated", user.id);
         Ok(HttpResponse::Ok()
             .cookie(
                 Cookie::build("ut_session", session_id)
@@ -116,6 +117,7 @@ async fn invalidate(
     let session = validate_session(&request).await?;
     sessions::delete_session(&pool, &session.id).await?;
     if session.user.guest {
+        info!("deleted guest user {}", session.user.id);
         users::delete_user(&pool, session.user.id).await?;
     }
     Ok(HttpResponse::Ok().json("OK"))
@@ -166,7 +168,9 @@ async fn register(
     }
     user.password = hash_password(&user.password, &settings)?;
     user.guest = false;
-    Ok(HttpResponse::Ok().json(users::create_user(&pool, user).await?))
+    let user = users::create_user(&pool, user).await?;
+    info!("user {} registered", user.id);
+    Ok(HttpResponse::Ok().json(user))
 }
 
 #[post("/auth/guest")]
@@ -187,6 +191,7 @@ async fn guest(pool: web::Data<PgPool>) -> actix_web::Result<HttpResponse> {
         user.id,
     )
     .await?;
+    info!("guest user {} created", user.id);
     Ok(HttpResponse::Ok()
         .cookie(
             Cookie::build("ut_session", session_id)
@@ -215,6 +220,7 @@ async fn finish_registration(
     }
     user.password = hash_password(&user.password, &settings)?;
     users::update_user(&pool, session.user.id, &user).await?;
+    info!("guest user {} completed registration", session.user.id);
     Ok(HttpResponse::NoContent().finish())
 }
 
