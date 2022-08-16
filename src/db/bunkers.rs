@@ -117,6 +117,8 @@ pub struct Crop {
     pub max: i32,
     #[serde(default)]
     pub stunted: bool,
+    #[serde(default)]
+    pub diseased: bool, // TODO
 }
 
 pub struct NewBunker {
