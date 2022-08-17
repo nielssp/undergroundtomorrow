@@ -36,6 +36,7 @@ pub async fn handle_tick(
         .iter_mut()
         .filter(|i| i.is_ready() && i.data.assignment == Some(Assignment::Horticulture))
         .collect();
+    let mut harvestable = workers.len() * 2;
     for crop in &mut bunker.data.horticulture.crops {
         let crop_type = ITEM_TYPES
             .get(&crop.seed_type)
@@ -70,7 +71,10 @@ pub async fn handle_tick(
             let chance = crop.quantity as f64 / crop_type.growth_time as f64 / 24.0;
             if roll_dice(chance, 1) {
                 if let Some(produce) = &crop_type.produce {
-                    items::add_item(pool, bunker.id, produce, 1).await?;
+                    if harvestable > 0 {
+                        harvestable -= 1;
+                        items::add_item(pool, bunker.id, produce, 1).await?;
+                    }
                 }
             }
         }
@@ -129,6 +133,7 @@ pub async fn add_crop(
         stage: 1,
         max: seed_type.growth_time,
         stunted: false,
+        diseased: false,
     });
     bunkers::update_bunker_data_query(bunker)
         .execute(&mut tx)

@@ -275,6 +275,8 @@ function getStatus(inhabitant: Inhabitant) {
         return '(recovering)';
     } else if (inhabitant.expeditionId) {
         return '(on mission)';
+    } else if (inhabitant.sleeping) {
+        return '(sleeping)';
     } else if (inhabitant.assignment) {
         return mapAssignment(inhabitant.assignment);
     } else {

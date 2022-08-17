@@ -54,7 +54,7 @@ pub fn handle_tick(
                     if roll_dice(0.1, 1) {
                         bunker.data.infirmary.medicine -= 1;
                     }
-                    0.1
+                    0.05
                 } else {
                     0.01
                 };
@@ -68,9 +68,9 @@ pub fn handle_tick(
                     if roll_dice(0.1, 1) {
                         bunker.data.infirmary.medicine -= 1;
                     }
-                    0.05
+                    0.01
                 } else {
-                    0.001
+                    0.0005
                 };
                 if skill_roll(chance, first_aid_level + medicine_level) {
                     actions.push((inhabitant.id, doctor.id, Action::StopInfection));
@@ -82,7 +82,7 @@ pub fn handle_tick(
                     if roll_dice(0.1, 1) {
                         bunker.data.infirmary.medicine -= 1;
                     }
-                    0.05
+                    0.03
                 } else {
                     0.001
                 };

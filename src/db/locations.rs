@@ -7,10 +7,7 @@ use crate::error;
 pub struct LocationData {
     pub location_type: String,
     #[serde(default)]
-    pub abundance: f64,
-    // abundance / chance of finding loot, lowers (for everyone) after each expedition
-    // accessibility: ...
-    // loot table
+    pub searches: i32,
 }
 
 #[derive(serde::Serialize, sqlx::FromRow)]
@@ -51,6 +48,15 @@ pub async fn create_location(pool: &PgPool, location: &NewLocation) -> Result<i3
         .fetch_one(pool)
         .await?
         .try_get(0)?)
+}
+
+pub async fn update_location(pool: &PgPool, location: &Location) -> Result<(), error::Error> {
+    sqlx::query("UPDATE locations SET data = $2 WHERE id = $1")
+        .bind(location.id)
+        .bind(&location.data)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 pub async fn add_bunker_location(

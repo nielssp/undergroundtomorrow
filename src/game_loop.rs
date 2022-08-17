@@ -6,14 +6,16 @@ use rand::Rng;
 use sqlx::PgPool;
 
 use crate::{
-    air_recycling, cafeteria,
+    air_recycling,
+    broadcaster::{Broadcaster, BunkerMessage, Message},
+    cafeteria,
     db::{
         bunkers,
         inhabitants::{self, Assignment},
         items, messages,
         worlds::{self, WorldTime},
     },
-    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop, broadcaster::{Broadcaster, BunkerMessage, Message},
+    error, expedition, health, horticulture, infirmary, reactor, water_treatment, workshop,
 };
 
 pub fn start_loop(pool: PgPool, broadcaster: Addr<Broadcaster>) {
@@ -34,7 +36,11 @@ pub async fn tick(pool: &PgPool, broadcaster: &Addr<Broadcaster>) -> Result<(), 
     Ok(())
 }
 
-pub async fn world_tick(pool: &PgPool, world: &WorldTime, broadcaster: &Addr<Broadcaster>) -> Result<(), error::Error> {
+pub async fn world_tick(
+    pool: &PgPool,
+    world: &WorldTime,
+    broadcaster: &Addr<Broadcaster>,
+) -> Result<(), error::Error> {
     let bunkers = bunkers::get_bunkers_by_next_tick(pool, world.id).await?;
     for mut bunker in bunkers {
         let mut inhabitants = inhabitants::get_inhabitants(pool, bunker.id).await?;
@@ -90,8 +96,11 @@ pub async fn world_tick(pool: &PgPool, world: &WorldTime, broadcaster: &Addr<Bro
         let seconds = rand::thread_rng().gen_range(2400..4800) / world.time_acceleration;
         bunker.next_tick = Utc::now() + Duration::seconds(seconds as i64);
         bunkers::update_bunker_data_and_tick(pool, &bunker).await?;
-        
-        broadcaster.do_send(BunkerMessage { bunker_id: bunker.id, message: Message::Tick });
+
+        broadcaster.do_send(BunkerMessage {
+            bunker_id: bunker.id,
+            message: Message::Tick,
+        });
     }
     expedition::handle_finished_expeditions(pool, world, broadcaster).await?;
     Ok(())

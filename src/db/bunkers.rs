@@ -218,14 +218,10 @@ pub fn update_bunker_data_query(bunker: &Bunker) -> Query<Postgres, PgArguments>
         .bind(&bunker.data)
 }
 
-pub async fn delete_bunker(
-    pool: &PgPool,
-    bunker_id: i32,
-) -> Result<(), error::Error> {
+pub async fn delete_bunker(pool: &PgPool, bunker_id: i32) -> Result<(), error::Error> {
     sqlx::query("DELETE FROM bunkers WHERE id = $1")
         .bind(bunker_id)
         .execute(pool)
         .await?;
     Ok(())
 }
-

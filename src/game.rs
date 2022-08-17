@@ -8,6 +8,7 @@ use tracing::info;
 
 use crate::{
     auth::validate_session,
+    broadcaster,
     data::ITEM_TYPES,
     db::{
         bunkers::{self, Bunker},
@@ -18,7 +19,7 @@ use crate::{
         worlds,
     },
     dto::{BunkerDto, ExpeditionDto, InhabitantDto, ItemDto, LocationDto},
-    error, expedition, horticulture, infirmary, reactor, workshop, broadcaster,
+    error, expedition, horticulture, infirmary, reactor, workshop,
 };
 
 pub struct Player {
@@ -403,10 +404,15 @@ async fn get_events(
     broadcaster: web::Data<Addr<broadcaster::Broadcaster>>,
     stream: web::Payload,
 ) -> actix_web::Result<HttpResponse> {
-    let bunker = bunkers::get_bunker_by_broadcast_id(&pool, &query.broadcast_id).await?
+    let bunker = bunkers::get_bunker_by_broadcast_id(&pool, &query.broadcast_id)
+        .await?
         .ok_or_else(|| error::client_error("INVALID_BROADCAST_ID"))?;
     ws::start(
-        broadcaster::BroadcastReceiver::new(broadcaster.get_ref().clone(), bunker.world_id, bunker.id),
+        broadcaster::BroadcastReceiver::new(
+            broadcaster.get_ref().clone(),
+            bunker.world_id,
+            bunker.id,
+        ),
         &request,
         stream,
     )

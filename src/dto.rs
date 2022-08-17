@@ -32,6 +32,7 @@ pub struct InhabitantDto {
     pub infection: bool,
     pub recovering: bool,
     pub starving: bool,
+    pub sleeping: bool,
     pub ready: bool,
     pub health: i32,
 }
@@ -56,6 +57,7 @@ impl From<Inhabitant> for InhabitantDto {
             infection: data.infection,
             recovering: data.recovering,
             starving: data.starving,
+            sleeping: data.sleeping,
             ready,
             health: data.health,
         }

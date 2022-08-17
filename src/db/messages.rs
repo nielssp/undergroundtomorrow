@@ -83,7 +83,10 @@ pub async fn set_all_messages_read(pool: &PgPool, bunker_id: i32) -> Result<(), 
     Ok(())
 }
 
-pub async fn unread_messages_exist(pool: &PgPool, bunker_id: i32) -> Result<Option<DateTime<Utc>>, error::Error> {
+pub async fn unread_messages_exist(
+    pool: &PgPool,
+    bunker_id: i32,
+) -> Result<Option<DateTime<Utc>>, error::Error> {
     Ok(sqlx::query(
         "SELECT created FROM messages WHERE receiver_bunker_id = $1 AND unread = true ORDER BY created DESC LIMIT 1",
     )

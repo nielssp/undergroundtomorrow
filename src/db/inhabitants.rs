@@ -91,9 +91,9 @@ pub struct InhabitantData {
     #[serde(default)]
     pub ammo: i32,
     #[serde(default)]
-    pub hp: i32, // TODO: wounded state
+    pub hp: i32,
     #[serde(default)]
-    pub energy: i32, // TODO: sleep state etc
+    pub tiredness: i32, // TODO: sleep state etc
     #[serde(default)]
     pub bleeding: bool,
     #[serde(default)]
@@ -108,6 +108,8 @@ pub struct InhabitantData {
     pub hunger: i32,
     #[serde(default)]
     pub starving: bool,
+    #[serde(default)]
+    pub sleeping: bool,
 }
 
 pub struct NewInhabitant {
@@ -160,16 +162,13 @@ pub async fn get_inhabitants(
     )
 }
 
-pub async fn get_inhabitant_count(
-    pool: &PgPool,
-    bunker_id: i32,
-) -> Result<i64, error::Error> {
+pub async fn get_inhabitant_count(pool: &PgPool, bunker_id: i32) -> Result<i64, error::Error> {
     Ok(
         sqlx::query("SELECT COUNT(*) FROM inhabitants WHERE bunker_id = $1")
             .bind(bunker_id)
             .fetch_one(pool)
             .await?
-            .try_get(0)?
+            .try_get(0)?,
     )
 }
 
@@ -245,6 +244,7 @@ pub async fn delete_inhabitant(pool: &PgPool, inhabitant_id: i32) -> Result<(), 
 impl Inhabitant {
     pub fn is_ready(&self) -> bool {
         self.expedition_id.is_none()
+            && !self.data.sleeping
             && !self.data.bleeding
             && !self.data.infection
             && !self.data.wounded

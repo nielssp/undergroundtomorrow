@@ -1,11 +1,13 @@
-use std::{collections::{HashMap, HashSet}, time::Duration};
+use std::{
+    collections::{HashMap, HashSet},
+    time::Duration,
+};
 
 use actix::*;
 use actix_web_actors::ws;
 use rand::{rngs::ThreadRng, Rng};
 use time::Instant;
 use tracing::info;
-
 
 #[derive(actix::Message, Clone, serde::Serialize)]
 #[rtype(result = "()")]
@@ -96,7 +98,10 @@ impl Handler<Connect> for Broadcaster {
     type Result = usize;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        info!("Broadcast receiver connected for bunker {} world {}", msg.bunker_id, msg.world_id);
+        info!(
+            "Broadcast receiver connected for bunker {} world {}",
+            msg.bunker_id, msg.world_id
+        );
         let id: usize = self.rng.gen();
         self.sessions.insert(id, msg.addr);
         if let Some(world) = self.worlds.get_mut(&msg.world_id) {
@@ -246,9 +251,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for BroadcastReceiver
             ws::Message::Text(_) => {
                 info!("Ignored text message from WebSocket client");
             }
-            ws::Message::Binary(_) =>{
+            ws::Message::Binary(_) => {
                 info!("Ignored binary message from WebSocket client");
-            },
+            }
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();

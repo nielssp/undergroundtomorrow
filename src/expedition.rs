@@ -8,6 +8,7 @@ use sqlx::PgPool;
 
 use crate::{
     battle,
+    broadcaster::{Broadcaster, BunkerMessage, Message},
     data::{ITEM_TYPES, LOCATION_TYPES},
     db::{
         bunkers::Bunker,
@@ -17,7 +18,7 @@ use crate::{
         worlds::{self, WorldTime},
     },
     error,
-    util::{self, get_sector_name, roll_dice, skill_roll}, broadcaster::{Broadcaster, BunkerMessage, Message},
+    util::{self, get_sector_name, roll_dice, skill_roll},
 };
 
 #[derive(serde::Deserialize)]
@@ -213,18 +214,23 @@ pub async fn handle_finished_expeditions(
         }
         if !retreat {
             if let Some(location_id) = expedition.location_id {
-                let location = locations::get_location(pool, location_id).await?;
+                let mut location = locations::get_location(pool, location_id).await?;
                 report_body.push_str(&format!(
-                    "Successfully explored {} in sector {}\n",
+                    "Successfully searched {} in sector {}\n",
                     location.name, sector_name
                 ));
+                let mut base_chance = if location.data.searches > 0 {
+                    1.0 / location.data.searches as f64
+                } else {
+                    1.0
+                };
                 let location_type = LOCATION_TYPES
                     .get(&location.data.location_type)
                     .ok_or_else(|| error::internal_error("Unknown location type"))?;
-                for mut member in &mut team {
+                for member in &mut team {
                     let scavenging_level = member.get_skill_level(SkillType::Scavenging);
                     for (item_type_id, entry) in &location_type.loot {
-                        if skill_roll(entry.chance, scavenging_level) {
+                        if skill_roll(base_chance * entry.chance, scavenging_level) {
                             let item_type = ITEM_TYPES
                                 .get(item_type_id)
                                 .ok_or_else(|| error::internal_error("Item type not found"))?;
@@ -247,7 +253,10 @@ pub async fn handle_finished_expeditions(
                             }
                         }
                     }
+                    base_chance /= 2.0;
                 }
+                location.data.searches += 1;
+                locations::update_location(pool, &location).await?;
             } else {
                 let locations = locations::get_undiscovered_locations(
                     pool,
@@ -259,10 +268,7 @@ pub async fn handle_finished_expeditions(
                 let mut discovered = 0;
                 for location in &locations {
                     for member in &team {
-                        let exploration_level = inhabitants::get_inhabitant_skill_level(
-                            &member,
-                            SkillType::Exploration,
-                        );
+                        let exploration_level = member.get_skill_level(SkillType::Exploration);
                         if skill_roll(0.25, exploration_level) {
                             discovered += 1;
                             report_body.push_str(&format!(
@@ -279,8 +285,8 @@ pub async fn handle_finished_expeditions(
                     report_body.push_str("No new locations discovered");
                 } else {
                     let xp = discovered * 40;
-                    for mut member in &mut team {
-                        if inhabitants::add_xp_to_skill(&mut member, SkillType::Exploration, xp) {
+                    for member in &mut team {
+                        if member.add_xp(SkillType::Exploration, xp) {
                             report_body
                                 .push_str(&format!("{} got better at exploration\n", member.name));
                         }
@@ -288,10 +294,7 @@ pub async fn handle_finished_expeditions(
                 }
                 if discovered >= locations.len() as i32 {
                     for member in &team {
-                        let exploration_level = inhabitants::get_inhabitant_skill_level(
-                            &member,
-                            SkillType::Exploration,
-                        );
+                        let exploration_level = member.get_skill_level(SkillType::Exploration);
                         if skill_roll(0.25, exploration_level) {
                             locations::add_bunker_sector(
                                 pool,
@@ -306,8 +309,8 @@ pub async fn handle_finished_expeditions(
                 }
             }
         }
-        let exposure =
-            ((Utc::now() - expedition.created) * world.time_acceleration).num_hours() as i32;
+        let exposure = 1
+            + ((Utc::now() - expedition.created) * world.time_acceleration).num_hours() as i32 * 3;
         for member in &mut team {
             member.data.surface_exposure += exposure;
             inhabitants::update_inhabitant_data(pool, &member).await?;
@@ -329,7 +332,10 @@ pub async fn handle_finished_expeditions(
                 }
             }
         }
-        broadcaster.do_send(BunkerMessage { bunker_id: expedition.bunker_id, message: Message::Expedition });
+        broadcaster.do_send(BunkerMessage {
+            bunker_id: expedition.bunker_id,
+            message: Message::Expedition,
+        });
         messages::create_system_message(
             pool,
             &messages::NewSystemMessage {

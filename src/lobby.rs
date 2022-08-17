@@ -5,7 +5,7 @@ use rand::{seq::IteratorRandom, Rng};
 use sqlx::PgPool;
 
 use crate::{
-    auth::{validate_admin_session, validate_session, generate_session_id},
+    auth::{generate_session_id, validate_admin_session, validate_session},
     data::{self, ITEM_TYPES, LAST_NAMES},
     db::{
         bunkers::{self, Crop},
@@ -13,8 +13,9 @@ use crate::{
         items, locations, worlds,
     },
     error,
+    game::validate_player,
     generate::{self, generate_position},
-    util::get_sector, game::validate_player,
+    util::get_sector,
 };
 
 #[derive(serde::Deserialize)]
@@ -67,7 +68,7 @@ async fn create_world(
                     y,
                     data: locations::LocationData {
                         location_type: location_type.id.clone(),
-                        abundance: 1.0,
+                        searches: 0,
                     },
                 },
             )
@@ -116,6 +117,7 @@ async fn join_world(
             stage: seed_type.growth_time,
             max: seed_type.growth_time,
             stunted: false,
+            diseased: false,
         });
         food_required -= quantity / seed_type.growth_time;
     }
@@ -148,9 +150,7 @@ async fn join_world(
                     malfunction: false,
                     parts: 20,
                 },
-                cafeteria: bunkers::CafeteriaStatus {
-                    food: 25 * 6,
-                },
+                cafeteria: bunkers::CafeteriaStatus { food: 25 * 6 },
             },
         },
     )

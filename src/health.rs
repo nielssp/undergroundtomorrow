@@ -14,6 +14,7 @@ pub fn handle_tick(
 ) -> Result<(), error::Error> {
     for inhabitant in inhabitants {
         inhabitant.data.hunger += 1;
+        inhabitant.data.tiredness += 1;
         if inhabitant.data.hunger >= 12 {
             if inhabitant.expedition_id.is_none() && bunker.data.cafeteria.food > 0 {
                 bunker.data.cafeteria.food -= 1;
@@ -25,9 +26,25 @@ pub fn handle_tick(
         }
         if inhabitant.expedition_id.is_none() {
             if air_quality < 100 || water_quality < 100 {
-                inhabitant.data.surface_exposure += 1;
+                if air_quality < 100 && water_quality < 100 {
+                    inhabitant.data.surface_exposure += 4;
+                } else {
+                    inhabitant.data.surface_exposure += 2;
+                }
             } else if inhabitant.data.surface_exposure > 0 {
                 inhabitant.data.surface_exposure -= 1;
+            }
+            if inhabitant.data.tiredness >= 16 {
+                inhabitant.data.sleeping = true;
+            }
+        } else {
+            inhabitant.data.sleeping = false;
+        }
+        if inhabitant.data.sleeping {
+            if inhabitant.data.tiredness > 1 {
+                inhabitant.data.tiredness -= 2;
+            } else {
+                inhabitant.data.sleeping = false;
             }
         }
         if inhabitant.data.bleeding {
@@ -68,7 +85,7 @@ pub fn handle_tick(
             inhabitant.changed = true;
         } else if roll_dice(
             0.01,
-            inhabitant.data.surface_exposure,
+            inhabitant.data.surface_exposure + (inhabitant.data.tiredness - 24).max(0),
         ) {
             debug!("{} got sick", inhabitant.name);
             inhabitant.data.sick = true;
