@@ -58,6 +58,9 @@ pub async fn handle_tick(
         }
         if crop.stunted {
             for worker in &mut workers {
+                if worker.data.sleeping {
+                    continue;
+                }
                 let level = worker.get_skill_level(SkillType::Botany);
                 if skill_roll(0.05, level) {
                     crop.stunted = false;

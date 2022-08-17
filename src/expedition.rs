@@ -117,6 +117,7 @@ pub async fn create(
             inhabintant.data.weapon_type = None;
             inhabintant.data.ammo = 0;
         }
+        inhabintant.data.sleeping = false;
     }
     let speed = 5 * 1000 / 60;
     let duration =

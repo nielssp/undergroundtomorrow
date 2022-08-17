@@ -31,6 +31,14 @@ pub async fn handle_tick(
         if !status.malfunction && status.maintenance >= 100 {
             break;
         }
+        if inhabitant.data.sleeping {
+            if status.malfunction {
+                inhabitant.data.sleep_block = 2;
+                inhabitant.data.sleeping = false;
+            } else {
+                continue;
+            }
+        }
         let level = inhabitants::get_inhabitant_skill_level(inhabitant, SkillType::Repair);
         if skill_roll(0.1, level) {
             status.malfunction = false;

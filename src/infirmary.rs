@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use sqlx::PgPool;
 
@@ -30,6 +30,7 @@ pub fn handle_tick(
     inhabitants: &mut Vec<Inhabitant>,
 ) -> Result<(), error::Error> {
     let mut actions: Vec<(i32, i32, Action)> = vec![];
+    let mut awoken_doctors: HashSet<i32> = HashSet::new();
     for doctor in inhabitants.iter() {
         if doctor.data.assignment != Some(Assignment::Infirmary) || !doctor.is_ready() {
             continue;
@@ -38,6 +39,9 @@ pub fn handle_tick(
         for inhabitant in inhabitants.iter() {
             if !inhabitant.needs_attention() || inhabitant.expedition_id.is_some() {
                 continue;
+            }
+            if doctor.data.sleeping {
+                awoken_doctors.insert(doctor.id);
             }
             let first_aid_level = doctor.get_skill_level(SkillType::FirstAid);
             let medicine_level = doctor.get_skill_level(SkillType::Medicine);
@@ -96,6 +100,10 @@ pub fn handle_tick(
         }
     }
     for inhabitant in inhabitants {
+        if awoken_doctors.contains(&inhabitant.id) {
+            inhabitant.data.sleeping = false;
+            inhabitant.data.sleep_block = 2;
+        }
         for (patient_id, doctor_id, action) in &actions {
             if *patient_id == inhabitant.id {
                 match action {

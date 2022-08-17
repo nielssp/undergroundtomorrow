@@ -110,6 +110,8 @@ pub struct InhabitantData {
     pub starving: bool,
     #[serde(default)]
     pub sleeping: bool,
+    #[serde(default)]
+    pub sleep_block: i32,
 }
 
 pub struct NewInhabitant {
@@ -244,13 +246,12 @@ pub async fn delete_inhabitant(pool: &PgPool, inhabitant_id: i32) -> Result<(), 
 impl Inhabitant {
     pub fn is_ready(&self) -> bool {
         self.expedition_id.is_none()
-            && !self.data.sleeping
             && !self.data.bleeding
             && !self.data.infection
             && !self.data.wounded
-            && (!self.data.sick || self.data.health > 75)
-            && (!self.data.recovering || self.data.health > 75)
-            && (!self.data.starving || self.data.health > 75)
+            && (!self.data.sick || self.data.health > 33)
+            && (!self.data.recovering || self.data.health > 33)
+            && (!self.data.starving || self.data.health > 33)
     }
 
     pub fn get_skill_level(&self, skill_type: SkillType) -> i32 {

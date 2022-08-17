@@ -27,22 +27,25 @@ pub fn handle_tick(
         if inhabitant.expedition_id.is_none() {
             if air_quality < 100 || water_quality < 100 {
                 if air_quality < 100 && water_quality < 100 {
-                    inhabitant.data.surface_exposure += 4;
+                    inhabitant.data.surface_exposure += 3;
                 } else {
-                    inhabitant.data.surface_exposure += 2;
+                    inhabitant.data.surface_exposure += 1;
                 }
             } else if inhabitant.data.surface_exposure > 0 {
                 inhabitant.data.surface_exposure -= 1;
             }
-            if inhabitant.data.tiredness >= 16 {
+            if inhabitant.data.tiredness >= 16 && inhabitant.data.sleep_block < 1 {
                 inhabitant.data.sleeping = true;
             }
         } else {
             inhabitant.data.sleeping = false;
         }
+        if inhabitant.data.sleep_block > 0 {
+            inhabitant.data.sleep_block -= 1;
+        }
         if inhabitant.data.sleeping {
-            if inhabitant.data.tiredness > 1 {
-                inhabitant.data.tiredness -= 2;
+            if inhabitant.data.tiredness > 2 {
+                inhabitant.data.tiredness -= 3;
             } else {
                 inhabitant.data.sleeping = false;
             }
