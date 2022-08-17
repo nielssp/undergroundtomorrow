@@ -154,6 +154,7 @@ export interface Inhabitant {
     ready: boolean;
     starving: boolean;
     sleeping: boolean;
+    tired: boolean;
     health: number;
 }
 
