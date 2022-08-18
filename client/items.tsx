@@ -3,7 +3,7 @@ import {differenceInYears, format, parseISO} from "date-fns";
 import { openDialog } from "./dialog";
 import { Item } from "./dto";
 import {GameService} from "./services/game-service";
-import {dataSource, DerefData, getItemName, LoadingIndicator} from "./util";
+import {applyFilter, dataSource, DerefData, getItemName, LoadingIndicator, Select} from "./util";
 import { AddProject } from "./workshop";
 
 type ItemFilter = {
@@ -33,12 +33,6 @@ const filters: ItemFilter[] = [
         apply: item => item.itemType.reactivity > 0,
     },
 ];
-
-function applyFilter<T>(list: Property<T[]>, filter: Property<{apply: (item: T) => boolean}>): Property<T[]> {
-    return zipWith([list, filter], (l, f) => {
-        return l.filter(f.apply);
-    });
-}
 
 export function Items({gameService}: {
     gameService: GameService,
@@ -93,25 +87,6 @@ export function Items({gameService}: {
             </>
             }</DerefData>
     </>;
-}
-
-function Select<T>({selection, options, toString, close}: {
-    selection: T,
-    options: T[],
-    toString: (option: T) => string,
-    close: (selection: T) => void,
-}) {
-    return <div class='stack-column padding'>
-        <div role='grid' class='stack-column'>
-            <For each={bind(options)}>{item =>
-                <button role='row' class='selectable' aria-selected={ariaBool(item.eq(selection))} onClick={() => close(item.value)}>
-                    <div role='gridcell' class='stack-row spacing'>
-                        <div>{item.map(toString)}</div>
-                    </div>
-                </button>
-                }</For>
-        </div>
-    </div>;
 }
 
 function ShowItem({item, gameService}: {

@@ -1,4 +1,4 @@
-import {Property, Show, createElement, bind, zipWith, Deref, Fragment, ValueProperty} from "cstk";
+import {Property, Show, createElement, bind, zipWith, Deref, Fragment, ValueProperty, For, ariaBool} from "cstk";
 import { differenceInSeconds, parseISO } from "date-fns";
 import { Item, ItemType } from "./dto";
 import { ErrorIndicator } from "./error";
@@ -118,3 +118,27 @@ export function QuantityButtons({value, max}: {
     </div>;
 }
 
+export function Select<T>({selection, options, toString, close}: {
+    selection: T,
+    options: T[],
+    toString: (option: T) => string,
+    close: (selection: T) => void,
+}) {
+    return <div class='stack-column padding'>
+        <div role='grid' class='stack-column'>
+            <For each={bind(options)}>{item =>
+                <button role='row' class='selectable' aria-selected={ariaBool(item.eq(selection))} onClick={() => close(item.value)}>
+                    <div role='gridcell' class='stack-row spacing'>
+                        <div>{item.map(toString)}</div>
+                    </div>
+                </button>
+                }</For>
+        </div>
+    </div>;
+}
+
+export function applyFilter<T>(list: Property<T[]>, filter: Property<{apply: (item: T) => boolean}>): Property<T[]> {
+    return zipWith([list, filter], (l, f) => {
+        return l.filter(f.apply);
+    });
+}

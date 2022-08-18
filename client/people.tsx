@@ -4,12 +4,68 @@ import { openConfirm, openDialog } from "./dialog";
 import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
 import { ErrorIndicator, handleError } from "./error";
 import {GameService} from "./services/game-service";
-import {dataSource, DerefData, LoadingIndicator} from "./util";
+import {applyFilter, dataSource, DerefData, LoadingIndicator, Select} from "./util";
+
+type PeopleFilter = {
+    name: string,
+    apply: (item: Inhabitant) => boolean,
+};
+
+const assignmentFilters: PeopleFilter[] = [
+    {
+        name: 'No Filter',
+        apply: () => true,
+    },
+    ...Object.entries(assignmentMap).map(assignment => {
+        return {
+            name: assignment[1],
+            apply: (p: Inhabitant) => p.assignment === assignment[0],
+        };
+    })
+];
+
+const statusFilters: PeopleFilter[] = [
+    {
+        name: 'No Filter',
+        apply: () => true,
+    },
+    {
+        name: 'Bleeding',
+        apply: p => p.bleeding,
+    },
+    {
+        name: 'Wounded',
+        apply: p => p.wounded,
+    },
+    {
+        name: 'Infection',
+        apply: p => p.infection,
+    },
+    {
+        name: 'Sick',
+        apply: p => p.sick,
+    },
+    {
+        name: 'Starving',
+        apply: p => p.starving,
+    },
+    {
+        name: 'Tired',
+        apply: p => p.tired,
+    },
+    {
+        name: 'Sleeping',
+        apply: p => p.sleeping,
+    },
+];
+
 
 export function People({gameService}: {
     gameService: GameService,
 }, context: JSX.Context) {
     const people = dataSource(() => gameService.getInhabitants());
+    const activeAssignmentFilter = bind<PeopleFilter>(assignmentFilters[0]);
+    const activeStatusFilter = bind<PeopleFilter>(statusFilters[0]);
     const teams = bind<string[]>([]);
     let alreadyAsked = false;
 
@@ -42,6 +98,28 @@ export function People({gameService}: {
         }
     }
 
+    async function assignmentFilter() {
+        const selection: PeopleFilter|undefined = await openDialog(Select, {
+            selection: activeAssignmentFilter.value,
+            options: assignmentFilters,
+            toString: (filter: PeopleFilter) => filter.name,
+        });
+        if (selection) {
+            activeAssignmentFilter.value = selection;
+        }
+    }
+
+    async function statusFilter() {
+        const selection: PeopleFilter|undefined = await openDialog(Select, {
+            selection: activeStatusFilter.value,
+            options: statusFilters,
+            toString: (filter: PeopleFilter) => filter.name,
+        });
+        if (selection) {
+            activeStatusFilter.value = selection;
+        }
+    }
+
     context.onDestroy(people.data.getAndObserve(people => {
         if (people) {
             if (!people.length) {
@@ -57,10 +135,14 @@ export function People({gameService}: {
     context.onDestroy(gameService.expeditionDone.observe(() => people.refresh()));
 
     return <>
+        <div class='stack-row justify-end spacing margin-bottom'>
+            <button onClick={assignmentFilter}>Job</button>
+            <button onClick={statusFilter}>Status</button>
+        </div>
         <DerefData data={people}>{people =>
             <>
                 <div class='stack-column' role='grid'>
-                    <For each={people}>{person =>
+                    <For each={applyFilter(applyFilter(people, activeAssignmentFilter), activeStatusFilter)}>{person =>
                         <button class='stack-row spacing' role='row' onClick={() => openDetails(person)}>
                             <div>{person.props.name}</div>
                             <div>({person.props.dateOfBirth.flatMap(dob => gameService.bindAge(dob))})</div>
