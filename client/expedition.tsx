@@ -177,7 +177,10 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                 </div>
             </Show>
             <Show when={teams.map(t => !t.length).or(custom)}>
-                <div>Select team</div>
+                <div>
+                    Select team
+                    {location ? ' (Scavenging)' : ' (Exploration)'}
+                </div>
                 <DerefData data={people}>{people =>
                     <>
                         <div class='stack-column' role='grid' style='overflow-y: auto;'>
@@ -186,7 +189,12 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
                                     onClick={() => showTeamMember(person.value)}
                                     class='selectable'
                                     aria-selected={ariaBool(zipWith([person, selection], (p, s) => s.has(p.id)))}>
-                                    <div role='gridcell'>{person.props.name}</div>
+                                    <div role='gridcell' class='grow'>{person.props.name}</div>
+                                    <div role='gridcell'>{person.props.skills.map(skills => {
+                                        const skill = location ? skills.find(s => s.skillType === 'scavenging')
+                                            :skills.find(s => s.skillType === 'exploration');
+                                        return skill?.level || 0;
+                                    })}</div>
                                 </button>
                                 }</For>
                         </div>
