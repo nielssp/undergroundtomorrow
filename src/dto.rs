@@ -75,6 +75,7 @@ pub struct LocationDto {
     pub x: i32,
     pub y: i32,
     pub location_type: String,
+    // TODO: abundance
 }
 
 impl From<Location> for LocationDto {
