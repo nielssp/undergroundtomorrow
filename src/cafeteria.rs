@@ -21,7 +21,9 @@ pub async fn handle_tick(
     let num_inhabitants = inhabitants.len() as i32;
     let mut workers: Vec<_> = inhabitants
         .iter_mut()
-        .filter(|i| i.is_ready() && !i.data.sleeping && i.data.assignment == Some(Assignment::Cafeteria))
+        .filter(|i| {
+            i.is_ready() && !i.data.sleeping && i.data.assignment == Some(Assignment::Cafeteria)
+        })
         .collect();
     if !workers.is_empty() && bunker.data.cafeteria.food < num_inhabitants * 2 {
         let ingredients = items::get_items(pool, bunker.id).await?;

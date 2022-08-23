@@ -37,7 +37,9 @@ pub async fn handle_tick(
 ) -> Result<(), error::Error> {
     let mut workers: Vec<_> = inhabitants
         .iter_mut()
-        .filter(|i| i.is_ready() && !i.data.sleeping && i.data.assignment == Some(Assignment::Workshop))
+        .filter(|i| {
+            i.is_ready() && !i.data.sleeping && i.data.assignment == Some(Assignment::Workshop)
+        })
         .collect();
     let projects = &mut bunker.data.workshop.projects;
     let mut common_xp = 0;
