@@ -1,13 +1,18 @@
-import {bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith} from "cstk";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith } from "cstk";
 import { ChangePassword } from "./change-password";
-import {openConfirm, openDialog, openPrompt} from "./dialog";
-import {NewWorld, User, World} from "./dto";
-import {handleError} from "./error";
+import { openConfirm, openDialog, openPrompt } from "./dialog";
+import { NewWorld, User, World } from "./dto";
+import { handleError } from "./error";
 import { Register } from "./register";
-import {AuthService} from "./services/auth-service";
-import {GameService} from "./services/game-service";
-import {LobbyService} from "./services/lobby-service";
-import {dataSource, DerefData, LoadingIndicator} from "./util";
+import { AuthService } from "./services/auth-service";
+import { GameService } from "./services/game-service";
+import { LobbyService } from "./services/lobby-service";
+import { dataSource, DerefData } from "./util";
 
 export function Lobby({user, authService, lobbyService, gameService}: {
     user: Property<User>,

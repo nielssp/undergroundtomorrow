@@ -1,8 +1,13 @@
-import {bind, bindList, Emitter, Property, ref, zipWith} from "cstk";
-import {addSeconds, differenceInCalendarYears, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear} from "date-fns";
-import {Api} from "../api";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { bind, bindList, Emitter, Property, ref } from "cstk";
+import { addSeconds, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear } from "date-fns";
+import { Api } from "../api";
 import { environment } from "../config/environment";
-import {Broadcast, BroadcastEvent, Bunker, CraftingRecipe, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World} from "../dto";
+import { Broadcast, BroadcastEvent, Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World } from "../dto";
 import { Receiver } from "../receiver";
 
 function getWorldtime(world: World) {

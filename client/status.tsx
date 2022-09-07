@@ -1,12 +1,16 @@
-import {bind, createElement, Deref, Fragment, Property, Show} from "cstk";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { bind, createElement, Deref, Fragment, Property, Show } from "cstk";
 import { Cafeteria } from "./cafeteria";
 import { AirRecyclingStatus, User, WaterTreatmentStatus } from "./dto";
 import { Horticulture } from "./horticulture";
 import { Infirmary } from "./infirmary";
 import { Reactor } from "./reactor";
 import { AuthService } from "./services/auth-service";
-import {GameService} from "./services/game-service";
-import {dataSource, DerefData, QuantityButtons} from "./util";
+import { GameService } from "./services/game-service";
 import { Workshop } from "./workshop";
 
 export function Status({gameService, user, authService}: {

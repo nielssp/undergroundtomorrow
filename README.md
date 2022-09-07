@@ -1,6 +1,6 @@
 # Underground Tomorrow
 
-## Setup
+## Server
 
 Create database
 
@@ -18,8 +18,7 @@ Create `.env`
 
 ```sh
 RUST_BACKTRACE=1
-RUST_LOG=debug
-LOG_QUERIES=1
+RUST_LOG=debug,sqlx=warn
 UT_SECRET_KEY=dev
 UT_DATABASE=postgresql://ut:ut@localhost/ut
 ```
@@ -28,4 +27,18 @@ Run
 
 ```sh
 cargo watch -x run
+```
+
+## Client
+
+Install dependencies
+
+```sh
+npm install
+```
+
+Run dev server
+
+```sh
+npm run dev
 ```

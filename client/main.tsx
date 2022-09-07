@@ -1,23 +1,28 @@
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from 'cstk';
-import {format} from 'date-fns';
+import { format } from 'date-fns';
 import { Api } from './api';
 import { environment } from './config/environment';
 import { dialogContainer, openDialog } from './dialog';
 import { Icon } from './icon';
-import {Items} from './items';
-import {Lobby} from './lobby';
+import { Items } from './items';
+import { Lobby } from './lobby';
 import { Login } from './login';
 import './main.scss';
 import { Map } from './map';
-import {Messages} from './messages';
-import {People} from './people';
+import { Messages } from './messages';
+import { People } from './people';
 import { Radio } from './radio';
 import { Register } from './register';
 import { AuthService } from './services/auth-service';
-import {GameService} from './services/game-service';
-import {LobbyService} from './services/lobby-service';
+import { GameService } from './services/game-service';
+import { LobbyService } from './services/lobby-service';
 import { Status } from './status';
-import {LoadingIndicator} from './util';
+import { LoadingIndicator } from './util';
 
 function Root({authService, lobbyService, gameService}: {
     authService: AuthService,

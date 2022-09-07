@@ -1,5 +1,9 @@
-import { apply, bind, Component, createElement, Dynamic, Emitter, Field, Fragment, Input, mount, Property, ref, TextControl } from "cstk";
-import { Icon } from "./icon";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { apply, bind, Component, createElement, Emitter, Field, Input, mount, Property, ref, TextControl } from "cstk";
 
 export const dialogContainer = bind<HTMLElement>(document.body);
 

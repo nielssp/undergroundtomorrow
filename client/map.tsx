@@ -1,11 +1,14 @@
-import {Fragment, createElement, ref, Property, Deref, bind, For, Show, zipWith, ariaBool} from 'cstk';
-import { differenceInYears, format, parseISO } from 'date-fns';
-import { Dialog, DialogRef, openAlert, openDialog } from './dialog';
-import {Bunker, Expedition, Inhabitant, Location, Sector} from './dto';
-import { ErrorIndicator, handleError } from './error';
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { Fragment, createElement, ref, Property, Deref, bind, For, Show } from 'cstk';
+import { DialogRef, openDialog } from './dialog';
+import { Bunker, Expedition, Location, Sector } from './dto';
 import { CreateExpeditionDialog } from './expedition';
-import {GameService} from './services/game-service';
-import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName, LoadingIndicator } from './util';
+import { GameService } from './services/game-service';
+import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName } from './util';
 
 export class MapService {
 }

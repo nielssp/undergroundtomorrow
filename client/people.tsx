@@ -1,10 +1,15 @@
-import {ariaBool, bind, createElement, Deref, Field, For, Fragment, Property, Show, TextControl, ValueProperty, zipWith} from "cstk";
-import {differenceInYears, format, parseISO} from "date-fns";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { ariaBool, bind, createElement, Deref, Field, For, Fragment, Property, Show, TextControl, ValueProperty, zipWith } from "cstk";
+import { differenceInYears, format, parseISO } from "date-fns";
 import { openConfirm, openDialog } from "./dialog";
 import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
 import { ErrorIndicator, handleError } from "./error";
-import {GameService} from "./services/game-service";
-import {applyFilter, dataSource, DerefData, LoadingIndicator, Select} from "./util";
+import { GameService } from "./services/game-service";
+import { applyFilter, dataSource, DerefData, LoadingIndicator, Select } from "./util";
 
 type PeopleFilter = {
     name: string,

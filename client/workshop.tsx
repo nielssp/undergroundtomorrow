@@ -1,9 +1,14 @@
-import {createElement, For, Property, Show, Fragment, ref, bind, Deref, zipWith} from "cstk";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { createElement, For, Property, Show, Fragment, ref, bind, Deref, zipWith } from "cstk";
 import { openConfirm, openDialog } from "./dialog";
-import { ItemType, RecipeItemType, WorkshopProject, WorkshopStatus } from "./dto";
+import { RecipeItemType, WorkshopProject, WorkshopStatus } from "./dto";
 import { handleError } from "./error";
-import {GameService} from "./services/game-service";
-import { dataSource, DerefData, getItemName, getItemTypeNameAndQuantity, QuantityButtons } from "./util";
+import { GameService } from "./services/game-service";
+import { dataSource, DerefData, getItemTypeNameAndQuantity, QuantityButtons } from "./util";
 
 export function Workshop({gameService, status, onReload}: {
     gameService: GameService,

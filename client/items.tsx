@@ -1,9 +1,13 @@
-import {ariaBool, bind, createElement, Deref, For, Fragment, Property, Show, zipWith} from "cstk";
-import {differenceInYears, format, parseISO} from "date-fns";
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { bind, createElement, For, Fragment, Show } from "cstk";
 import { openDialog } from "./dialog";
 import { Item } from "./dto";
-import {GameService} from "./services/game-service";
-import {applyFilter, dataSource, DerefData, getItemName, LoadingIndicator, Select} from "./util";
+import { GameService } from "./services/game-service";
+import { applyFilter, dataSource, DerefData, getItemName, Select } from "./util";
 import { AddProject } from "./workshop";
 
 type ItemFilter = {

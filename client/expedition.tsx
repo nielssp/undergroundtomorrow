@@ -1,10 +1,15 @@
-import {Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList, Deref} from 'cstk';
+/* Copyright (c) 2022 Niels Sonnich Poulsen (http://nielssp.dk)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import { Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList, Deref } from 'cstk';
 import { differenceInYears, parseISO } from 'date-fns';
 import { DialogRef, openDialog } from './dialog';
-import {Inhabitant, Item, ItemType, Location} from './dto';
+import { Inhabitant, Item, ItemType, Location } from './dto';
 import { handleError } from './error';
-import {GameService} from './services/game-service';
-import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration, getItemName, QuantityButtons } from './util';
+import { GameService } from './services/game-service';
+import { dataSource, DerefData, getDistance, formatDistance, getSectorName, formatDuration, QuantityButtons } from './util';
 
 interface Equiped {
     inhabitantId: number;
