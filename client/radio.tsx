@@ -3,14 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { createElement, Field, For, Fragment, ref, TextControl } from "cstk";
+import { Context, createElement, Field, For, Fragment, ref, TextControl } from "cytoplasmic";
 import { handleError } from "./error";
-import { GameService } from "./services/game-service";
+import { GameServiceContext } from "./services/game-service";
 import { LoadingIndicator } from "./util";
 
-export function Radio({gameService}: {
-    gameService: GameService,
-}, context: JSX.Context) {
+export function Radio({}: {}, context: Context) {
+    const gameService = context.use(GameServiceContext);
+
     const logElem = ref<HTMLDivElement>();
     const message = new TextControl('');
 

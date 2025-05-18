@@ -3,10 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, For, Fragment, Show } from "cstk";
+import { cell, Context, createElement, For, Fragment, Show } from "cytoplasmic";
 import { openDialog } from "./dialog";
 import { Item } from "./dto";
-import { GameService } from "./services/game-service";
+import { GameService, GameServiceContext } from "./services/game-service";
 import { applyFilter, dataSource, DerefData, getItemName, Select } from "./util";
 import { AddProject } from "./workshop";
 
@@ -38,11 +38,11 @@ const filters: ItemFilter[] = [
     },
 ];
 
-export function Items({gameService}: {
-    gameService: GameService,
-}, context: JSX.Context) {
+export function Items({}: {}, context: Context) {
+    const gameService = context.use(GameServiceContext);
+
     const items = dataSource(() => gameService.getItems());
-    const activeFilter = bind<ItemFilter>(filters[0]);
+    const activeFilter = cell<ItemFilter>(filters[0]);
 
     function show(item: Item) {
         openDialog(ShowItem, {item, gameService});
@@ -97,7 +97,7 @@ function ShowItem({item, gameService}: {
     item: Item,
     gameService: GameService,
 }) {
-    const ammoType = bind('');
+    const ammoType = cell('');
     if (item.itemType.ammoType) {
         gameService.getItemTypeName(item.itemType.ammoType).then(name => ammoType.value = name);
     }
@@ -105,7 +105,7 @@ function ShowItem({item, gameService}: {
         <strong>
             {item.itemType.name}
         </strong>
-        <Show when={bind(item.itemType.weapon)}>
+        <Show when={cell(item.itemType.weapon)}>
             <div>Weapon</div>
             <div class='stack-row spacing justify-space-between'>
                 <strong>Range</strong>
@@ -122,21 +122,21 @@ function ShowItem({item, gameService}: {
                 </div>
             </Show>
         </Show>
-        <Show when={bind(item.itemType.reactivity)}>
+        <Show when={cell(item.itemType.reactivity)}>
             <div>Reactor Fuel</div>
             <div class='stack-row spacing justify-space-between'>
                 <strong>Reactivity</strong>
                 <div>{item.itemType.reactivity}</div>
             </div>
         </Show>
-        <Show when={bind(item.itemType.seed)}>
+        <Show when={cell(item.itemType.seed)}>
             <div>Seed</div>
             <div class='stack-row spacing justify-space-between'>
                 <strong>Growth Time</strong>
                 <div>{item.itemType.growthTime} days</div>
             </div>
         </Show>
-        <Show when={bind(item.itemType.food)}>
+        <Show when={cell(item.itemType.food)}>
             <div>Food</div>
         </Show>
     </div>;

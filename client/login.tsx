@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Field, TextControl } from "cstk";
+import { cell, createElement, Field, TextControl } from "cytoplasmic";
 import { openAlert } from "./dialog";
 import { handleError } from "./error";
 import { AuthService } from "./services/auth-service";
@@ -11,7 +11,7 @@ import { AuthService } from "./services/auth-service";
 export function Login({authService}: {
     authService: AuthService,
 }) {
-    const loading = bind(false);
+    const loading = cell(false);
     const usernameControl = new TextControl('');
     const passwordControl = new TextControl('');
 

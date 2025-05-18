@@ -3,14 +3,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { createElement, Property, Show } from "cstk";
+import { createElement, Cell, Show } from "cytoplasmic";
 import { CafeteriaStatus } from "./dto";
 import { GameService } from "./services/game-service";
 
 
 export function Cafeteria({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<CafeteriaStatus>,
+    status: Cell<CafeteriaStatus>,
     onReload: () => void,
 }) {
     return <div class='stack-column'>

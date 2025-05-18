@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { ariaBool, bind, createElement, Deref, Field, For, Fragment, Property, Show, TextControl, ValueProperty, zipWith } from "cstk";
-import { differenceInYears, format, parseISO } from "date-fns";
-import { openConfirm, openDialog } from "./dialog";
-import { Assignment, assignmentMap, assignments, Inhabitant } from "./dto";
-import { ErrorIndicator, handleError } from "./error";
-import { GameService } from "./services/game-service";
-import { applyFilter, dataSource, DerefData, LoadingIndicator, Select } from "./util";
+import { ariaBool, cell, Context, createElement, Deref, Field, For, Fragment, Cell, Show, TextControl, MutCell, zipWith } from 'cytoplasmic';
+import { differenceInYears, format, parseISO } from 'date-fns';
+import { openConfirm, openDialog } from './dialog';
+import { Assignment, assignmentMap, assignments, Inhabitant } from './dto';
+import { ErrorIndicator, handleError } from './error';
+import { GameService, GameServiceContext } from './services/game-service';
+import { applyFilter, dataSource, DerefData, LoadingIndicator, Select } from './util';
 
 type PeopleFilter = {
     name: string,
@@ -65,16 +65,16 @@ const statusFilters: PeopleFilter[] = [
 ];
 
 
-export function People({gameService}: {
-    gameService: GameService,
-}, context: JSX.Context) {
+export function People({}: {}, context: Context) {
+    const gameService = context.use(GameServiceContext);
+
     const people = dataSource(() => gameService.getInhabitants());
-    const activeAssignmentFilter = bind<PeopleFilter>(assignmentFilters[0]);
-    const activeStatusFilter = bind<PeopleFilter>(statusFilters[0]);
-    const teams = bind<string[]>([]);
+    const activeAssignmentFilter = cell<PeopleFilter>(assignmentFilters[0]);
+    const activeStatusFilter = cell<PeopleFilter>(statusFilters[0]);
+    const teams = cell<string[]>([]);
     let alreadyAsked = false;
 
-    async function openDetails(person: Property<Inhabitant>) {
+    async function openDetails(person: Cell<Inhabitant>) {
         await openDialog(Details, {person, gameService, teams, onReload: () => people.notify()});
         people.notify();
     }
@@ -164,9 +164,9 @@ export function People({gameService}: {
 }
 
 function Details({gameService, teams, person, onReload}: {
-    person: Property<Inhabitant>,
+    person: Cell<Inhabitant>,
     gameService: GameService,
-    teams: ValueProperty<string[]>,
+    teams: MutCell<string[]>,
     onReload: () => void,
 }) {
 
@@ -250,7 +250,7 @@ function Details({gameService, teams, person, onReload}: {
 
 function SetTeam({person, teams, close}: {
     person: Inhabitant,
-    teams: ValueProperty<string[]>,
+    teams: MutCell<string[]>,
     close: (team: [string]|[]) => void,
 }) {
     const newTeam = new TextControl('');
@@ -262,7 +262,7 @@ function SetTeam({person, teams, close}: {
 
     return <div class='padding spacing stack-column'>
         <div role='grid' class='stack-column'>
-            <button role='row' class='selectable' aria-selected={ariaBool(bind(!person.team))} onClick={() => close([])}>
+            <button role='row' class='selectable' aria-selected={ariaBool(cell(!person.team))} onClick={() => close([])}>
                 <div role='gridcell'>No Team</div>
             </button>
             <For each={teams}>{team =>
@@ -291,10 +291,10 @@ function SetAssignment({person, close}: {
 }) {
     return <div class='padding spacing stack-column'>
         <div role='grid' class='stack-column'>
-            <button role='row' class='selectable' aria-selected={ariaBool(bind(!person.assignment))} onClick={() => close([])}>
+            <button role='row' class='selectable' aria-selected={ariaBool(cell(!person.assignment))} onClick={() => close([])}>
                 <div role='gridcell'>No Assignment</div>
             </button>
-            <For each={bind(assignments)}>{assignment =>
+            <For each={cell(assignments)}>{assignment =>
                 <button role='row' class='selectable' aria-selected={ariaBool(assignment.eq(person.assignment))} onClick={() => close([assignment.value])}>
                     <div role='gridcell'>{assignment.map(mapAssignment)}</div>
                 </button>

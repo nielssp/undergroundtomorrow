@@ -3,9 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, bindList, Emitter, Property, ref } from "cstk";
+import { cell, Cell, ref, cellArray, createEmitter, createValue } from "cytoplasmic";
 import { addSeconds, differenceInSeconds, differenceInYears, format, formatISO, isSameDay, parseISO, setYear } from "date-fns";
-import { Api } from "../api";
+import { Api, ApiContext } from "../api";
 import { environment } from "../config/environment";
 import { Broadcast, BroadcastEvent, Bunker, Expedition, ExpeditionRequest, Inhabitant, Item, ItemType, Location, Message, RecipeItemType, Sector, World } from "../dto";
 import { Receiver } from "../receiver";
@@ -26,11 +26,11 @@ export class GameService {
     private mostRecentMessage: string|null = null;
     readonly world = ref<World>();
     readonly bunker = ref<Bunker>();
-    readonly worldTime = bind(new Date());
-    readonly messageNotification = bind(false);
-    readonly radioNotification = bind(false);
-    readonly expeditionDone = new Emitter<void>();
-    readonly transcript = bindList<Broadcast>();
+    readonly worldTime = cell(new Date());
+    readonly messageNotification = cell(false);
+    readonly radioNotification = cell(false);
+    readonly expeditionDone = createEmitter<void>();
+    readonly transcript = cellArray<Broadcast>();
 
     constructor(
         private api: Api,
@@ -70,7 +70,7 @@ export class GameService {
     }
 
     get radioConnected() {
-        return this.receiver.flatMap(r => r?.connected || bind(false));
+        return this.receiver.flatMap(r => r?.connected || cell(false));
     }
 
     getAge(dob: string): number {
@@ -78,7 +78,7 @@ export class GameService {
         return differenceInYears(this.worldTime.value, date);
     }
 
-    bindAge(dob: string): Property<number> {
+    bindAge(dob: string): Cell<number> {
         const date = parseISO(dob);
         return this.worldTime.map(wt => differenceInYears(wt, date));
     }
@@ -129,12 +129,20 @@ export class GameService {
         return id;
     }
 
-    async selectWorld(worldId: number) {
+    disconnect() {
+        this.world.value = undefined;
         if (this.receiver.value) {
             this.receiver.value.disconnect();
             this.receiver.value.onEvent.unobserve(this.eventObserver);
             this.receiver.value = undefined;
         }
+    }
+
+    async selectWorld(worldId: number) {
+        if (this.world.value?.id === worldId) {
+            return;
+        }
+        this.disconnect();
         this.world.value = await this.getWorld(worldId);
         try {
             this.bunker.value = await this.getBunker();
@@ -147,23 +155,27 @@ export class GameService {
     }
 
     private handleEvent(event: BroadcastEvent) {
-        switch (event) {
-            case 'Tick':
-                this.refreshBunker();
-                break;
-            case 'Expedition':
-                this.expeditionDone.emit();
-                break;
-            case 'Message':
-                this.messageNotification.value = true;
-                break;
-            default:
-                if (event.Broadcast) {
-                    this.transcript.push(event.Broadcast);
-                    this.radioNotification.value = true;
-                    setTimeout(() => this.radioNotification.value = false, 1000);
-                }
-                break;
+        try {
+            switch (event) {
+                case 'Tick':
+                    this.refreshBunker();
+                    break;
+                case 'Expedition':
+                    this.expeditionDone.emit();
+                    break;
+                case 'Message':
+                    this.messageNotification.value = true;
+                    break;
+                default:
+                    if (event.Broadcast) {
+                        this.transcript.push(event.Broadcast);
+                        this.radioNotification.value = true;
+                        setTimeout(() => this.radioNotification.value = false, 1000);
+                    }
+                    break;
+            }
+        } catch (error: unknown) {
+            console.error('Error in event handler', error);
         }
     }
 
@@ -271,3 +283,5 @@ export class GameService {
         await this.selectWorld(worldId);
     }
 }
+
+export const GameServiceContext = createValue(new GameService(ApiContext.defaultValue));

@@ -1,0 +1,37 @@
+:root {
+    --margin: 1vh;
+    --padding: var(--margin);
+    --spacing: var(--margin);
+
+    --primary-hue: 120;
+
+    --primary: hsl(var(--primary-hue), 100%, 50%);
+    --primary-90: hsla(var(--primary-hue), 100%, 50%, 90%);
+    --primary-80: hsla(var(--primary-hue), 100%, 50%, 80%);
+    --primary-70: hsla(var(--primary-hue), 100%, 50%, 70%);
+    --primary-60: hsla(var(--primary-hue), 100%, 50%, 60%);
+    --primary-50: hsla(var(--primary-hue), 100%, 50%, 50%);
+    --primary-40: hsla(var(--primary-hue), 100%, 50%, 40%);
+    --primary-30: hsla(var(--primary-hue), 100%, 50%, 30%);
+    --primary-20: hsla(var(--primary-hue), 100%, 50%, 20%);
+    --primary-10: hsla(var(--primary-hue), 100%, 50%, 10%);
+
+    --primary-60b: hsla(var(--primary-hue), 100%, 30%, 100%);
+
+    --focus: #0ff;
+
+    --line-width: 0.15vh;
+    --line-color: var(--primary-60);
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+html {
+    height: 100%;
+}
+
+

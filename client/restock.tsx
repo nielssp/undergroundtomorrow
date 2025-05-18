@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Fragment } from "cstk";
+import { cell, createElement, Fragment } from "cytoplasmic";
 import { GameService } from "./services/game-service";
 import { dataSource, DerefData, QuantityButtons } from "./util";
 
@@ -13,8 +13,8 @@ export function Restock({gameService, current, itemType, close}: {
     itemType: string,
     close: (newValue: number) => void,
 }) {
-    const assigned = bind(current);
-    const itemTypeName = bind(gameService.getItemTypeName(itemType, 2)).await().orElse('');
+    const assigned = cell(current);
+    const itemTypeName = cell(gameService.getItemTypeName(itemType, 2)).await().orElse('');
     const item = dataSource(() => gameService.getItems().then(items => items.find(item => item.itemType.id === itemType)?.quantity || 0));
     const total = item.data.orElse(0).map(x => x + current);
 

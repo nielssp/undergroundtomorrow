@@ -3,9 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { apply, bind, Component, createElement, Emitter, Field, Input, mount, Property, ref, TextControl } from "cstk";
+import { apply, cell, Component, createElement, Emitter, Field, Input, mount, Cell, ref, TextControl, createEmitter } from "cytoplasmic";
 
-export const dialogContainer = bind<HTMLElement>(document.body);
+export const dialogContainer = cell<HTMLElement>(document.body);
 
 function DialogContent<T extends {}>({container, window, dialog}: {
     container: HTMLElement,
@@ -52,10 +52,10 @@ function DialogContent<T extends {}>({container, window, dialog}: {
 }
 
 export interface DialogRef {
-    readonly isOpen: Property<boolean>;
+    readonly isOpen: Cell<boolean>;
     readonly onClose: Emitter<void>;
-    readonly canClose: Property<boolean>;
-    readonly modal: Property<boolean>;
+    readonly canClose: Cell<boolean>;
+    readonly modal: Cell<boolean>;
     focus(): void;
     open(): void;
     close(): void;
@@ -69,10 +69,10 @@ export class Dialog<T extends {}> implements DialogRef {
     private window: HTMLElement = document.createElement('div');
     private previousFocus?: HTMLElement;
     private unmount?: () => void;
-    readonly isOpen = bind(false);
-    readonly onClose = new Emitter<void>();
-    readonly canClose = bind(true);
-    readonly modal = bind(false);
+    readonly isOpen = cell(false);
+    readonly onClose = createEmitter<void>();
+    readonly canClose = cell(true);
+    readonly modal = cell(false);
 
     constructor(
         public body: DialogBody<T>,

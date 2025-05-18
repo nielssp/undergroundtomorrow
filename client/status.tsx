@@ -3,21 +3,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Deref, Fragment, Property, Show } from "cstk";
+import { cell, createElement, Deref, Fragment, Cell, Show, Context } from "cytoplasmic";
 import { Cafeteria } from "./cafeteria";
 import { AirRecyclingStatus, User, WaterTreatmentStatus } from "./dto";
 import { Horticulture } from "./horticulture";
 import { Infirmary } from "./infirmary";
 import { Reactor } from "./reactor";
-import { AuthService } from "./services/auth-service";
-import { GameService } from "./services/game-service";
+import { AuthService, AuthServiceContext } from "./services/auth-service";
+import { GameService, GameServiceContext } from "./services/game-service";
 import { Workshop } from "./workshop";
 
-export function Status({gameService, user, authService}: {
-    user: Property<User>
-    gameService: GameService,
-    authService: AuthService,
-}, context: JSX.Context) {
+export function Status({user}: {
+    user: Cell<User>
+}, context: Context) {
+    const authService = context.use(AuthServiceContext);
+    const gameService = context.use(GameServiceContext);
+
     function refresh() {
         gameService.refreshBunker();
     }
@@ -25,8 +26,11 @@ export function Status({gameService, user, authService}: {
     <div class='stack-row spacing justify-space-between align-center'>
         <div>Welcome back, {user.props.username}.</div>
         <div class='stack-row spacing'>
-            <button onClick={() => gameService.world.value = undefined}>Switch</button>
-            <button onClick={() => authService.invalidate()}>Log Out</button>
+            <button onClick={() => gameService.disconnect()}>Switch</button>
+            <button onClick={() => {
+                gameService.disconnect();
+                authService.invalidate();
+            }}>Log Out</button>
         </div>
     </div>
     <div class='margin-top stack-column spacing'>
@@ -47,7 +51,7 @@ export function Status({gameService, user, authService}: {
 
 export function WaterTreatment({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<WaterTreatmentStatus>,
+    status: Cell<WaterTreatmentStatus>,
     onReload: () => void,
 }) {
     return <div class='stack-column'>
@@ -63,7 +67,7 @@ export function WaterTreatment({gameService, status, onReload}: {
 
 export function AirRecycling({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<AirRecyclingStatus>,
+    status: Cell<AirRecyclingStatus>,
     onReload: () => void,
 }) {
     return <div class='stack-column'>

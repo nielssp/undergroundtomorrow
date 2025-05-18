@@ -7,7 +7,7 @@
     "dev": "webpack-dev-server --mode=development --host 0.0.0.0"
   },
   "browserslist": [
-    "last 1 Chrome version"
+    "defaults"
   ],
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.5",
-    "cstk": "^0.2.0",
+    "cytoplasmic": "^0.9.0",
     "date-fns": "^2.29.1"
   }
 }

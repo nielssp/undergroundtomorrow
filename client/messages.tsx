@@ -3,16 +3,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { createElement, For, Fragment, Show } from "cstk";
+import { Context, createElement, For, Fragment, Show } from "cytoplasmic";
 import { openDialog } from "./dialog";
 import { Message } from "./dto";
 import { handleError } from "./error";
-import { GameService } from "./services/game-service";
+import { GameServiceContext } from "./services/game-service";
 import { dataSource, DerefData } from "./util";
 
-export function Messages({gameService}: {
-    gameService: GameService,
-}, context: JSX.Context) {
+export function Messages({}: {}, context: Context) {
+    const gameService = context.use(GameServiceContext);
+
     const messages = dataSource(() => gameService.getMessages());
 
     gameService.messageNotification.value = false;

@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Fragment, Property, Show } from "cstk";
+import { cell, createElement, Fragment, Cell, Show } from "cytoplasmic";
 import { openDialog } from "./dialog";
 import { InfirmaryStatus } from "./dto";
 import { handleError } from "./error";
@@ -12,7 +12,7 @@ import { GameService } from "./services/game-service";
 
 export function Infirmary({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<InfirmaryStatus>,
+    status: Cell<InfirmaryStatus>,
     onReload: () => void,
 }) {
 

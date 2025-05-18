@@ -3,20 +3,21 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { Fragment, createElement, ref, Property, Deref, bind, For, Show } from 'cstk';
+import { Fragment, createElement, ref, Cell, Deref, cell, For, Show, Context } from 'cytoplasmic';
 import { DialogRef, openDialog } from './dialog';
 import { Bunker, Expedition, Location, Sector } from './dto';
 import { CreateExpeditionDialog } from './expedition';
-import { GameService } from './services/game-service';
+import { GameService, GameServiceContext } from './services/game-service';
 import { DataSource, dataSource, DerefData, formatDistance, formatEta, getDistance, getSector, getSectorName } from './util';
 
 export class MapService {
 }
 
-export function Map({amber, gameService}: {
-    amber: Property<boolean>,
-    gameService: GameService,
-}, context: JSX.Context) {
+export function Map({amber}: {
+    amber: Cell<boolean>,
+}, context: Context) {
+    const gameService = context.use(GameServiceContext);
+
     const expeditions = dataSource(() => gameService.getExpeditions());
     const locations = dataSource(() => gameService.getLocations());
     const sectors = dataSource(() => gameService.getSectors());
@@ -91,8 +92,8 @@ export function Map({amber, gameService}: {
 function ExpeditionsDialog({dialog, expeditions}: {
     dialog: DialogRef,
     expeditions: DataSource<Expedition[]>,
-}, context: JSX.Context) {
-    const emitter = bind(null);
+}, context: Context) {
+    const emitter = cell(null);
     const interval = setInterval(() => emitter.value = null, 1000);
     context.onDestroy(() => clearInterval(interval));
     return <div class='stack-column spacing padding'>
@@ -114,7 +115,7 @@ function ExpeditionsDialog({dialog, expeditions}: {
 
 function LocationsDialog({dialog, locations, bunker, onExplore}: {
     dialog: DialogRef,
-    locations: Property<Location[]>,
+    locations: Cell<Location[]>,
     bunker: Bunker,
     onExplore: (location: Location) => void,
 }) {
@@ -146,11 +147,11 @@ function LocationDialog({dialog, explored, sector, locations, onExplore}: {
             <div>Sector {getSectorName(sector)}</div>
             <button onClick={() => {dialog.close(); onExplore();}}>Explore</button>
         </div>
-        <Show when={bind(explored)}>
+        <Show when={cell(explored)}>
             <div>Explored</div>
         </Show>
         <strong>Locations</strong>
-        <For each={bind(locations)}>{location =>
+        <For each={cell(locations)}>{location =>
             <div class='stack-row spacing align-center justify-space-between'>
                 <div>{location.props.name}</div>
                 <button onClick={() => {dialog.close(); onExplore(location.value);}}>Search</button>
@@ -160,13 +161,13 @@ function LocationDialog({dialog, explored, sector, locations, onExplore}: {
 }
 
 function MapCanvas({amber, bunker, locations, sectors, expeditions, onSelect}: {
-    amber: Property<boolean>,
-    bunker: Property<Bunker>,
-    locations: Property<Location[]>, 
-    sectors: Property<Sector[]>, 
-    expeditions: Property<Expedition[]>, 
+    amber: Cell<boolean>,
+    bunker: Cell<Bunker>,
+    locations: Cell<Location[]>, 
+    sectors: Cell<Sector[]>, 
+    expeditions: Cell<Expedition[]>, 
     onSelect: (sector: {x: number, y: number}) => void,
-}, context: JSX.Context) {
+}, context: Context) {
     const canvasRef = ref<HTMLCanvasElement>();
     let repaint = true;
     let destroyed = false;

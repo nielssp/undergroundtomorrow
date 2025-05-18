@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, Fragment, createElement, For, Property, ref, Show, ariaBool } from "cstk";
+import { cell, Fragment, createElement, For, ref, Show, ariaBool, Cell } from "cytoplasmic";
 import { openConfirm, openDialog } from "./dialog";
 import { Crop, HorticultureStatus, Item } from "./dto";
 import { handleError } from "./error";
@@ -12,7 +12,7 @@ import { dataSource, DerefData, getItemName, QuantityButtons } from "./util";
 
 export function Horticulture({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<HorticultureStatus>,
+    status: Cell<HorticultureStatus>,
     onReload: () => void,
 }) {
 
@@ -33,7 +33,7 @@ export function Horticulture({gameService, status, onReload}: {
 
 function ManageCrops({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<HorticultureStatus>,
+    status: Cell<HorticultureStatus>,
     onReload: () => void,
 }) {
 
@@ -65,7 +65,7 @@ function ManageCrops({gameService, status, onReload}: {
                     <div>
                         <Show when={crop.props.stunted}><div>STUNTED</div></Show>
                     </div>
-                    <button onClick={() => remove(crop.value, index.value)}>Remove</button>
+                    <button onClick={() => remove(crop.value, index)}>Remove</button>
                 </div>
             </div>
         }</For>
@@ -83,8 +83,8 @@ function AddCrop({gameService, close}: {
     close: (reload: true) => void,
 }) {
     const seedType = ref<string>();
-    const amount = bind(0);
-    const max = bind(0);
+    const amount = cell(0);
+    const max = cell(0);
     const seeds = dataSource(() => gameService.getItems().then(items => items.filter(item => item.itemType.seed)));
 
     async function ok() {

@@ -3,13 +3,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { Property, Show, createElement, bind, zipWith, Deref, Fragment, ValueProperty, For, ariaBool } from "cstk";
+import { Cell, Show, createElement, cell, zipWith, Deref, Fragment, MutCell, For, ariaBool } from "cytoplasmic";
 import { differenceInSeconds, parseISO } from "date-fns";
 import { Item, ItemType } from "./dto";
 import { ErrorIndicator } from "./error";
 
 export function LoadingIndicator({loading}: {
-    loading: Property<any>,
+    loading: Cell<any>,
 }) {
     return <Show when={loading}>
         <div class='stack-row spacing'>
@@ -61,16 +61,16 @@ export function getSector({x, y}: {x: number, y: number}): {x: number, y: number
 }
 
 export class DataSource<T> {
-    private readonly promise = bind(this.source());
-    readonly data: Property<T|undefined> = this.promise.await(error => this._error.value = error);
-    private readonly _error = bind<any>(undefined);
-    readonly loading: Property<boolean> = zipWith([this.data, this.error], (d, e) => typeof d === 'undefined' && !e);
+    private readonly promise = cell(this.source());
+    readonly data: Cell<T|undefined> = this.promise.await(error => this._error.value = error);
+    private readonly _error = cell<any>(undefined);
+    readonly loading: Cell<boolean> = zipWith([this.data, this.error], (d, e) => typeof d === 'undefined' && !e);
     constructor(
         private source: () => Promise<T>,
     ) {
     }
 
-    get error(): Property<any> {
+    get error(): Cell<any> {
         return this._error;
     }
 
@@ -91,7 +91,7 @@ export function dataSource<T>(source: () => Promise<T>): DataSource<T> {
 
 export function DerefData<T>({data, children}: {
     data: DataSource<T>,
-    children: (data: Property<T>) => JSX.Element,
+    children: (data: Cell<T>) => JSX.Element,
 }) {
     return <>
         <LoadingIndicator loading={data.loading}/>
@@ -112,8 +112,8 @@ export function getItemTypeNameAndQuantity(itemType: ItemType, quantity: number)
 }
 
 export function QuantityButtons({value, max}: {
-    value: ValueProperty<number>,
-    max: Property<number>,
+    value: MutCell<number>,
+    max: Cell<number>,
 }) {
     return <div class='stack-row spacing justify-space-between'>
         <button disabled={value.map(a => a <= 0)} onClick={() => value.value = Math.max(0, value.value - 10)}>-10</button>
@@ -131,7 +131,7 @@ export function Select<T>({selection, options, toString, close}: {
 }) {
     return <div class='stack-column padding'>
         <div role='grid' class='stack-column'>
-            <For each={bind(options)}>{item =>
+            <For each={cell(options)}>{item =>
                 <button role='row' class='selectable' aria-selected={ariaBool(item.eq(selection))} onClick={() => close(item.value)}>
                     <div role='gridcell' class='stack-row spacing'>
                         <div>{item.map(toString)}</div>
@@ -142,7 +142,7 @@ export function Select<T>({selection, options, toString, close}: {
     </div>;
 }
 
-export function applyFilter<T>(list: Property<T[]>, filter: Property<{apply: (item: T) => boolean}>): Property<T[]> {
+export function applyFilter<T>(list: Cell<T[]>, filter: Cell<{apply: (item: T) => boolean}>): Cell<T[]> {
     return zipWith([list, filter], (l, f) => {
         return l.filter(f.apply);
     });

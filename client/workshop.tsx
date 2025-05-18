@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { createElement, For, Property, Show, Fragment, ref, bind, Deref, zipWith } from "cstk";
+import { createElement, For, Cell, Show, Fragment, ref, cell, Deref, zipWith } from "cytoplasmic";
 import { openConfirm, openDialog } from "./dialog";
 import { RecipeItemType, WorkshopProject, WorkshopStatus } from "./dto";
 import { handleError } from "./error";
@@ -12,7 +12,7 @@ import { dataSource, DerefData, getItemTypeNameAndQuantity, QuantityButtons } fr
 
 export function Workshop({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<WorkshopStatus>,
+    status: Cell<WorkshopStatus>,
     onReload: () => void,
 }) {
 
@@ -33,7 +33,7 @@ export function Workshop({gameService, status, onReload}: {
 
 export function ManageProjects({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<WorkshopStatus>,
+    status: Cell<WorkshopStatus>,
     onReload: () => void,
 }) {
 
@@ -84,9 +84,9 @@ export function ManageProjects({gameService, status, onReload}: {
                     </div>
                     <div class='stack-row spacing'>
                         <Show when={index}>
-                            <button onClick={() => prioritize(project.value, index.value)}>Prioritize</button>
+                            <button onClick={() => prioritize(project.value, index)}>Prioritize</button>
                         </Show>
-                        <button onClick={() => remove(project.value, index.value)}>Cancel</button>
+                        <button onClick={() => remove(project.value, index)}>Cancel</button>
                     </div>
                 </div>
             </div>
@@ -112,9 +112,9 @@ export function AddProject({gameService, close}: {
 }) {
     const recipes = dataSource(() => gameService.recipes.then(recipes => recipes.sort((a, b) => a.recipe.minLevel - b.recipe.minLevel)));
     const selection = ref<RecipeItemType>();
-    const quantity = bind(0);
-    const max = bind(0);
-    const ingredients = bind<Ingredient[]>([]);
+    const quantity = cell(0);
+    const max = cell(0);
+    const ingredients = cell<Ingredient[]>([]);
 
     async function select(recipe: RecipeItemType) {
         const items = await gameService.getItems();

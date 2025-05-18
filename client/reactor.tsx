@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { createElement, For, Fragment, Property, Show } from "cstk";
+import { createElement, For, Fragment, Cell, Show } from "cytoplasmic";
 import { openDialog } from "./dialog";
 import { ReactorStatus } from "./dto";
 import { handleError } from "./error";
@@ -12,7 +12,7 @@ import { dataSource, DerefData, getItemName } from "./util";
 
 export function Reactor({gameService, status, onReload}: {
     gameService: GameService,
-    status: Property<ReactorStatus>,
+    status: Cell<ReactorStatus>,
     onReload: () => void,
 }) {
 

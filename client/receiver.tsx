@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, Emitter } from "cstk";
+import { cell, createEmitter } from "cytoplasmic";
 import { BroadcastEvent } from "./dto";
 
 export class Receiver {
@@ -13,8 +13,8 @@ export class Receiver {
     private reject?: (reason?: any) => void;
     active = true;
 
-    readonly onEvent = new Emitter<BroadcastEvent>();
-    readonly connected = bind(false);
+    readonly onEvent = createEmitter<BroadcastEvent>();
+    readonly connected = cell(false);
 
     reconnectTimeout?: number;
 

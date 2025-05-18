@@ -3,11 +3,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { ref } from "cstk";
-import { Api } from "../api";
-import { openConfirm, openDialog } from "../dialog";
-import { Credentials, UpdatePassword, User } from "../dto";
-import { Register } from "../register";
+import { createValue, ref } from 'cytoplasmic';
+import { Api, ApiContext } from '../api';
+import { openConfirm, openDialog } from '../dialog';
+import { Credentials, UpdatePassword, User } from '../dto';
+import { Register } from '../register';
 
 export class AuthService {
     readonly user = ref<User>();
@@ -84,3 +84,5 @@ export class AuthService {
         }
     }
 }
+
+export const AuthServiceContext = createValue(new AuthService(ApiContext.defaultValue));

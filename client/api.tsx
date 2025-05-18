@@ -3,6 +3,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import { createValue } from 'cytoplasmic';
+import { environment } from './config/environment';
+
 export interface ApiError {
     status: number;
     statusText: string;
@@ -55,3 +58,5 @@ export class Api {
         return response.json();
     }
 }
+
+export const ApiContext = createValue(new Api(environment.apiUrl));

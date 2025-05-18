@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { Fragment, createElement, ref, bind, For, Show, zipWith, ariaBool, bindList, Deref } from 'cstk';
+import { Fragment, createElement, ref, cell, For, Show, zipWith, ariaBool, Deref, Context, cellArray } from 'cytoplasmic';
 import { differenceInYears, parseISO } from 'date-fns';
 import { DialogRef, openDialog } from './dialog';
 import { Inhabitant, Item, ItemType, Location } from './dto';
@@ -24,26 +24,26 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
     sector: {x: number, y: number},
     location?: Location,
     close: (choice: boolean) => void,
-}, context: JSX.Context) {
+}, context: Context) {
     const people = dataSource(() => gameService.getInhabitants().then(people => people.filter(p => {
         if (!p.ready) {
             return false;
         }
         return gameService.getAge(p.dateOfBirth) >= 16;
     })));
-    const teams = bind<string[]>([]);
-    const custom = bind(false);
-    const page = bind<'team'|'equipment'|'confirm'>('team');
+    const teams = cell<string[]>([]);
+    const custom = cell(false);
+    const page = cell<'team'|'equipment'|'confirm'>('team');
     const distance = getDistance({
         x: sector.x * 100 + 50,
         y: sector.y * 100 + 50,
     }, gameService.bunker.value || {x: 0, y: 0});
 
-    const selection = bind<Set<number>>(new Set());
-    const weapons = bind<Map<string, Item>>(new Map());
-    const ammoTypes = bind<Map<string, Item>>(new Map());
-    const members = bindList<Equiped>([]);
-    const eta = bind<string>('');
+    const selection = cell<Set<number>>(new Set());
+    const weapons = cell<Map<string, Item>>(new Map());
+    const ammoTypes = cell<Map<string, Item>>(new Map());
+    const members = cellArray<Equiped>([]);
+    const eta = cell<string>('');
 
     async function showTeamMember(inhabitant: Inhabitant) {
         const selected = selection.value.has(inhabitant.id);
@@ -79,7 +79,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
             return [i.itemType.id, i];
         }));
         ammoTypes.value = new Map(items.filter(i => ammoTypeIds.has(i.itemType.id)).map(i => [i.itemType.id, i]));
-        members.updateAll(people.data.value?.filter(p => selection.value.has(p.id)).map(p => {
+        members.replaceAll(people.data.value?.filter(p => selection.value.has(p.id)).map(p => {
             let weaponType: ItemType|undefined;
             let ammo = 0;
             if (p.weaponType) {
@@ -219,7 +219,7 @@ export function CreateExpeditionDialog({dialog, gameService, sector, location, c
         <Show when={page.eq('equipment')}>
             <div>Select equipment</div>
             <div class='stack-column' role='grid'>
-                <For each={members}>{(member, index) =>
+                <For each={members.indexed}>{(member, index) =>
                     <button role='row' class='stack-row spacing justify-space-between' onClick={() => selectWeapon(index.value, member.value)}>
                         <div role='gridcell'>{member.props.name}</div>
                         <div role='gridcell'>{member.map(p => p.weaponType ? p.weaponType.name + (p.weaponType.ammoType ? ` [${p.ammo}]` : '') : 'No weapon')}</div>
@@ -263,7 +263,7 @@ function TeamMemberDetails({dialog, inhabitant, selected, gameService, close}: {
     selected: boolean,
     gameService: GameService,
     close: (choice: boolean) => void,
-}, context: JSX.Context) {
+}, context: Context) {
     const primaryButton = ref<HTMLButtonElement>();
     function select() {
         close(!selected);
@@ -299,9 +299,9 @@ function SelectWeapon({weapon, ammo, weapons, ammoTypes, gameService, close}: {
     close: (selection: {weapon: ItemType|undefined, ammo: number}) => void,
 }) {
     const selection = ref<string>();
-    const ammoTypeName = bind('');
+    const ammoTypeName = cell('');
     const ammoItem = ref<Item>();
-    const ammoAmount = bind(ammo);
+    const ammoAmount = cell(ammo);
 
     async function select(weapon: ItemType) {
         selection.value = weapon.id;
@@ -346,7 +346,7 @@ function SelectWeapon({weapon, ammo, weapons, ammoTypes, gameService, close}: {
                     No weapon
                 </div>
             </button>
-            <For each={bind([...weapons.values()])}>{weapon => 
+            <For each={cell([...weapons.values()])}>{weapon => 
                 <Show when={weapon.map(w => w.quantity > 0)}>
                     <button role='row' class='selectable' aria-selected={ariaBool(selection.eq(weapon.props.itemType.props.id))} onClick={() => select(weapon.value.itemType)}>
                         <div role='gridcell' class='stack-row spacing'>

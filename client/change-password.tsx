@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Field, TextControl } from "cstk";
+import { cell, Context, createElement, Field, TextControl } from "cytoplasmic";
 import { openAlert } from "./dialog";
 import { handleError } from "./error";
 import { AuthService } from "./services/auth-service";
@@ -11,8 +11,8 @@ import { AuthService } from "./services/auth-service";
 export function ChangePassword({authService, close}: {
     authService: AuthService,
     close: (done: boolean) => void,
-}, context: JSX.Context) {
-    const loading = bind(false);
+}, context: Context) {
+    const loading = cell(false);
     const existingPasswordControl = new TextControl('');
     const passwordControl = new TextControl('');
     const confirmPasswordControl = new TextControl('');

@@ -3,23 +3,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Deref, Fragment, For, Show, Property, TextControl, IntControl, Field, zipWith } from "cstk";
+import { createElement, Fragment, For, Show, TextControl, IntControl, Field, zipWith, Cell, Context } from "cytoplasmic";
 import { ChangePassword } from "./change-password";
 import { openConfirm, openDialog, openPrompt } from "./dialog";
 import { NewWorld, User, World } from "./dto";
 import { handleError } from "./error";
 import { Register } from "./register";
-import { AuthService } from "./services/auth-service";
-import { GameService } from "./services/game-service";
-import { LobbyService } from "./services/lobby-service";
+import { AuthServiceContext } from "./services/auth-service";
+import { GameServiceContext } from "./services/game-service";
+import { LobbyServiceContext } from "./services/lobby-service";
 import { dataSource, DerefData } from "./util";
 
-export function Lobby({user, authService, lobbyService, gameService}: {
-    user: Property<User>,
-    authService: AuthService,
-    lobbyService: LobbyService,
-    gameService: GameService,
-}) {
+export function Lobby({user}: {
+    user: Cell<User>,
+}, context: Context) {
+    const lobbyService = context.use(LobbyServiceContext);
+    const authService = context.use(AuthServiceContext);
+    const gameService = context.use(GameServiceContext);
     const worlds = dataSource(() => lobbyService.getWorlds());
 
     function reload() {

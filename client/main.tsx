@@ -3,37 +3,67 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { bind, createElement, Deref, mount, Show, Fragment, ref, ariaBool } from 'cstk';
+import { cell, createElement, Deref, mount, Show, Fragment, ref, Context, createRouter, Link } from 'cytoplasmic';
 import { format } from 'date-fns';
-import { Api } from './api';
-import { environment } from './config/environment';
 import { dialogContainer, openDialog } from './dialog';
 import { Icon } from './icon';
-import { Items } from './items';
 import { Lobby } from './lobby';
 import { Login } from './login';
 import './main.scss';
-import { Map } from './map';
-import { Messages } from './messages';
-import { People } from './people';
-import { Radio } from './radio';
 import { Register } from './register';
-import { AuthService } from './services/auth-service';
-import { GameService } from './services/game-service';
-import { LobbyService } from './services/lobby-service';
-import { Status } from './status';
+import { AuthServiceContext } from './services/auth-service';
+import { GameServiceContext } from './services/game-service';
 import { LoadingIndicator } from './util';
+import { handleError } from './error';
 
-function Root({authService, lobbyService, gameService}: {
-    authService: AuthService,
-    lobbyService: LobbyService,
-    gameService: GameService,
-}, context: JSX.Context) {
-    const loading = bind(true);
-    const amber = bind(localStorage.getItem('utTheme') !== 'green');
+function Root({}: {}, context: Context) {
+    const authService = context.use(AuthServiceContext);
+    const gameService = context.use(GameServiceContext);
+
+    const loading = cell(true);
+    const amber = cell(localStorage.getItem('utTheme') !== 'green');
     const displayRef = ref<HTMLDivElement>();
 
-    const tab = bind<'status'|'people'|'items'|'map'|'radio'|'messages'>('status');
+    const router = createRouter({
+        '': () => <Deref ref={authService.user}>{user =>
+                <div class='stack-column grow' style='overflow-y: auto;'>
+                    <Lobby user={user}/>
+                </div>
+            }</Deref>,
+        '*': worldId => ({
+            '**': async () => {
+                try {
+                    loading.value = true;
+                    const m = await import('./game');
+                    await gameService.selectWorld(parseInt(worldId));
+                    return <Deref ref={authService.user}>{user =>
+                        <m.Game user={user} amber={amber}/>
+                    }</Deref>;
+                } catch (error: unknown) {
+                    handleError(error);
+                    router.navigate('/');
+                    return <div class="stack-row spacing">
+                        <div>
+                            Error
+                        </div>
+                        <Link path=''>
+                            <a>Return</a>
+                        </Link>
+                    </div>;
+                } finally {
+                    loading.value = false;
+                }
+            },
+        }),
+        '**': () => <div class="stack-row-spacing">
+            <div>
+                Not found
+            </div>
+            <Link path=''>
+                <a>Return</a>
+            </Link>
+        </div>,
+    }, 'hash');
 
     async function authenticate() {
         loading.value = true;
@@ -63,31 +93,23 @@ function Root({authService, lobbyService, gameService}: {
         }
     }));
 
-    context.onDestroy(authService.user.getAndObserve(user => {
-        if (user) {
-            const m = location.hash.match(/^#(\d+)\/([^\/]+)$/);
-            if (m) {
-                tab.value = m[2] as any;
-                gameService.selectWorld(parseInt(m[1]));
-            }
-        }
-    }));
 
     context.onDestroy(gameService.world.getAndObserve(world => {
         if (world) {
-            location.hash = `${world.id}/${tab.value}`;
-        }
-    }));
-
-    context.onDestroy(tab.getAndObserve(tab => {
-        const worldId = gameService.world.value?.id;
-        if (worldId) {
-            location.hash = `${worldId}/${tab}`;
+            const page = router.activeRoute.value?.path[1] || 'status';
+            console.log(world.id, page);
+            router.navigate([String(world.id), page]);
+        } else {
+            router.navigate([]);
         }
     }));
 
     async function guest() {
-        await authService.guest(true);
+        try {
+            await authService.guest(true);
+        } catch (error: unknown) {
+            handleError(error);
+        }
     }
 
     async function register() {
@@ -114,45 +136,9 @@ function Root({authService, lobbyService, gameService}: {
                         <Login authService={authService}/>
                     </div>
                 </Show>
-                <Deref ref={authService.user}>{user =>
-                    <>
-                        <Show when={gameService.world.not}>
-                            <div class='stack-column grow' style='overflow-y: auto;'>
-                                <Lobby user={user} authService={authService} lobbyService={lobbyService} gameService={gameService}/>
-                            </div>
-                        </Show>
-                        <Show when={gameService.world}>
-                            <menu role='tablist'>
-                                <li><button onClick={() => tab.value = 'status'} aria-selected={ariaBool(tab.eq('status'))}>Status</button></li>
-                                <li><button onClick={() => tab.value = 'people'} aria-selected={ariaBool(tab.eq('people'))}>People</button></li>
-                                <li><button onClick={() => tab.value = 'items'} aria-selected={ariaBool(tab.eq('items'))}>Items</button></li>
-                                <li><button onClick={() => tab.value = 'map'} aria-selected={ariaBool(tab.eq('map'))}>Map</button></li>
-                                <li><button onClick={() => tab.value = 'radio'} aria-selected={ariaBool(tab.eq('radio'))} class={{attention: gameService.radioNotification}}>Radio</button></li>
-                                <li><button onClick={() => tab.value = 'messages'} aria-selected={ariaBool(tab.eq('messages'))} class={{attention: gameService.messageNotification}}><Icon name='message'/></button></li>
-                            </menu>
-                            <div class='stack-column grow' style='overflow-y: auto;'>
-                                <Show when={tab.eq('status')}>
-                                    <Status gameService={gameService} authService={authService} user={user}/>
-                                </Show>
-                                <Show when={tab.eq('people')}>
-                                    <People gameService={gameService}/>
-                                </Show>
-                                <Show when={tab.eq('items')}>
-                                    <Items gameService={gameService}/>
-                                </Show>
-                                <Show when={tab.eq('map')}>
-                                    <Map amber={amber} gameService={gameService}/>
-                                </Show>
-                                <Show when={tab.eq('radio')}>
-                                    <Radio gameService={gameService}/>
-                                </Show>
-                                <Show when={tab.eq('messages')}>
-                                    <Messages gameService={gameService}/>
-                                </Show>
-                            </div>
-                        </Show>
-                    </>
-                    }</Deref>
+                <Show when={authService.user}>
+                    <router.Portal/>
+                </Show>
             </Show>
             <div class='status-bar margin-top'>
                 <Deref ref={gameService.bunker}>{bunker =>
@@ -171,9 +157,4 @@ function Root({authService, lobbyService, gameService}: {
     </div>;
 }
 
-const api = new Api(environment.apiUrl);
-const authService = new AuthService(api);
-const lobbyService = new LobbyService(api);
-const gameService = new GameService(api);
-
-mount(document.body, <Root authService={authService} lobbyService={lobbyService} gameService={gameService}/>)
+mount(document.body, <Root/>)
