@@ -2,8 +2,7 @@
 @use './layout';
 
 body {
-    background-color: #000;
-    background: linear-gradient(to bottom, #333, #000);
+    background: #000 linear-gradient(to bottom, var(--primary-10), #000);
     color: var(--primary);
     font-family: 'IBM Plex Mono', monospace;
     display: flex;

@@ -136,9 +136,9 @@ function Root({}: {}, context: Context) {
                         <Login authService={authService}/>
                     </div>
                 </Show>
-                <Show when={authService.user}>
-                    <router.Portal/>
-                </Show>
+            </Show>
+            <Show when={authService.user}>
+                <router.Portal/>
             </Show>
             <div class='status-bar margin-top'>
                 <Deref ref={gameService.bunker}>{bunker =>

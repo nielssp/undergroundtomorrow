@@ -40,6 +40,7 @@ module.exports = (env, argv) => {
         },
       ],
     },
+    devtool: devMode ? 'eval-source-map' : undefined,
     devServer: {
       static: './dist',
       hot: true,
